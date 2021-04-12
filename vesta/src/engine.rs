@@ -3,9 +3,11 @@ use crate::{VestaApp, config::Config, renderer::{Renderer}, texture};
 
 pub struct Engine { }
 impl Engine {
-    pub async fn run<V: VestaApp + 'static>(config: Config, app: V)  {        
+    pub async fn run<V: VestaApp + 'static>(config: Config)  {        
         // Loop that will run all the events
         let event_loop = EventLoop::new();
+        
+        
         
         // Build the window with specified config
         let window = WindowBuilder::new()
@@ -58,14 +60,14 @@ impl Engine {
         let mut renderer = Renderer { surface, device, queue, swap_chain_desc, swap_chain, size, depth_texture };
         
         // First initllize all the apps resources (shaders, pipelines etc.)
-        app.init(&renderer);
-        
+        let mut app = V::init(&renderer);
+                
         event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Poll;
             
             match event {
                 Event::RedrawRequested(_) => {
-                    match Self::render(&window, &renderer, &app) {
+                    match Self::render(&window, &renderer, &mut app) {
                         Ok(_) => {}
                         // Recreate the swap_chain if lost
                         Err(wgpu::SwapChainError::Lost) => {
@@ -111,7 +113,7 @@ impl Engine {
         renderer.depth_texture = renderer.create_depth_texture(Some("Depth Texture")).unwrap();        
     }
     
-    fn render<V: VestaApp>(_window: &Window, renderer: &Renderer, app: &V) -> Result<(), wgpu::SwapChainError> {
+    fn render<V: VestaApp>(_window: &Window, renderer: &Renderer, app: &mut V) -> Result<(), wgpu::SwapChainError> {
         // Get a frame
         let frame = renderer.swap_chain.get_current_frame()?.output;
         let mut encoder = renderer.device.create_command_encoder(&Default::default());

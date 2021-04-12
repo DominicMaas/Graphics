@@ -1,16 +1,18 @@
 mod app;
 
-use vesta::{config::Config, engine::Engine};
+use app::*;
 use futures::executor::block_on;
 
 fn main() {
+    // Get log events
     env_logger::init();
     
-    let app = app::App::new();
-    
-    let config = Config {
+    // Config for the engine
+    let config = vesta::Config {
         window_title: "Vesta Example".to_string()
     };
     
-    block_on(Engine::run(config, app));
+    // Unable to run async in main, so block the async,
+    // create for App, and pass in the config
+    block_on(vesta::Engine::run::<App>(config));
 }

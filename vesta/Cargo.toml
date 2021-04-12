@@ -13,3 +13,11 @@ anyhow = "1.0"
 image = "0.23"
 cgmath = "0.18"
 bytemuck = { version = "1.5", features = [ "derive" ] }
+
+[dependencies.naga]
+git = "https://github.com/gfx-rs/naga"
+tag = "gfx-21"
+features = ["wgsl-in"]
+
+[patch.crates-io]
+naga = { git = 'https://github.com/gfx-rs/naga', tag = 'gfx-21', features = ["wgsl-in"] }
