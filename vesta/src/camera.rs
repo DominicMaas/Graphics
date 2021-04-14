@@ -17,9 +17,9 @@ unsafe impl bytemuck::Pod for CameraUniform {}
 // Holds the camera position, yaw and pitch
 pub struct Camera {
     pub position: Vector3<f32>,
-
     pub front: Vector3<f32>,
     pub up: Vector3<f32>,
+    
     pub world_up: Vector3<f32>,
     pub right: Vector3<f32>,
 
@@ -51,7 +51,7 @@ impl Camera {
             yaw: cgmath::Rad(-90.0 / 180.0 * f32::PI()), // Look left or right
             pitch: cgmath::Rad(0.0),                     // Look Up / Down
             projection: Box::new(projection),
-            uniform_buffer,
+            uniform_buffer
         }
     }
 
