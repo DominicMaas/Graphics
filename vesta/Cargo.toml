@@ -17,7 +17,4 @@ bytemuck = { version = "1.5", features = [ "derive" ] }
 [dependencies.naga]
 git = "https://github.com/gfx-rs/naga"
 tag = "gfx-21"
-features = ["wgsl-in"]
-
-[patch.crates-io]
-naga = { git = 'https://github.com/gfx-rs/naga', tag = 'gfx-21', features = ["wgsl-in"] }
+features = ["wgsl-in", "spv-out"]

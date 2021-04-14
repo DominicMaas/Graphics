@@ -2,7 +2,8 @@ use anyhow::*;
 
 pub struct RenderPipelineBuilder<'a> {
     layout: Option<&'a wgpu::PipelineLayout>,
-    shader_source: Option<wgpu::ShaderModuleDescriptor<'a>>,
+    vertex_shader_source: Option<wgpu::ShaderModuleDescriptor<'a>>,
+    fragment_shader_source: Option<wgpu::ShaderModuleDescriptor<'a>>,
     vertex_shader_entry: &'a str,
     fragment_shader_entry: &'a str,
     texture_format: wgpu::TextureFormat,
@@ -17,7 +18,8 @@ impl<'a> RenderPipelineBuilder<'a> {
     ) -> RenderPipelineBuilder {
         Self {
             layout: None,
-            shader_source: None,
+            vertex_shader_source: None,
+            fragment_shader_source: None,
             vertex_shader_entry: "vs_main",
             fragment_shader_entry: "fs_main",
             texture_format,
@@ -31,8 +33,17 @@ impl<'a> RenderPipelineBuilder<'a> {
         self
     }
 
-    pub fn with_shader_source(&mut self, source: wgpu::ShaderSource<'a>) -> &mut Self {
-        self.shader_source = Some(wgpu::ShaderModuleDescriptor {
+    pub fn with_vertext_shader_source(&mut self, source: wgpu::ShaderSource<'a>) -> &mut Self {
+        self.vertex_shader_source = Some(wgpu::ShaderModuleDescriptor {
+            label: None,
+            source,
+            flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION,
+        });
+        self
+    }
+    
+    pub fn with_fragment_shader_source(&mut self, source: wgpu::ShaderSource<'a>) -> &mut Self {
+        self.fragment_shader_source = Some(wgpu::ShaderModuleDescriptor {
             label: None,
             source,
             flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION,
@@ -64,23 +75,27 @@ impl<'a> RenderPipelineBuilder<'a> {
         let layout = self.layout.unwrap();
 
         // Ensure shader source
-        if self.shader_source.is_none() {
-            bail!("No shader source supplied!");
+        if self.vertex_shader_source.is_none() {
+            bail!("No vertext shader source supplied!");
+        }
+        
+        if self.fragment_shader_source.is_none() {
+            bail!("No fragment shader source supplied!");
         }
         
         // Create the modules
         let vs_module = device.create_shader_module(
             &self
-                .shader_source
+                .vertex_shader_source
                 .take()
-                .context("No shader source supplied!")?,
+                .context("No vertex shader source supplied!")?,
         );
 
         let fs_module = device.create_shader_module(
             &self
-                .shader_source
+                .fragment_shader_source
                 .take()
-                .context("No shader source supplied!")?,
+                .context("No fragment shader source supplied!")?,
         );
 
         // Create the actual pipeline
