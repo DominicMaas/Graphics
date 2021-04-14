@@ -14,6 +14,11 @@ image = "0.23"
 cgmath = "0.18"
 bytemuck = { version = "1.5", features = [ "derive" ] }
 
+# GUI
+imgui = "0.7"
+imgui-wgpu = "0.14"
+imgui-winit-support = "0.7"
+
 [dependencies.naga]
 git = "https://github.com/gfx-rs/naga"
 tag = "gfx-19"

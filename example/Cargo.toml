@@ -14,3 +14,8 @@ log = "0.4"
 wgpu = "0.7"
 cgmath = "0.18"
 vesta = { path = "../vesta" }
+
+# GUI
+imgui = "0.7"
+imgui-wgpu = "0.14"
+imgui-winit-support = "0.7"

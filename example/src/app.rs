@@ -66,6 +66,15 @@ impl vesta::VestaApp for App {
          self.camera.update_uniforms(&engine.renderer.queue);
     }
     
+    fn render_ui(&mut self, ui: &imgui::Ui, _engine: &vesta::Engine) {
+        let window = imgui::Window::new(imgui::im_str!("Debug"));
+        window
+            .size([400.0, 700.0], imgui::Condition::FirstUseEver)
+            .build(&ui, || {
+                ui.text(imgui::im_str!("Hello World!"));
+            });
+    }
+    
     fn render<'a>(&'a mut self, render_pass: &mut wgpu::RenderPass<'a>, _engine: &vesta::Engine) {        
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
