@@ -66,6 +66,8 @@ pub trait VestaApp {
     fn update(&mut self, dt: std::time::Duration, engine: &Engine);
     fn render<'a>(&'a mut self, render_pass: &mut wgpu::RenderPass<'a>, engine: &Engine);
     
+    fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>, engine: &Engine);
+    
     fn input(&mut self, event: &winit::event::WindowEvent, engine: &Engine) -> bool;
     fn device_input(&mut self, event: &winit::event::DeviceEvent, engine: &Engine) -> bool;
 }

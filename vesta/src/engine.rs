@@ -83,7 +83,7 @@ impl Engine {
                         // Recreate the swap_chain if lost
                         Err(wgpu::SwapChainError::Lost) => {
                             let size = engine.renderer.size;
-                            Self::resize(&mut engine,size)
+                            Self::resize(&mut engine, &mut app, size)
                         },
                         // The system is out of memory, we should probably quit
                         Err(wgpu::SwapChainError::OutOfMemory) => *control_flow = ControlFlow::Exit,
@@ -102,10 +102,10 @@ impl Engine {
                         match event {
                             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                             WindowEvent::Resized(physical_size) => {
-                                Self::resize(&mut engine, *physical_size);
+                                Self::resize(&mut engine, &mut app, *physical_size);
                             }
                             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                                Self::resize(&mut engine, **new_inner_size);
+                                Self::resize(&mut engine, &mut app, **new_inner_size);
                             }
                             _ => {}
                         }
@@ -116,7 +116,7 @@ impl Engine {
         });
     }
     
-    fn resize(engine: &mut Engine, new_size: winit::dpi::PhysicalSize<u32>) {
+    fn resize<V: VestaApp>(engine: &mut Engine, app: &mut V, new_size: winit::dpi::PhysicalSize<u32>) {
         engine.renderer.size = new_size;
         
         engine.renderer.swap_chain_desc.width = new_size.width;
@@ -124,7 +124,9 @@ impl Engine {
         
         engine.renderer.swap_chain = engine.renderer.device.create_swap_chain(&engine.renderer.surface, &engine.renderer.swap_chain_desc);
         
-        engine.renderer.depth_texture = engine.renderer.create_depth_texture(Some("Depth Texture")).unwrap();        
+        engine.renderer.depth_texture = engine.renderer.create_depth_texture(Some("Depth Texture")).unwrap();
+        
+        app.resize(new_size, engine);
     }
     
     fn render<V: VestaApp>(_window: &Window, engine: &Engine, app: &mut V) -> Result<(), wgpu::SwapChainError> {
