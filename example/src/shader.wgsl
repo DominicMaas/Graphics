@@ -15,8 +15,17 @@ struct Camera {
     view_proj: mat4x4<f32>;
 };
 
+[[block]]
+struct Model {
+    model: mat4x4<f32>;
+    normal: mat3x3<f32>;
+};
+
 [[group(0), binding(0)]]
 var u_camera: Camera;
+
+[[group(1), binding(0)]]
+var u_model: Model;
 
 // Vertex Shader
 [[stage(vertex)]]

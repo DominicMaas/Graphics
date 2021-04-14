@@ -1,6 +1,16 @@
 use wgpu::util::BufferInitDescriptor;
 use wgpu::util::DeviceExt;
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct ModelUniform {
+    pub model: cgmath::Matrix4<f32>,  // 4x4 matrix
+    pub normal: cgmath::Matrix3<f32>, // 3x3 matrix
+}
+
+unsafe impl bytemuck::Zeroable for ModelUniform {}
+unsafe impl bytemuck::Pod for ModelUniform {}
+
 /// A holder for a uniform buffer, contains the data and raw buffer
 pub struct UniformBuffer<T>
 where

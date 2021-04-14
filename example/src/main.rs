@@ -1,4 +1,5 @@
 mod app;
+mod cube;
 
 use app::*;
 use futures::executor::block_on;

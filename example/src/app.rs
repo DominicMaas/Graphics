@@ -4,9 +4,11 @@ use vesta::DrawMesh;
 use cgmath::num_traits::FloatConst;
 use winit::event::DeviceEvent;
 
+use crate::cube::Cube;
+
 pub struct App {
     render_pipeline: wgpu::RenderPipeline,
-    mesh: vesta::Mesh,
+    cube: Cube,
     camera: vesta::Camera,
     camera_controller: vesta::CameraController
 }
@@ -21,6 +23,10 @@ impl vesta::VestaApp for App {
                         wgpu::ShaderStage::VERTEX,
                         &engine.renderer.device,
                     ),
+                    &vesta::UniformBufferUtils::create_bind_group_layout(
+                        wgpu::ShaderStage::VERTEX,
+                        &engine.renderer.device,
+                    ),
                 ],
                 push_constant_ranges: &[],
             });
@@ -30,42 +36,9 @@ impl vesta::VestaApp for App {
             .with_layout(&render_pipeline_layout)
             .build(&engine.renderer.device)
             .unwrap();
-                                    
-        let mut vertices: Vec<vesta::Vertex> = Vec::new();
-        let mut indices: Vec<u32> = Vec::new();
-          
-        let x = -1.0;
-        let y = -1.0;
-        let z = -5.0;
-        let curr_index = 0;
+                                       
+        let cube = Cube::new(&engine.renderer);
         
-        vertices.push(vesta::Vertex::with_color(
-            Vector3::new(1.0 + x, 1.0 + y, 0.0 + z),
-            Vector3::new(0.0, 0.0, -1.0),
-        ));
-        vertices.push(vesta::Vertex::with_color(
-            Vector3::new(1.0 + x, 0.0 + y, 0.0 + z),
-            Vector3::new(0.0, 0.0, -1.0),
-        ));
-        vertices.push(vesta::Vertex::with_color(
-            Vector3::new(0.0 + x, 0.0 + y, 0.0 + z),
-            Vector3::new(0.0, 0.0, -1.0),
-        ));
-        vertices.push(vesta::Vertex::with_color(
-            Vector3::new(0.0 + x, 1.0 + y, 0.0 + z),
-            Vector3::new(0.0, 0.0, -1.0),
-        ));
-
-        indices.push(curr_index + 0);
-        indices.push(curr_index + 1);
-        indices.push(curr_index + 3);
-
-        indices.push(curr_index + 1);
-        indices.push(curr_index + 2);
-        indices.push(curr_index + 3);
-        
-        let mesh = engine.renderer.create_mesh(vertices, indices);
-            
         // Setup the main camera
         let camera = vesta::Camera::new(
             (0.0, 0.0, 0.0).into(),
@@ -83,7 +56,7 @@ impl vesta::VestaApp for App {
         
         Self {
             render_pipeline,
-            mesh,
+            cube,
             camera,
             camera_controller
         }            
@@ -97,8 +70,8 @@ impl vesta::VestaApp for App {
     
     fn render<'a>(&'a mut self, render_pass: &mut wgpu::RenderPass<'a>, _engine: &vesta::Engine) {        
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);        
-        render_pass.draw_mesh(&self.mesh);
+        render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
+        self.cube.draw(render_pass);        
     }
     
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>, _engine: &vesta::Engine) {
