@@ -5,6 +5,7 @@ use crate::{VestaApp, config::Config, renderer::Renderer, texture};
 
 pub struct Engine {
     pub renderer: Renderer,
+    pub window_size: winit::dpi::PhysicalSize<u32>,
 }
 
 impl Engine {
@@ -19,7 +20,7 @@ impl Engine {
             .unwrap();
         
         // Determined window size
-        let size = window.inner_size();
+        let window_size = window.inner_size();
         
         // New WGPU instance and surface to render on
         let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
@@ -48,8 +49,8 @@ impl Engine {
         let swap_chain_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
             format: adapter.get_swap_chain_preferred_format(&surface),
-            width: size.width,
-            height: size.height,
+            width: window_size.width,
+            height: window_size.height,
             present_mode: wgpu::PresentMode::Fifo,
         };
     
@@ -60,29 +61,44 @@ impl Engine {
             texture::Texture::create_depth(&device, &swap_chain_desc, Some("Depth Texture")).unwrap();
         
         // Renderer information, this will be sent to the app implementation so it can access resources
-        let renderer = Renderer { surface, device, queue, swap_chain_desc, swap_chain, size, depth_texture };
-        let mut engine = Engine { renderer };
+        let renderer = Renderer { surface, device, queue, swap_chain_desc, swap_chain, depth_texture };
+        let mut engine = Engine { renderer, window_size };
         
         // First initllize all the apps resources (shaders, pipelines etc.)
         let mut app = V::init(&engine);
-        let mut last_update = Instant::now();
+                
+        // Update timings
+        //let mut t: f64 = 0.0;
+        const DT: f32 = 0.01;
+                
+        let mut current_time = Instant::now();
+        let mut accumulator: f32 = 0.0;
                 
         event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Poll;
             
             match event {
                 Event::RedrawRequested(_) => {
-                    let now = Instant::now();
-                    let dt = now - last_update;
-                    last_update = now;
+                    // Timing logic
+                    let new_time = Instant::now();
+                    let frame_time = new_time - current_time;
                     
-                    app.update(dt, &engine);
+                    current_time = new_time;
                     
+                    accumulator += frame_time.as_secs_f32();
+                    
+                    while accumulator >= DT {
+                        app.update(DT, &engine);
+                        accumulator -= DT;
+                        //t += DT;
+                    }
+                    
+                    // Perform the actual rendering
                     match Self::render(&window, &engine, &mut app) {
                         Ok(_) => {}
                         // Recreate the swap_chain if lost
                         Err(wgpu::SwapChainError::Lost) => {
-                            let size = engine.renderer.size;
+                            let size = engine.window_size;
                             Self::resize(&mut engine, &mut app, size)
                         },
                         // The system is out of memory, we should probably quit
@@ -117,7 +133,7 @@ impl Engine {
     }
     
     fn resize<V: VestaApp>(engine: &mut Engine, app: &mut V, new_size: winit::dpi::PhysicalSize<u32>) {
-        engine.renderer.size = new_size;
+        engine.window_size = new_size;
         
         engine.renderer.swap_chain_desc.width = new_size.width;
         engine.renderer.swap_chain_desc.height = new_size.height;

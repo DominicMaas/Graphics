@@ -36,13 +36,13 @@ impl vesta::VestaApp for App {
             .unwrap();
                                        
         let cube = Cube::new(&engine.renderer);
-        
+                
         // Setup the main camera
         let camera = vesta::Camera::new(
             (0.0, 0.0, 0.0).into(),
             vesta::PerspectiveProjection::new(
-                engine.renderer.swap_chain_desc.width,
-                engine.renderer.swap_chain_desc.height,
+                engine.window_size.width,
+                engine.window_size.height,
                 cgmath::Rad(70.0 / 180.0 * f32::PI()),
                 0.01,
                 1000.0,
@@ -60,7 +60,7 @@ impl vesta::VestaApp for App {
         }            
     }
     
-    fn update(&mut self, dt: std::time::Duration, engine: &vesta::Engine) {
+    fn update(&mut self, dt: f32, engine: &vesta::Engine) {
          // Update camera positions
          self.camera_controller.update_camera(&mut self.camera, dt);
          self.camera.update_uniforms(&engine.renderer.queue);

@@ -155,8 +155,7 @@ impl CameraController {
         }
     }
 
-    pub fn update_camera(&mut self, camera: &mut Camera, dt: Duration) {
-        let dt = dt.as_secs_f32();
+    pub fn update_camera(&mut self, camera: &mut Camera, dt: f32) {
         let velocity = self.speed * dt;
 
         // Update Positions (left, right)

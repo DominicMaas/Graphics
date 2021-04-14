@@ -32,7 +32,7 @@ pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
 
 pub trait VestaApp {
     fn init(engine: &Engine) -> Self;
-    fn update(&mut self, dt: std::time::Duration, engine: &Engine);
+    fn update(&mut self, dt: f32, engine: &Engine);
     fn render<'a>(&'a mut self, render_pass: &mut wgpu::RenderPass<'a>, engine: &Engine);
     
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>, engine: &Engine);
