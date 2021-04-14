@@ -2,8 +2,7 @@ use anyhow::*;
 
 pub struct RenderPipelineBuilder<'a> {
     layout: Option<&'a wgpu::PipelineLayout>,
-    vertex_shader_source: Option<wgpu::ShaderModuleDescriptor<'a>>,
-    fragment_shader_source: Option<wgpu::ShaderModuleDescriptor<'a>>,
+    shader_source: Option<wgpu::ShaderModuleDescriptor<'a>>,
     vertex_shader_entry: &'a str,
     fragment_shader_entry: &'a str,
     texture_format: wgpu::TextureFormat,
@@ -18,8 +17,7 @@ impl<'a> RenderPipelineBuilder<'a> {
     ) -> RenderPipelineBuilder {
         Self {
             layout: None,
-            vertex_shader_source: None,
-            fragment_shader_source: None,
+            shader_source: None,
             vertex_shader_entry: "vs_main",
             fragment_shader_entry: "fs_main",
             texture_format,
@@ -33,17 +31,8 @@ impl<'a> RenderPipelineBuilder<'a> {
         self
     }
 
-    pub fn with_vertext_shader_source(&mut self, source: wgpu::ShaderSource<'a>) -> &mut Self {
-        self.vertex_shader_source = Some(wgpu::ShaderModuleDescriptor {
-            label: None,
-            source,
-            flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION,
-        });
-        self
-    }
-    
-    pub fn with_fragment_shader_source(&mut self, source: wgpu::ShaderSource<'a>) -> &mut Self {
-        self.fragment_shader_source = Some(wgpu::ShaderModuleDescriptor {
+    pub fn with_shader_source(&mut self, source: wgpu::ShaderSource<'a>) -> &mut Self {
+        self.shader_source = Some(wgpu::ShaderModuleDescriptor {
             label: None,
             source,
             flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION,
@@ -75,27 +64,16 @@ impl<'a> RenderPipelineBuilder<'a> {
         let layout = self.layout.unwrap();
 
         // Ensure shader source
-        if self.vertex_shader_source.is_none() {
-            bail!("No vertext shader source supplied!");
+        if self.shader_source.is_none() {
+            bail!("No shader source supplied!");
         }
         
-        if self.fragment_shader_source.is_none() {
-            bail!("No fragment shader source supplied!");
-        }
-        
-        // Create the modules
-        let vs_module = device.create_shader_module(
+        // Create the module
+        let shader_module = device.create_shader_module(
             &self
-                .vertex_shader_source
+                .shader_source
                 .take()
-                .context("No vertex shader source supplied!")?,
-        );
-
-        let fs_module = device.create_shader_module(
-            &self
-                .fragment_shader_source
-                .take()
-                .context("No fragment shader source supplied!")?,
+                .context("No shader source supplied!")?,
         );
 
         // Create the actual pipeline
@@ -103,7 +81,7 @@ impl<'a> RenderPipelineBuilder<'a> {
             label: Some(self.pipeline_name),
             layout: Some(&layout),
             vertex: wgpu::VertexState {
-                module: &vs_module,
+                module: &shader_module,
                 entry_point: self.vertex_shader_entry,
                 buffers: &[crate::Vertex::layout()],
             },
@@ -129,7 +107,7 @@ impl<'a> RenderPipelineBuilder<'a> {
                 alpha_to_coverage_enabled: false,
             },
             fragment: Some(wgpu::FragmentState {
-                module: &fs_module,
+                module: &shader_module,
                 entry_point: self.fragment_shader_entry,
                 targets: &[wgpu::ColorTargetState {
                     format: self.texture_format,

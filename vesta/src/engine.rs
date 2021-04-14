@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use winit::{event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder}};
 use crate::{VestaApp, config::Config, renderer::Renderer, texture};
 
@@ -59,17 +61,23 @@ impl Engine {
         
         // Renderer information, this will be sent to the app implementation so it can access resources
         let renderer = Renderer { surface, device, queue, swap_chain_desc, swap_chain, size, depth_texture };
-        
         let mut engine = Engine { renderer };
         
         // First initllize all the apps resources (shaders, pipelines etc.)
         let mut app = V::init(&engine);
+        let mut last_update = Instant::now();
                 
         event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Poll;
             
             match event {
                 Event::RedrawRequested(_) => {
+                    let now = Instant::now();
+                    let dt = now - last_update;
+                    last_update = now;
+                    
+                    app.update(dt, &engine);
+                    
                     match Self::render(&window, &engine, &mut app) {
                         Ok(_) => {}
                         // Recreate the swap_chain if lost
@@ -86,8 +94,11 @@ impl Engine {
                 Event::MainEventsCleared => {
                     window.request_redraw();
                 }
+                Event::DeviceEvent { ref event, .. } => {
+                    app.device_input(event, &engine);
+                }
                 Event::WindowEvent { ref event, .. } => {
-                    //if !state.input(event) {
+                    if !app.input(event, &engine) {
                         match event {
                             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                             WindowEvent::Resized(physical_size) => {
@@ -98,7 +109,7 @@ impl Engine {
                             }
                             _ => {}
                         }
-                    //}
+                    }
                 }
                 _ => {}
             }
@@ -147,7 +158,7 @@ impl Engine {
                 }),
             });
             
-            app.render(engine, &mut render_pass)
+            app.render(&mut render_pass, engine)
         }
         
         // Finished with the frame

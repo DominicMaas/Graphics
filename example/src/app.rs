@@ -16,8 +16,7 @@ impl vesta::VestaApp for App {
             });
                     
         let render_pipeline = vesta::RenderPipelineBuilder::new(engine.renderer.swap_chain_desc.format, "Render Pipeline")
-            .with_vertext_shader_source(wgpu::ShaderSource::SpirV(Cow::Borrowed(vesta::ShaderLoader::load_wgsl(include_str!("shader.wgsl")).unwrap().as_slice())))
-            .with_fragment_shader_source(wgpu::ShaderSource::SpirV(Cow::Borrowed(vesta::ShaderLoader::load_wgsl(include_str!("shader.wgsl")).unwrap().as_slice())))
+            .with_shader_source(wgpu::ShaderSource::SpirV(Cow::Borrowed(vesta::ShaderLoader::load_wgsl(include_str!("shader.wgsl")).unwrap().as_slice())))
             .with_layout(&render_pipeline_layout)
             .build(&engine.renderer.device)
             .unwrap();
@@ -35,12 +34,20 @@ impl vesta::VestaApp for App {
         }            
     }
     
-    fn update(&mut self, _engine: &vesta::Engine) {
+    fn update(&mut self, _dt: std::time::Duration, _engine: &vesta::Engine) {
         
     }
     
-    fn render<'a>(&'a mut self, _engine: &vesta::Engine, render_pass: &mut wgpu::RenderPass<'a>) {        
+    fn render<'a>(&'a mut self, render_pass: &mut wgpu::RenderPass<'a>, _engine: &vesta::Engine) {        
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.draw_mesh(&self.mesh);
+    }
+    
+    fn input(&mut self, _event: &winit::event::WindowEvent, _engine: &vesta::Engine) -> bool {
+        false
+    }
+    
+    fn device_input(&mut self, _event: &winit::event::DeviceEvent, _engine: &vesta::Engine) -> bool {
+        false
     }
 }
