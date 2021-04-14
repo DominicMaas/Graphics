@@ -19,7 +19,6 @@ impl vesta::VestaApp for App {
             .with_vertext_shader_source(wgpu::ShaderSource::SpirV(Cow::Borrowed(vesta::ShaderLoader::load_wgsl(include_str!("shader.wgsl")).unwrap().as_slice())))
             .with_fragment_shader_source(wgpu::ShaderSource::SpirV(Cow::Borrowed(vesta::ShaderLoader::load_wgsl(include_str!("shader.wgsl")).unwrap().as_slice())))
             .with_layout(&render_pipeline_layout)
-            .with_topology(wgpu::PrimitiveTopology::PointList)
             .build(&engine.renderer.device)
             .unwrap();
                                     
