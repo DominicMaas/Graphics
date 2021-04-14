@@ -1,5 +1,5 @@
 use winit::event::{ElementState, KeyboardInput, WindowEvent, VirtualKeyCode};
-use std::{f32::consts::FRAC_PI_2, time::Duration};
+use std::{f32::consts::FRAC_PI_2};
 use cgmath::{Angle, Matrix4, Point3, Rad, Vector3, EuclideanSpace, SquareMatrix, InnerSpace};
 use cgmath::num_traits::FloatConst;
 
