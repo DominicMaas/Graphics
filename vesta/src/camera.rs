@@ -26,12 +26,12 @@ pub struct Camera {
     pub yaw: Rad<f32>,
     pub pitch: Rad<f32>,
 
-    pub projection: Projection,
+    pub projection: Box<dyn Projection>,
     pub uniform_buffer: UniformBuffer<CameraUniform>,
 }
 
 impl Camera {
-    pub fn new(position: Vector3<f32>, projection: Projection, device: &wgpu::Device) -> Self {
+    pub fn new(position: Vector3<f32>, projection: impl Projection + 'static, device: &wgpu::Device) -> Self {
         // The uniform buffer
         let uniform_buffer = UniformBuffer::new(
             "Camera Uniform Buffer",
@@ -50,7 +50,7 @@ impl Camera {
             right: (0.0, 0.0, 0.0).into(),
             yaw: cgmath::Rad(-90.0 / 180.0 * f32::PI()), // Look left or right
             pitch: cgmath::Rad(0.0),                     // Look Up / Down
-            projection,
+            projection: Box::new(projection),
             uniform_buffer,
         }
     }

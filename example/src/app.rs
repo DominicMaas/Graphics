@@ -1,6 +1,4 @@
 use std::borrow::Cow;
-use cgmath::Vector3;
-use vesta::DrawMesh;
 use cgmath::num_traits::FloatConst;
 use winit::event::DeviceEvent;
 
@@ -42,7 +40,7 @@ impl vesta::VestaApp for App {
         // Setup the main camera
         let camera = vesta::Camera::new(
             (0.0, 0.0, 0.0).into(),
-            vesta::Projection::new(
+            vesta::PerspectiveProjection::new(
                 engine.renderer.swap_chain_desc.width,
                 engine.renderer.swap_chain_desc.height,
                 cgmath::Rad(70.0 / 180.0 * f32::PI()),
