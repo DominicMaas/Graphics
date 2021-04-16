@@ -25,6 +25,7 @@ impl vesta::VestaApp for App {
                         wgpu::ShaderStage::VERTEX,
                         &engine.renderer.device,
                     ),
+                    &vesta::Texture::create_bind_group_layout(&engine.renderer.device)
                 ],
                 push_constant_ranges: &[],
             });
@@ -64,6 +65,8 @@ impl vesta::VestaApp for App {
          // Update camera positions
          self.camera_controller.update_camera(&mut self.camera, dt);
          self.camera.update_uniforms(&engine.renderer.queue);
+         
+         self.cube.update(dt, &engine.renderer.queue);
     }
     
     fn render<'a>(&'a mut self, render_pass: &mut wgpu::RenderPass<'a>, _engine: &vesta::Engine) {        

@@ -1,9 +1,12 @@
-use cgmath::{Matrix3, Matrix4, Quaternion, Vector2, Vector3};
+use cgmath::{Deg, Matrix3, Matrix4, Quaternion, Vector2, Vector3};
 use vesta::DrawMesh;
+use cgmath::num_traits::FloatConst;
 
 pub struct Cube {
-    pub mesh: vesta::Mesh,
-    pub uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
+    mesh: vesta::Mesh,
+    uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
+    texture: vesta::Texture,
+    angle: f32
 }
 
 impl Cube {
@@ -16,16 +19,16 @@ impl Cube {
         let z = -5.0;
         let mut curr_index = 0;
         
-        // FRONT
+        // BACK
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 0.0 + z),
             Vector3::new(0.0, 0.0, -1.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 0.0 + z),
             Vector3::new(0.0, 0.0, -1.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 0.0 + z),
@@ -35,7 +38,7 @@ impl Cube {
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 0.0 + z),
             Vector3::new(0.0, 0.0, -1.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(0.0, 1.0),
         ));
 
         indices.push(curr_index + 0);
@@ -48,16 +51,16 @@ impl Cube {
 
         curr_index = curr_index + 4;
         
-        // BACK
+        // FRONT
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 1.0 + z),
             Vector3::new(0.0, 0.0, 1.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 1.0 + z),
             Vector3::new(0.0, 0.0, 1.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 1.0 + z),
@@ -67,7 +70,7 @@ impl Cube {
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 1.0 + z),
             Vector3::new(0.0, 0.0, 1.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(0.0, 1.0),
         ));
 
         indices.push(curr_index + 0);
@@ -84,12 +87,12 @@ impl Cube {
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 1.0 + z),
             Vector3::new(-1.0, 0.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 0.0 + z),
             Vector3::new(-1.0, 0.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 0.0 + z),
@@ -99,7 +102,7 @@ impl Cube {
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 1.0 + z),
             Vector3::new(-1.0, 0.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(0.0, 1.0),
         ));
 
         indices.push(curr_index + 0);
@@ -116,12 +119,12 @@ impl Cube {
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 0.0 + z),
             Vector3::new(1.0, 0.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 0.0 + z),
             Vector3::new(1.0, 0.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 1.0 + z),
@@ -131,7 +134,7 @@ impl Cube {
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 1.0 + z),
             Vector3::new(1.0, 0.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(0.0, 1.0),
         ));
 
         indices.push(curr_index + 0);
@@ -148,12 +151,12 @@ impl Cube {
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 0.0 + z),
             Vector3::new(0.0, -1.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 0.0 + z),
             Vector3::new(0.0, -1.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 1.0 + z),
@@ -163,7 +166,7 @@ impl Cube {
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 1.0 + z),
             Vector3::new(0.0, -1.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(0.0, 1.0),
         ));
 
         indices.push(curr_index + 0);
@@ -180,12 +183,12 @@ impl Cube {
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 1.0 + z),
             Vector3::new(0.0, 1.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 0.0 + z),
             Vector3::new(0.0, 1.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 0.0 + z),
@@ -195,7 +198,7 @@ impl Cube {
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 1.0 + z),
             Vector3::new(0.0, 1.0, 0.0),
-            Vector2::new(0.0, 0.0),
+            Vector2::new(0.0, 1.0),
         ));
 
         indices.push(curr_index + 0);
@@ -220,14 +223,39 @@ impl Cube {
             &renderer.device,
         );
         
+        let texture = renderer.create_texture_from_bytes(include_bytes!("square.png"), Some("square.png")).unwrap();
+        
         Self {
             mesh,
-            uniform_buffer
+            uniform_buffer,
+            texture,
+            angle: 0.0
         }
+    }
+    
+    pub fn update(&mut self, dt: f32, queue: &wgpu::Queue) {
+        self.angle += dt * 100.0;
+        if self.angle >= 360.0 {
+            self.angle = 0.0;
+        }
+        
+        
+                
+        let rotation = Matrix4::from_angle_z(Deg(self.angle));       
+        let model = Matrix4::from_translation(Vector3::new(0.0, 0.0, 0.0)) * Matrix4::from(rotation);
+        let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
+        
+        self.uniform_buffer.data.model = model;
+        self.uniform_buffer.data.normal = normal;
+        
+        self.uniform_buffer.write_buffer(&queue);
+        
+        print!("{}", self.angle);
     }
     
     pub fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         render_pass.set_bind_group(1, &self.uniform_buffer.bind_group, &[]);
+        render_pass.set_bind_group(2, self.texture.bind_group.as_ref().unwrap(), &[]);
         render_pass.draw_mesh(&self.mesh);
     }
 }

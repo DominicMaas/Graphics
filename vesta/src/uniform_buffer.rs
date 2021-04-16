@@ -22,6 +22,10 @@ where
 }
 
 impl<T: Copy + bytemuck::Pod + bytemuck::Zeroable> UniformBuffer<T> {
+    pub fn write_buffer(&self, queue: &wgpu::Queue) {
+        queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&[self.data]));
+    }
+    
     //noinspection RsBorrowChecker
     /// Crate a new uniform buffer to store data of type
     pub fn new(name: &str, visibility: wgpu::ShaderStage, data: T, device: &wgpu::Device) -> Self {
