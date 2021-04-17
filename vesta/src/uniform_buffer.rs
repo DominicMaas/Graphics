@@ -21,7 +21,16 @@ where
     pub bind_group: wgpu::BindGroup,
 }
 
+impl crate::Renderer {
+    /// Write the specified uniform buffer to the GPU
+    pub fn write_uniform_buffer<T: Copy + bytemuck::Pod + bytemuck::Zeroable>(&self, uniform_buffer: &UniformBuffer<T>) {
+        self.queue.write_buffer(&uniform_buffer.buffer, 0, bytemuck::cast_slice(&[uniform_buffer.data]));
+    }
+}
+
 impl<T: Copy + bytemuck::Pod + bytemuck::Zeroable> UniformBuffer<T> {
+    
+    #[deprecated(note = "Please use renderer.write_uniform_buffer() instead")]
     pub fn write_buffer(&self, queue: &wgpu::Queue) {
         queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&[self.data]));
     }

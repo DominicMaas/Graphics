@@ -4,15 +4,13 @@ version = "0.1.0"
 authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 winit = "0.24"
 wgpu = "0.7"
-anyhow = "1.0"
 image = "0.23"
 cgmath = "0.18"
 bytemuck = { version = "1.5", features = [ "derive" ] }
+anyhow = "1.0"
 
 # GUI
 imgui = "0.7"

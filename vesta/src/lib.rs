@@ -22,6 +22,14 @@ pub use uniform_buffer::*;
 pub use camera::*;
 pub use projections::*;
 
+// These are exposed in the vesta API, so allow dependents to access them
+pub extern crate winit;
+pub extern crate wgpu;
+pub extern crate image;
+pub extern crate cgmath;
+pub extern crate bytemuck;
+pub extern crate imgui;
+
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
     1.0, 0.0, 0.0, 0.0,

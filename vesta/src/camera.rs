@@ -65,14 +65,9 @@ impl Camera {
     }
 
     /// Update the uniforms for the camera, and write to the GPU
-    pub fn update_uniforms(&mut self, queue: &wgpu::Queue) {
+    pub fn update_uniforms(&mut self, renderer: &crate::Renderer) {
         self.uniform_buffer.data.view_proj = self.projection.calc_matrix() * self.calc_matrix();
-
-        queue.write_buffer(
-            &self.uniform_buffer.buffer,
-            0,
-            bytemuck::cast_slice(&[self.uniform_buffer.data]),
-        );
+        renderer.write_uniform_buffer(&self.uniform_buffer);
     }
 }
 

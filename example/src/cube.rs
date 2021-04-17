@@ -1,6 +1,5 @@
-use cgmath::{Deg, Matrix3, Matrix4, Quaternion, Vector2, Vector3};
+use vesta::cgmath::{Deg, Matrix3, Matrix4, Quaternion, Vector2, Vector3};
 use vesta::DrawMesh;
-use cgmath::num_traits::FloatConst;
 
 pub struct Cube {
     mesh: vesta::Mesh,
@@ -218,7 +217,7 @@ impl Cube {
         let uniform_data = vesta::ModelUniform { model, normal };
         let uniform_buffer = vesta::UniformBuffer::new(
             "Cube Uniform Buffer",
-            wgpu::ShaderStage::VERTEX,
+            vesta::wgpu::ShaderStage::VERTEX,
             uniform_data,
             &renderer.device,
         );
@@ -233,13 +232,11 @@ impl Cube {
         }
     }
     
-    pub fn update(&mut self, dt: f32, queue: &wgpu::Queue) {
+    pub fn update(&mut self, dt: f32, renderer: &vesta::Renderer) {
         self.angle += dt * 100.0;
         if self.angle >= 360.0 {
             self.angle = 0.0;
         }
-        
-        
                 
         let rotation = Matrix4::from_angle_z(Deg(self.angle));       
         let model = Matrix4::from_translation(Vector3::new(0.0, 0.0, 0.0)) * Matrix4::from(rotation);
@@ -247,13 +244,12 @@ impl Cube {
         
         self.uniform_buffer.data.model = model;
         self.uniform_buffer.data.normal = normal;
-        
-        self.uniform_buffer.write_buffer(&queue);
+        renderer.write_uniform_buffer(&self.uniform_buffer);
         
         print!("{}", self.angle);
     }
     
-    pub fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
+    pub fn draw<'a>(&'a self, render_pass: &mut vesta::wgpu::RenderPass<'a>) {
         render_pass.set_bind_group(1, &self.uniform_buffer.bind_group, &[]);
         render_pass.set_bind_group(2, self.texture.bind_group.as_ref().unwrap(), &[]);
         render_pass.draw_mesh(&self.mesh);
