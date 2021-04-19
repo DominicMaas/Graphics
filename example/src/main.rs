@@ -3,6 +3,7 @@ mod cube;
 
 use app::*;
 use futures::executor::block_on;
+use vesta::winit::dpi::PhysicalSize;
 
 fn main() {
     // Get log events
@@ -10,7 +11,8 @@ fn main() {
     
     // Config for the engine
     let config = vesta::Config {
-        window_title: "Vesta Example".to_string()
+        window_title: "Vesta Example".to_string(),
+        window_size: PhysicalSize::new(1920, 1080),
     };
     
     // Unable to run async in main, so block the async,

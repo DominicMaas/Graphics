@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use winit::{event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder}};
+use winit::{event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{CursorIcon, UserAttentionType, Window, WindowBuilder}};
 use crate::{VestaApp, config::Config, renderer::Renderer, texture};
 
 struct GUI {
@@ -10,8 +10,14 @@ struct GUI {
 }
 
 pub struct Engine {
+    window: Window,
     pub renderer: Renderer,
-    pub window_size: winit::dpi::PhysicalSize<u32>
+    pub window_size: winit::dpi::PhysicalSize<u32>,
+    cursor_captured: bool,    
+    // Timing
+    delta_time: f32,
+    current_time: Instant,
+    accumulator: f32
 }
 
 impl Engine {
@@ -22,6 +28,7 @@ impl Engine {
         // Build the window with specified config
         let window = WindowBuilder::new()
             .with_title(config.window_title)
+            .with_inner_size(config.window_size)
             .build(&event_loop)
             .unwrap();
         
@@ -102,108 +109,110 @@ impl Engine {
         // Renderer information, this will be sent to the app implementation so it can access resources
         let renderer = Renderer { surface, device, queue, swap_chain_desc, swap_chain, depth_texture };
         let mut gui = GUI { gui_context, gui_platform, gui_renderer };
-        let mut engine = Engine { renderer, window_size };
+        let mut engine = Engine { 
+            window, 
+            renderer, 
+            window_size, 
+            cursor_captured: false ,
+            delta_time: 0.01,
+            current_time: Instant::now(),
+            accumulator: 0.0
+        };
         
         // First initllize all the apps resources (shaders, pipelines etc.)
-        let mut app = V::init(&engine);
-                
-        // Update timings
-        //let mut t: f64 = 0.0;
-        const DT: f32 = 0.01;
-                
-        let mut current_time = Instant::now();
-        let mut accumulator: f32 = 0.0;
+        let mut app = V::init(&mut engine);
                 
         event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Poll;
             
             // Handle gui events
             let io = gui.gui_context.io_mut();
-            gui.gui_platform.handle_event(io, &window, &event);
+            gui.gui_platform.handle_event(io, &engine.window, &event);
             
-            match event {
-                Event::RedrawRequested(_) => {
-                    // Timing logic
-                    let new_time = Instant::now();
-                    let frame_time = new_time - current_time;
-                    
-                    current_time = new_time;
-                    
-                    accumulator += frame_time.as_secs_f32();
-                    
-                    while accumulator >= DT {
-                        gui.gui_context.io_mut().update_delta_time(std::time::Duration::from_secs_f32(DT));
-                        app.update(DT, &engine);
-                        
-                        accumulator -= DT;
-                        //t += DT;
-                    }
-                    
-                    // Perform the actual rendering
-                    match Self::render(&window, &engine, &mut gui, &mut app) {
-                        Ok(_) => {}
-                        // Recreate the swap_chain if lost
-                        Err(wgpu::SwapChainError::Lost) => {
-                            let size = engine.window_size;
-                            Self::resize(&mut engine, &mut app, size)
-                        },
-                        // The system is out of memory, we should probably quit
-                        Err(wgpu::SwapChainError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                        // All other errors (Outdated, Timeout) should be resolved by the next frame
-                        Err(e) => eprintln!("{:?}", e),
-                    }
-                }
-                Event::MainEventsCleared => {
-                    window.request_redraw();
-                }
-                Event::DeviceEvent { ref event, .. } => {
-                    app.device_input(event, &engine);
-                }
-                Event::WindowEvent { ref event, .. } => {
-                    if !app.input(event, &engine) {
-                        match event {
-                            WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                            WindowEvent::Resized(physical_size) => {
-                                Self::resize(&mut engine, &mut app, *physical_size);
-                            }
-                            WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                                Self::resize(&mut engine, &mut app, **new_inner_size);
-                            }
-                            _ => {}
-                        }
-                    }
-                }
-                _ => {}
-            }
+            engine.handle_events(event, control_flow, &mut app, &mut gui);
         });
     }
     
-    fn resize<V: VestaApp>(engine: &mut Engine, app: &mut V, new_size: winit::dpi::PhysicalSize<u32>) {
-        engine.window_size = new_size;
-        
-        engine.renderer.swap_chain_desc.width = new_size.width;
-        engine.renderer.swap_chain_desc.height = new_size.height;
-        
-        engine.renderer.swap_chain = engine.renderer.device.create_swap_chain(&engine.renderer.surface, &engine.renderer.swap_chain_desc);
-        
-        engine.renderer.depth_texture = engine.renderer.create_depth_texture(Some("Depth Texture")).unwrap();
-        
-        app.resize(new_size, engine);
+    fn handle_events<V: VestaApp>(&mut self, event: Event<()>, control_flow: &mut ControlFlow, app: &mut V, gui: &mut GUI) {
+        match event {
+            Event::RedrawRequested(_) => {
+                // Timing logic
+                let new_time = Instant::now();
+                let frame_time = new_time - self.current_time;
+                
+                self.current_time = new_time;       
+                self.accumulator += frame_time.as_secs_f32();
+                
+                while self.accumulator >= self.delta_time {
+                    gui.gui_context.io_mut().update_delta_time(std::time::Duration::from_secs_f32(self.delta_time));
+                    app.update(self.delta_time, self);
+                    
+                    self.accumulator -= self.delta_time;
+                }
+                
+                // Perform the actual rendering
+                match self.render(gui, app) {
+                    Ok(_) => {}
+                    // Recreate the swap_chain if lost
+                    Err(wgpu::SwapChainError::Lost) => {
+                        self.resize(app, self.window_size);
+                    },
+                    // The system is out of memory, we should probably quit
+                    Err(wgpu::SwapChainError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+                    // All other errors (Outdated, Timeout) should be resolved by the next frame
+                    Err(e) => eprintln!("{:?}", e),
+                }
+            }
+            Event::MainEventsCleared => {
+                self.window.request_redraw();
+            }
+            Event::DeviceEvent { ref event, .. } => {
+                app.device_input(event, self);
+            }
+            Event::WindowEvent { ref event, .. } => {
+                if !app.input(event, self) {
+                    match event {
+                        WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                        WindowEvent::Resized(physical_size) => {
+                            self.resize(app, *physical_size);
+                        }
+                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                            self.resize(app, **new_inner_size);
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
     }
     
-    fn render<V: VestaApp>(window: &Window, engine: &Engine, gui: &mut GUI, app: &mut V) -> Result<(), wgpu::SwapChainError> {
+    fn resize<V: VestaApp>(&mut self, app: &mut V, new_size: winit::dpi::PhysicalSize<u32>) {
+        self.window_size = new_size;
+        
+        self.renderer.swap_chain_desc.width = new_size.width;
+        self.renderer.swap_chain_desc.height = new_size.height;
+        
+        self.renderer.swap_chain = self.renderer.device.create_swap_chain(&self.renderer.surface, &self.renderer.swap_chain_desc);
+        
+        self.renderer.depth_texture = self.renderer.create_depth_texture(Some("Depth Texture")).unwrap();
+        
+        app.resize(new_size, self);
+    }
+    
+    fn render<V: VestaApp>(&self, gui: &mut GUI, app: &mut V) -> Result<(), wgpu::SwapChainError> {
         // Prepare the UI
         gui.gui_platform
-            .prepare_frame(gui.gui_context.io_mut(), &window)
+            .prepare_frame(gui.gui_context.io_mut(), &self.window)
             .expect("Failed to prepare frame!");
         
         // Get a frame
-        let frame = engine.renderer.swap_chain.get_current_frame()?.output;
-        let mut encoder = engine.renderer.device.create_command_encoder(&Default::default());
+        let frame = self.renderer.swap_chain.get_current_frame()?.output;
+        let mut encoder = self.renderer.device.create_command_encoder(&Default::default());
         
         let ui = gui.gui_context.frame();
         {
-            app.render_ui(&ui, engine);
+            app.render_ui(&ui, &self);
         }
         
         // ---- MAIN ---- //
@@ -224,7 +233,7 @@ impl Engine {
                     },
                 }],
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachmentDescriptor {
-                    attachment: &engine.renderer.depth_texture.view,
+                    attachment: &self.renderer.depth_texture.view,
                     depth_ops: Some(wgpu::Operations {
                         load: wgpu::LoadOp::Clear(1.0),
                         store: true,
@@ -233,7 +242,7 @@ impl Engine {
                 }),
             });
             
-            app.render(&mut render_pass, engine)
+            app.render(&mut render_pass, &self)
         }
         
         // ---- UI ---- //
@@ -252,14 +261,30 @@ impl Engine {
             });
 
             // Render the UI
-            gui.gui_platform.prepare_render(&ui, &window);
+            gui.gui_platform.prepare_render(&ui, &self.window);
             gui.gui_renderer
-                .render(ui.render(), &engine.renderer.queue, &engine.renderer.device, &mut ui_pass)
+                .render(ui.render(), &self.renderer.queue, &self.renderer.device, &mut ui_pass)
                 .expect("Failed to render UI!");
         }
         
         // Finished with the frame
-        engine.renderer.queue.submit(std::iter::once(encoder.finish()));  
+        self.renderer.queue.submit(std::iter::once(encoder.finish()));  
         Ok(())
     }
+    
+    /// Sets if the current cursor is captured
+    pub fn set_cursor_captured(&mut self, captured: bool) {
+        self.cursor_captured = captured;
+        
+        if self.cursor_captured {
+            self.window.set_cursor_grab(true).ok();      
+            self.window.set_cursor_visible(false);      
+        } else {
+            
+            self.window.set_cursor_grab(false).ok();
+            self.window.set_cursor_visible(true);
+        }
+    }
+    
+    pub fn is_cursor_captured(&self) -> bool { self.cursor_captured }
 }

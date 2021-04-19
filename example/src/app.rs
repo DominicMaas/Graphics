@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use vesta::cgmath::num_traits::FloatConst;
+use vesta::{cgmath::num_traits::FloatConst, winit::event::{KeyboardInput, VirtualKeyCode}};
 use vesta::winit::{dpi::PhysicalSize, event::{DeviceEvent, WindowEvent}};
 
 use crate::cube::Cube;
@@ -12,7 +12,7 @@ pub struct App {
 }
 
 impl vesta::VestaApp for App {
-    fn init(engine: &vesta::Engine) -> Self {
+    fn init(engine: &mut vesta::Engine) -> Self {
         let render_pipeline_layout =
             engine.renderer.device.create_pipeline_layout(&vesta::wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
@@ -53,6 +53,8 @@ impl vesta::VestaApp for App {
 
         let camera_controller = vesta::CameraController::new(32.0, 0.2);
         
+        engine.set_cursor_captured(true);
+        
         Self {
             render_pipeline,
             cube,
@@ -80,14 +82,34 @@ impl vesta::VestaApp for App {
          self.camera.projection.resize(size.width, size.height);
     }
     
-    fn input(&mut self, event: &WindowEvent, _engine: &vesta::Engine) -> bool {
-        self.camera_controller.process_keyboard(event)
+    fn input(&mut self, event: &WindowEvent, engine: &mut vesta::Engine) -> bool {
+        if !self.camera_controller.process_keyboard(event) {
+            match event {
+                WindowEvent::KeyboardInput {
+                    input: KeyboardInput { virtual_keycode: Some(keycode), .. }, ..
+                } => {
+                    match keycode {
+                        VirtualKeyCode::Escape => {
+                            engine.set_cursor_captured(false);
+                            true
+                        }
+                        _ => false,
+                    }
+                }
+                _ => false,
+            }
+        } else {
+            false
+        }
     }
     
-    fn device_input(&mut self, event: &DeviceEvent, _engine: &vesta::Engine) -> bool {
+    fn device_input(&mut self, event: &DeviceEvent, engine: &mut vesta::Engine) -> bool {
         match event {
             DeviceEvent::MouseMotion { delta } => {
-                self.camera_controller.process_mouse(delta.0, delta.1);
+                if engine.is_cursor_captured() {
+                    self.camera_controller.process_mouse(delta.0, delta.1);
+                }
+                
                 true
             }
             _ => false,
