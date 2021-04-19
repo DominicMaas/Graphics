@@ -6,7 +6,7 @@ pub trait Projection {
     /// When the window resizes, this updates the internal
     /// aspect ratio to ensure everything still looks correct
     fn resize(&mut self, width: u32, height: u32);
-    
+
     /// Calculate the projection matrix for the window
     fn calc_matrix(&self) -> Matrix4<f32>;
 }
@@ -29,11 +29,11 @@ impl PerspectiveProjection {
     }
 }
 
-impl Projection for PerspectiveProjection {    
+impl Projection for PerspectiveProjection {
     fn calc_matrix(&self) -> Matrix4<f32> {
         OPENGL_TO_WGPU_MATRIX * cgmath::perspective(self.fov, self.aspect, self.z_near, self.z_far)
     }
-    
+
     fn resize(&mut self, width: u32, height: u32) {
         self.aspect = width as f32 / height as f32;
     }
@@ -56,10 +56,18 @@ impl OrthographicProjection {
 }
 
 impl Projection for OrthographicProjection {
-    fn calc_matrix(&self) -> Matrix4<f32> {        
-        OPENGL_TO_WGPU_MATRIX * cgmath::ortho(-self.aspect, self.aspect, -1.0, 1.0, self.z_near, self.z_far)
+    fn calc_matrix(&self) -> Matrix4<f32> {
+        OPENGL_TO_WGPU_MATRIX
+            * cgmath::ortho(
+                -self.aspect,
+                self.aspect,
+                -1.0,
+                1.0,
+                self.z_near,
+                self.z_far,
+            )
     }
-    
+
     fn resize(&mut self, width: u32, height: u32) {
         self.aspect = width as f32 / height as f32;
     }

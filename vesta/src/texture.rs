@@ -15,11 +15,15 @@ impl Renderer {
     pub fn create_texture_from_bytes(&self, bytes: &[u8], label: Option<&str>) -> Result<Texture> {
         Texture::from_bytes(&self.device, &self.queue, &bytes, label)
     }
-    
-    pub fn create_texture_from_image(&self, image: &image::DynamicImage, label: Option<&str>) -> Result<Texture> {
+
+    pub fn create_texture_from_image(
+        &self,
+        image: &image::DynamicImage,
+        label: Option<&str>,
+    ) -> Result<Texture> {
         Texture::from_image(&self.device, &self.queue, &image, label)
     }
-    
+
     /// Create a depth texture. This is a special type of texture that can be used for the
     /// depth buffer.
     pub fn create_depth_texture(&self, label: Option<&str>) -> Result<Texture> {

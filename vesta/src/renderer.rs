@@ -4,5 +4,5 @@ pub struct Renderer {
     pub queue: wgpu::Queue,
     pub swap_chain_desc: wgpu::SwapChainDescriptor,
     pub swap_chain: wgpu::SwapChain,
-    pub depth_texture: crate::texture::Texture
+    pub depth_texture: crate::texture::Texture,
 }

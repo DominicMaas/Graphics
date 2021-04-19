@@ -1,7 +1,7 @@
-use winit::event::{ElementState, KeyboardInput, WindowEvent, VirtualKeyCode};
-use std::{f32::consts::FRAC_PI_2};
-use cgmath::{Angle, Matrix4, Point3, Rad, Vector3, EuclideanSpace, SquareMatrix, InnerSpace};
 use cgmath::num_traits::FloatConst;
+use cgmath::{Angle, EuclideanSpace, InnerSpace, Matrix4, Point3, Rad, SquareMatrix, Vector3};
+use std::f32::consts::FRAC_PI_2;
+use winit::event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent};
 
 use crate::{Projection, UniformBuffer};
 
@@ -19,7 +19,7 @@ pub struct Camera {
     pub position: Vector3<f32>,
     pub front: Vector3<f32>,
     pub up: Vector3<f32>,
-    
+
     pub world_up: Vector3<f32>,
     pub right: Vector3<f32>,
 
@@ -31,7 +31,11 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(position: Vector3<f32>, projection: impl Projection + 'static, device: &wgpu::Device) -> Self {
+    pub fn new(
+        position: Vector3<f32>,
+        projection: impl Projection + 'static,
+        device: &wgpu::Device,
+    ) -> Self {
         // The uniform buffer
         let uniform_buffer = UniformBuffer::new(
             "Camera Uniform Buffer",
@@ -51,7 +55,7 @@ impl Camera {
             yaw: cgmath::Rad(-90.0 / 180.0 * f32::PI()), // Look left or right
             pitch: cgmath::Rad(0.0),                     // Look Up / Down
             projection: Box::new(projection),
-            uniform_buffer
+            uniform_buffer,
         }
     }
 

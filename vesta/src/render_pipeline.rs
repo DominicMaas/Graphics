@@ -67,7 +67,7 @@ impl<'a> RenderPipelineBuilder<'a> {
         if self.shader_source.is_none() {
             bail!("No shader source supplied!");
         }
-        
+
         // Create the module
         let shader_module = device.create_shader_module(
             &self

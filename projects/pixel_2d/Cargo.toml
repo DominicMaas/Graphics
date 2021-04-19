@@ -4,6 +4,19 @@ version = "0.1.0"
 authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+vesta = { path = "../../vesta" }
+futures = "0.3"
+env_logger = "0.8"
+log = "0.4"
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.2"
+glob = "0.3"
+cargo-wgsl = "0.0.3"
+
+[build-dependencies.naga]
+git = "https://github.com/gfx-rs/naga"
+tag = "gfx-19"
+features = ["wgsl-in", "spv-out"]
