@@ -10,6 +10,8 @@
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/core-foundation-sys-6de894eb60fa0342/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/crc32fast-1c692914e9e31a5b/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/crossbeam-utils-bb3c037575071f96/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/getrandom-abe9086de31da04a/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/getrandom-bbf0a9b72640ec58/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/imgui-sys-b186dacec4058906/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/indexmap-c391abe1fdeecd41/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/libc-6fc1dc11125ea342/out" isTestSource="false" />
@@ -23,6 +25,7 @@
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/num-traits-b89d0ed1bd1a2e79/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/objc_exception-8c468d0dcb239a8f/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/pixel_2d-393f6aa390e17546/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/pixel_2d-cac0961e7bfbb149/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/proc-macro-hack-05b566b760cfaaed/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/proc-macro-nested-f1606788ea6aa976/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/proc-macro2-7bde3dc3aa29a2bf/out" isTestSource="false" />

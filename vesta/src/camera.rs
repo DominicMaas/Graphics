@@ -48,7 +48,7 @@ impl Camera {
 
         Self {
             position,
-            front: (0.0, 0.0, 0.0).into(), // Where the camera is looking (takes into account rotation)
+            front: (0.0, 0.0, 1.0).into(), // Where the camera is looking (takes into account rotation)
             up: (0.0, 0.0, 0.0).into(),
             world_up: (0.0, 1.0, 0.0).into(),
             right: (0.0, 0.0, 0.0).into(),

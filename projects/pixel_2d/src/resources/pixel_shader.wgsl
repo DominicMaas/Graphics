@@ -6,7 +6,7 @@ struct VertexInput {
 };
 
 struct VertexOutput {
-    [[location(0)]] color: vec3<f32>;
+    [[location(0)]] tex_coord: vec2<f32>;
     [[builtin(position)]] position: vec4<f32>;
 };
 
@@ -34,15 +34,25 @@ var u_model: Model;
 fn vs_main(in: VertexInput) -> VertexOutput {
 
     var out: VertexOutput;
-    out.color = in.color;
-    out.position = u_camera.view_proj * u_model.model * vec4<f32>(in.position, 1.0);
+    out.tex_coord = in.tex_coord;
+    out.position = u_camera.view_proj * vec4<f32>(in.position, 1.0);
     return out;
 }
 
 // ---------------------------------------------------------------- //
 
+
+[[group(2), binding(0)]]
+var u_diffuse_texture: texture_2d<f32>;
+
+[[group(2), binding(1)]]
+var u_sampler: sampler;
+
 // Fragment Shader
 [[stage(fragment)]]
 fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-    return vec4<f32>(in.color, 1.0);
+    const object_color = textureSample(u_diffuse_texture, u_sampler, in.tex_coord);
+
+    //return vec4<f32>(in.color, 1.0);
+    return object_color;
 }
