@@ -88,7 +88,7 @@ impl<'a> RenderPipelineBuilder<'a> {
             primitive: wgpu::PrimitiveState {
                 topology: self.primitive_topology,
                 strip_index_format: None,
-                front_face: wgpu::FrontFace::Cw,
+                front_face: wgpu::FrontFace::Ccw,
                 cull_mode: wgpu::CullMode::Back,
                 polygon_mode: wgpu::PolygonMode::Fill,
             },
