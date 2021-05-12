@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use vesta::{cgmath::num_traits::FloatConst, winit::event::{KeyboardInput, VirtualKeyCode}};
 use vesta::winit::{dpi::PhysicalSize, event::{DeviceEvent, WindowEvent}};
 
@@ -31,7 +30,7 @@ impl vesta::VestaApp for App {
             });
                     
         let render_pipeline = vesta::RenderPipelineBuilder::new(engine.renderer.swap_chain_desc.format, "Render Pipeline")
-            .with_shader_source(vesta::wgpu::ShaderSource::SpirV(Cow::Borrowed(vesta::ShaderLoader::load_wgsl(include_str!("shader.wgsl")).unwrap().as_slice())))
+            .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()))
             .with_layout(&render_pipeline_layout)
             .build(&engine.renderer.device)
             .unwrap();
