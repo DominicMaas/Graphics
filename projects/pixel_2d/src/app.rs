@@ -48,7 +48,7 @@ impl vesta::VestaApp for App {
 
         // Camera which will let us see around the world
         let camera = vesta::Camera::new(
-            (0.0, 0.0, 1.0).into(),
+            (0.0, 0.0, 0.0).into(),
             vesta::OrthographicProjection::new(
                 engine.window_size.width,
                 engine.window_size.height,

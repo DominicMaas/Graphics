@@ -1,12 +1,12 @@
 [package]
 name = "vesta"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2018"
 
 [dependencies]
 winit = "0.24"
-wgpu = "0.7"
+wgpu = "0.8"
 image = "0.23"
 cgmath = "0.18"
 bytemuck = { version = "1.5", features = [ "derive" ] }
@@ -14,7 +14,7 @@ anyhow = "1.0"
 
 # GUI
 imgui = "0.7"
-imgui-wgpu = "0.14"
+imgui-wgpu = "0.15"
 imgui-winit-support = "0.7"
 
 [dependencies.naga]

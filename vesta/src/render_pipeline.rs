@@ -89,17 +89,20 @@ impl<'a> RenderPipelineBuilder<'a> {
                 topology: self.primitive_topology,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: wgpu::CullMode::Back,
+                cull_mode: Some(wgpu::Face::Back),
+                // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
+                // Setting this to true requires Features::DEPTH_CLAMPING
+                clamp_depth: false,
+                // Requires Features::CONSERVATIVE_RASTERIZATION
+                conservative: false,
             },
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: crate::texture::Texture::DEPTH_FORMAT,
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
-                // Setting this to true requires Features::DEPTH_CLAMPING
-                clamp_depth: false,
+                bias: wgpu::DepthBiasState::default(),      
             }),
             multisample: wgpu::MultisampleState {
                 count: 1,
@@ -111,8 +114,10 @@ impl<'a> RenderPipelineBuilder<'a> {
                 entry_point: self.fragment_shader_entry,
                 targets: &[wgpu::ColorTargetState {
                     format: self.texture_format,
-                    alpha_blend: wgpu::BlendState::REPLACE,
-                    color_blend: wgpu::BlendState::REPLACE,
+                    blend: Some(wgpu::BlendState {
+                        color: wgpu::BlendComponent::REPLACE,
+                        alpha: wgpu::BlendComponent::REPLACE,
+                    }),
                     write_mask: wgpu::ColorWrite::ALL,
                 }],
             }),
