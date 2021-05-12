@@ -31,11 +31,17 @@ impl<'a> RenderPipelineBuilder<'a> {
         self
     }
 
-    pub fn with_shader_source(&mut self, source: wgpu::ShaderSource<'a>) -> &mut Self {
+    pub fn with_shader_source(&mut self, source: wgpu::ShaderSource<'a>, validate: bool) -> &mut Self {
+        // Determine if we should validate the shaders
+        let mut flags = wgpu::ShaderFlags::default();
+        if validate {
+            flags = wgpu::ShaderFlags::VALIDATION;
+        }
+        
         self.shader_source = Some(wgpu::ShaderModuleDescriptor {
             label: None,
             source,
-            flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION,
+            flags,
         });
         self
     }

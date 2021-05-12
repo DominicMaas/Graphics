@@ -29,6 +29,18 @@
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/spirv_cross-3a12aa94566978ef/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/syn-294062d5e5c775f1/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/wgpu-core-06f63256fb8ed2bf/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/crossbeam-utils-db66c944d888af15/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/futures-channel-68b66b605908fd9a/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/futures-core-7c13bb9b824281b9/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/futures-macro-4826ab623ec15067/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/futures-task-e036f3b9b85a91aa/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/futures-util-abf39aa3f56325c2/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/imgui-sys-e8599af6b8792a63/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/libc-4fc800dbba4643c8/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/memchr-62e37417c1c22d84/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/objc_exception-3d9b9e9f4b22ac13/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/syn-d4f8007fa1c8865c/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/wgpu-core-fca9f39741ba888a/out" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
