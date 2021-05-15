@@ -6,10 +6,10 @@ struct VertexInput {
 };
 
 struct VertexOutput {
+    [[builtin(position)]] position: vec4<f32>;
     [[location(0)]] tex_coord: vec2<f32>;
     [[location(1)]] normal: vec3<f32>;
-    [[location(2)]] vertex_position: vec3<f32>;
-    [[builtin(position)]] position: vec4<f32>;
+    [[location(2)]] vertex_position: vec3<f32>;  
 };
 
 // Data structures 
@@ -26,10 +26,10 @@ struct Model {
 
 // Uniform bindings
 [[group(0), binding(0)]]
-var u_camera: Camera;
+var<uniform> u_camera: Camera;
 
 [[group(1), binding(0)]]
-var u_model: Model;
+var<uniform> u_model: Model;
 
 // Vertex Shader
 [[stage(vertex)]]
