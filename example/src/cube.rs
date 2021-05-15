@@ -245,8 +245,6 @@ impl Cube {
         self.uniform_buffer.data.model = model;
         self.uniform_buffer.data.normal = normal;
         renderer.write_uniform_buffer(&self.uniform_buffer);
-        
-        print!("{}", self.angle);
     }
     
     pub fn draw<'a>(&'a self, render_pass: &mut vesta::wgpu::RenderPass<'a>) {

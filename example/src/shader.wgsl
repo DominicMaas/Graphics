@@ -52,9 +52,5 @@ var u_sampler: sampler;
 // Fragment Shader
 [[stage(fragment)]]
 fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-    const object_color = textureSample(u_diffuse_texture, u_sampler, in.tex_coord);
-    
-    //return vec4<f32>(in.color, 1.0);
-    //return vec4<f32>(0.3, 0.2, 0.1, 1.0);
-    return object_color;
+    return textureSample(u_diffuse_texture, u_sampler, in.tex_coord);
 }
