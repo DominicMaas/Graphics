@@ -145,17 +145,15 @@ impl Chunk {
     }
 
     pub fn rand_noise(&mut self) {
-
-
-       // let noise = OpenSimplex::new().set_seed(s);
-       // println!("S:{}", noise.seed());
+        // let noise = OpenSimplex::new().set_seed(s);
+        // println!("S:{}", noise.seed());
 
         for x in 0..CHUNK_SIZE {
             for y in 0..CHUNK_SIZE {
                 let s = self.rng.gen_range(0..100);
                 let mut p = self.get_pixel(x, y);
 
-               // let n = noise.get([x as f64 / 256.0, y as f64 / 256.0]);
+                // let n = noise.get([x as f64 / 256.0, y as f64 / 256.0]);
                 if s > 50 {
                     p.color.r = 255;
                     p.color.g = 0;

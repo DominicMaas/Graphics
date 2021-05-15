@@ -1,7 +1,7 @@
+mod app;
 mod c_body;
 mod marching_cubes;
 mod utils;
-mod app;
 
 use app::App;
 use futures::executor::block_on;
@@ -9,13 +9,13 @@ use futures::executor::block_on;
 fn main() {
     // Get log events
     env_logger::init();
-    
+
     // Config for the engine
     let config = vesta::Config {
         window_title: "Eris".to_string(),
         window_size: (1920, 1080).into(),
     };
-    
+
     // Unable to run async in main, so block the async,
     // create for App, and pass in the config
     block_on(vesta::Engine::run::<App>(config));

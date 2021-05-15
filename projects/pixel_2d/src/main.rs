@@ -3,8 +3,8 @@ use futures::executor::block_on;
 use vesta::winit::dpi::PhysicalSize;
 
 mod app;
-mod world;
 mod chunk;
+mod world;
 
 fn main() {
     // Get log events

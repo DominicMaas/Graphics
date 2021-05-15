@@ -1,8 +1,8 @@
 use crate::world::World;
 use vesta::wgpu::RenderPass;
-use vesta::Engine;
 use vesta::winit::dpi::PhysicalSize;
-use vesta::winit::event::{DeviceEvent, VirtualKeyCode, WindowEvent, KeyboardInput};
+use vesta::winit::event::{DeviceEvent, KeyboardInput, VirtualKeyCode, WindowEvent};
+use vesta::Engine;
 
 pub struct App {
     pixel_pipeline: vesta::wgpu::RenderPipeline,
@@ -39,7 +39,9 @@ impl vesta::VestaApp for App {
             engine.renderer.swap_chain_desc.format,
             "Main Pipeline",
         )
-        .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(include_str!("resources/pixel_shader.wgsl").into()))
+        .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
+            include_str!("resources/pixel_shader.wgsl").into(),
+        ))
         .with_layout(&render_pipeline_layout)
         .with_cull_mode(None) // TODO: Fix rendering and remove this
         .build(&engine.renderer.device)
@@ -89,17 +91,20 @@ impl vesta::VestaApp for App {
         if !self.camera_controller.process_keyboard(event) {
             match event {
                 WindowEvent::KeyboardInput {
-                    input: KeyboardInput { virtual_keycode: Some(keycode), .. }, ..
-                } => {
-                    match keycode {
-                        VirtualKeyCode::R => {
-                            self.world.rebuild(&engine.renderer);
-                            true
-                        }
-                        _ => false,
+                    input:
+                        KeyboardInput {
+                            virtual_keycode: Some(keycode),
+                            ..
+                        },
+                    ..
+                } => match keycode {
+                    VirtualKeyCode::R => {
+                        self.world.rebuild(&engine.renderer);
+                        true
                     }
-                }
-                _ => false
+                    _ => false,
+                },
+                _ => false,
             }
         } else {
             false

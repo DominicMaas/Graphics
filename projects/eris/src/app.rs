@@ -1,57 +1,70 @@
 use std::time::Duration;
 
 use crate::{c_body::CBody, utils::LightUniform};
-use vesta::{DrawMesh, cgmath::{InnerSpace, Vector3, num_traits::FloatConst}};
+use vesta::{
+    cgmath::{num_traits::FloatConst, InnerSpace, Vector3},
+    DrawMesh,
+};
 
 pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
     c_body_pipeline: vesta::wgpu::RenderPipeline,
     camera: vesta::Camera,
     camera_controller: vesta::CameraController,
-    bodies: Vec<CBody>, 
+    bodies: Vec<CBody>,
     lights_uniform: vesta::UniformBuffer<LightUniform>,
 }
 
 impl vesta::VestaApp for App {
     fn init(engine: &mut vesta::Engine) -> Self {
-        
         // Pipeline layout
         let render_pipeline_layout =
-            engine.renderer.device.create_pipeline_layout(&vesta::wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[
-                    &vesta::Texture::create_bind_group_layout(&engine.renderer.device),
-                    &vesta::UniformBufferUtils::create_bind_group_layout(
-                        vesta::wgpu::ShaderStage::VERTEX,
-                        &engine.renderer.device,
-                    ),
-                    &vesta::UniformBufferUtils::create_bind_group_layout(
-                        vesta::wgpu::ShaderStage::VERTEX,
-                        &engine.renderer.device,
-                    ),
-                    &vesta::UniformBufferUtils::create_bind_group_layout(
-                        vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
-                        &engine.renderer.device,
-                    ),
-                ],
-                push_constant_ranges: &[],
-            });
-            
-        let render_pipeline =
-            vesta::RenderPipelineBuilder::new(engine.renderer.swap_chain_desc.format, "Main Pipeline")
-                .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(include_str!("shaders/main.wgsl").into()))
-                .with_layout(&render_pipeline_layout)
-                .build(&engine.renderer.device)
-                .unwrap();
-                
-        let c_body_pipeline =
-            vesta::RenderPipelineBuilder::new(engine.renderer.swap_chain_desc.format, "C Body Pipeline")
-                .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(include_str!("shaders/c_body.wgsl").into()))        
-                .with_layout(&render_pipeline_layout)
-                //.with_topology(wgpu::PrimitiveTopology::LineList)
-                .build(&engine.renderer.device)
-                .unwrap();
-        
+            engine
+                .renderer
+                .device
+                .create_pipeline_layout(&vesta::wgpu::PipelineLayoutDescriptor {
+                    label: Some("Render Pipeline Layout"),
+                    bind_group_layouts: &[
+                        &vesta::Texture::create_bind_group_layout(&engine.renderer.device),
+                        &vesta::UniformBufferUtils::create_bind_group_layout(
+                            vesta::wgpu::ShaderStage::VERTEX,
+                            &engine.renderer.device,
+                        ),
+                        &vesta::UniformBufferUtils::create_bind_group_layout(
+                            vesta::wgpu::ShaderStage::VERTEX,
+                            &engine.renderer.device,
+                        ),
+                        &vesta::UniformBufferUtils::create_bind_group_layout(
+                            vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
+                            &engine.renderer.device,
+                        ),
+                    ],
+                    push_constant_ranges: &[],
+                });
+
+        let render_pipeline = vesta::RenderPipelineBuilder::new(
+            engine.renderer.swap_chain_desc.format,
+            "Main Pipeline",
+        )
+        .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
+            include_str!("shaders/main.wgsl").into(),
+        ))
+        .with_layout(&render_pipeline_layout)
+        .build(&engine.renderer.device)
+        .unwrap();
+
+        let c_body_pipeline = vesta::RenderPipelineBuilder::new(
+            engine.renderer.swap_chain_desc.format,
+            "C Body Pipeline",
+        )
+        .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
+            include_str!("shaders/c_body.wgsl").into(),
+        ))
+        .with_layout(&render_pipeline_layout)
+        //.with_topology(wgpu::PrimitiveTopology::LineList)
+        .build(&engine.renderer.device)
+        .unwrap();
+
         // Setup the main camera
         let camera = vesta::Camera::new(
             (0.0, 0.0, 0.0).into(),
@@ -66,21 +79,30 @@ impl vesta::VestaApp for App {
         );
 
         let camera_controller = vesta::CameraController::new(32.0, 0.2);
-        
+
         let lights_uniform = vesta::UniformBuffer::new(
             "Light Uniform Buffer",
             vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
             LightUniform::new((2.0, 2.0, 2.0).into(), (1.0, 1.0, 1.0).into()),
             &engine.renderer.device,
-        );   
-         
-        // Bodies Setup      
-        let sun_texture = engine.renderer.create_texture_from_bytes(include_bytes!("images/sun.png"), Some("sun.png")).unwrap();
-        let earth_texture = engine.renderer.create_texture_from_bytes(include_bytes!("images/earth.png"), Some("earth.png")).unwrap();
-        let moon_texture = engine.renderer.create_texture_from_bytes(include_bytes!("images/earth.png"), Some("earth.png")).unwrap();
+        );
+
+        // Bodies Setup
+        let sun_texture = engine
+            .renderer
+            .create_texture_from_bytes(include_bytes!("images/sun.png"), Some("sun.png"))
+            .unwrap();
+        let earth_texture = engine
+            .renderer
+            .create_texture_from_bytes(include_bytes!("images/earth.png"), Some("earth.png"))
+            .unwrap();
+        let moon_texture = engine
+            .renderer
+            .create_texture_from_bytes(include_bytes!("images/earth.png"), Some("earth.png"))
+            .unwrap();
 
         let mut bodies = Vec::new();
-        
+
         let sun = CBody::new(
             "Sun".to_string(),
             1000000.0,
@@ -90,7 +112,7 @@ impl vesta::VestaApp for App {
             sun_texture,
             &engine.renderer.device,
         );
-        
+
         let earth = CBody::new(
             "Earth".to_string(),
             10000.0,
@@ -100,7 +122,7 @@ impl vesta::VestaApp for App {
             earth_texture,
             &engine.renderer.device,
         );
-        
+
         let moon = CBody::new(
             "Moon".to_string(),
             0.1,
@@ -110,21 +132,21 @@ impl vesta::VestaApp for App {
             moon_texture,
             &engine.renderer.device,
         );
-        
+
         bodies.push(sun);
         bodies.push(earth);
         bodies.push(moon);
-        
+
         Self {
             render_pipeline,
             c_body_pipeline,
             camera,
             camera_controller,
             bodies,
-            lights_uniform
+            lights_uniform,
         }
     }
-    
+
     fn update(&mut self, dt: f32, engine: &vesta::Engine) {
         // Loop through all bodies and apply updates
         for i in 0..self.bodies.len() {
@@ -171,62 +193,66 @@ impl vesta::VestaApp for App {
             vesta::bytemuck::cast_slice(&[self.lights_uniform.data]),
         );
     }
-    
+
     fn render_ui(&mut self, ui: &vesta::imgui::Ui, _engine: &vesta::Engine) {
         let ui_bodies = self.bodies.iter();
-            let cam = &self.camera;
+        let cam = &self.camera;
 
-            let window = vesta::imgui::Window::new(vesta::imgui::im_str!("Debug"));
-            window
-                .size([400.0, 700.0], vesta::imgui::Condition::FirstUseEver)
-                .build(&ui, || {
-                    // All bodies
-                    for b in ui_bodies {
-                        let g = ui.begin_group();
-                        ui.text(vesta::imgui::im_str!("Body '{}':", b.name));
-                        ui.text(vesta::imgui::im_str!("Mass: {:.2} kg", b.mass));
-                        ui.text(vesta::imgui::im_str!("Radius: {:.2} m", b.radius));
-                        ui.text(vesta::imgui::im_str!(
-                            "Velocity: {:.6} m/s",
-                            b.velocity.magnitude()
-                        ));
-                        ui.text(vesta::imgui::im_str!(
-                            "Escape Velocity: {:.6} m/s",
-                            b.escape_velocity()
-                        ));
-                        ui.text(vesta::imgui::im_str!(
-                            "Position: {:.2}, {:.2}, {:.2}",
-                            b.position.x,
-                            b.position.y,
-                            b.position.z
-                        ));
-
-                        ui.spacing();
-                        ui.separator();
-                        ui.spacing();
-
-                        g.end(&ui);
-                    }
-
-                    let cg = ui.begin_group();
-                    ui.text(vesta::imgui::im_str!("Camera:"));
+        let window = vesta::imgui::Window::new(vesta::imgui::im_str!("Debug"));
+        window
+            .size([400.0, 700.0], vesta::imgui::Condition::FirstUseEver)
+            .build(&ui, || {
+                // All bodies
+                for b in ui_bodies {
+                    let g = ui.begin_group();
+                    ui.text(vesta::imgui::im_str!("Body '{}':", b.name));
+                    ui.text(vesta::imgui::im_str!("Mass: {:.2} kg", b.mass));
+                    ui.text(vesta::imgui::im_str!("Radius: {:.2} m", b.radius));
+                    ui.text(vesta::imgui::im_str!(
+                        "Velocity: {:.6} m/s",
+                        b.velocity.magnitude()
+                    ));
+                    ui.text(vesta::imgui::im_str!(
+                        "Escape Velocity: {:.6} m/s",
+                        b.escape_velocity()
+                    ));
                     ui.text(vesta::imgui::im_str!(
                         "Position: {:.2}, {:.2}, {:.2}",
-                        cam.position.x,
-                        cam.position.y,
-                        cam.position.z
+                        b.position.x,
+                        b.position.y,
+                        b.position.z
                     ));
-                    ui.text(vesta::imgui::im_str!("Pitch: {:.2} rad", cam.pitch.0));
-                    ui.text(vesta::imgui::im_str!("Yaw: {:.2} rad", cam.yaw.0));
 
-                    cg.end(&ui);
-                });
+                    ui.spacing();
+                    ui.separator();
+                    ui.spacing();
+
+                    g.end(&ui);
+                }
+
+                let cg = ui.begin_group();
+                ui.text(vesta::imgui::im_str!("Camera:"));
+                ui.text(vesta::imgui::im_str!(
+                    "Position: {:.2}, {:.2}, {:.2}",
+                    cam.position.x,
+                    cam.position.y,
+                    cam.position.z
+                ));
+                ui.text(vesta::imgui::im_str!("Pitch: {:.2} rad", cam.pitch.0));
+                ui.text(vesta::imgui::im_str!("Yaw: {:.2} rad", cam.yaw.0));
+
+                cg.end(&ui);
+            });
     }
-    
-    fn render<'a>(&'a mut self, render_pass: &mut vesta::wgpu::RenderPass<'a>, _engine: &vesta::Engine) { 
+
+    fn render<'a>(
+        &'a mut self,
+        render_pass: &mut vesta::wgpu::RenderPass<'a>,
+        _engine: &vesta::Engine,
+    ) {
         // General
         render_pass.set_pipeline(&self.render_pipeline);
-        
+
         // Render bodies
         render_pass.set_pipeline(&self.c_body_pipeline);
         render_pass.set_bind_group(1, &self.camera.uniform_buffer.bind_group, &[]);
@@ -238,19 +264,25 @@ impl vesta::VestaApp for App {
             render_pass.draw_mesh(&body.mesh);
         }
     }
-    
+
     fn resize(&mut self, size: vesta::winit::dpi::PhysicalSize<u32>, _engine: &vesta::Engine) {
         // The screen projection needs to be updated
-        self.camera
-            .projection
-            .resize(size.width, size.height);
+        self.camera.projection.resize(size.width, size.height);
     }
-    
-    fn input(&mut self, event: &vesta::winit::event::WindowEvent, _engine: &mut vesta::Engine) -> bool {
+
+    fn input(
+        &mut self,
+        event: &vesta::winit::event::WindowEvent,
+        _engine: &mut vesta::Engine,
+    ) -> bool {
         self.camera_controller.process_keyboard(event)
     }
-    
-    fn device_input(&mut self, event: &vesta::winit::event::DeviceEvent, _engine: &mut vesta::Engine) -> bool {
+
+    fn device_input(
+        &mut self,
+        event: &vesta::winit::event::DeviceEvent,
+        _engine: &mut vesta::Engine,
+    ) -> bool {
         match event {
             vesta::winit::event::DeviceEvent::MouseMotion { delta } => {
                 self.camera_controller.process_mouse(delta.0, delta.1);

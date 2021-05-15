@@ -8,7 +8,7 @@ pub struct RenderPipelineBuilder<'a> {
     texture_format: wgpu::TextureFormat,
     pipeline_name: &'a str,
     primitive_topology: wgpu::PrimitiveTopology,
-    cull_mode: Option<wgpu::Face>
+    cull_mode: Option<wgpu::Face>,
 }
 
 impl<'a> RenderPipelineBuilder<'a> {
@@ -24,7 +24,7 @@ impl<'a> RenderPipelineBuilder<'a> {
             texture_format,
             pipeline_name,
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-            cull_mode: Some(wgpu::Face::Back)
+            cull_mode: Some(wgpu::Face::Back),
         }
     }
 
@@ -57,7 +57,7 @@ impl<'a> RenderPipelineBuilder<'a> {
         self.primitive_topology = topology;
         self
     }
-    
+
     #[allow(dead_code)]
     pub fn with_cull_mode(&mut self, face: Option<wgpu::Face>) -> &mut Self {
         self.cull_mode = face;
@@ -110,7 +110,7 @@ impl<'a> RenderPipelineBuilder<'a> {
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),      
+                bias: wgpu::DepthBiasState::default(),
             }),
             multisample: wgpu::MultisampleState {
                 count: 1,

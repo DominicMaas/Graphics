@@ -1,7 +1,7 @@
 use crate::utils::G;
+use std::time::Duration;
 use vesta::cgmath::{num_traits::FloatConst, Matrix3, Matrix4};
 use vesta::cgmath::{Quaternion, Vector2, Vector3};
-use std::time::Duration;
 
 pub struct CBody {
     pub name: String,
