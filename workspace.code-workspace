@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "projects/pixel_2d"
+		},
+		{
+			"path": "projects/eris"
 		}
 	],
 	"settings": {}
