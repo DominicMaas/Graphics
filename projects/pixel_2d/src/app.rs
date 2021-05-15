@@ -39,10 +39,9 @@ impl vesta::VestaApp for App {
             engine.renderer.swap_chain_desc.format,
             "Main Pipeline",
         )
-        .with_shader_source(vesta::wgpu::util::make_spirv(include_bytes!(
-            "resources/pixel_shader.spv"
-        )))
+        .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(include_str!("resources/pixel_shader.wgsl").into()))
         .with_layout(&render_pipeline_layout)
+        .with_cull_mode(None) // TODO: Fix rendering and remove this
         .build(&engine.renderer.device)
         .unwrap();
 
@@ -107,9 +106,9 @@ impl vesta::VestaApp for App {
         }
     }
 
-    fn device_input(&mut self, event: &DeviceEvent, engine: &mut vesta::Engine) -> bool {
+    fn device_input(&mut self, event: &DeviceEvent, _engine: &mut vesta::Engine) -> bool {
         match event {
-            DeviceEvent::MouseMotion { delta } => {
+            DeviceEvent::MouseMotion { delta: _ } => {
                 //self.camera_controller.process_mouse(delta.0, delta.1);
                 true
             }

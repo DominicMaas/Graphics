@@ -1,8 +1,7 @@
-use noise::utils::{NoiseMapBuilder, PlaneMapBuilder};
-use noise::{Perlin, Seedable, OpenSimplex, Fbm, NoiseFn};
+use std::num::NonZeroU32;
+
 use rand::rngs::ThreadRng;
 use rand::Rng;
-use vesta::cgmath::num_traits::AsPrimitive;
 use vesta::cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector2, Vector3};
 use vesta::DrawMesh;
 
@@ -61,7 +60,7 @@ impl Chunk {
         let texture_size = vesta::wgpu::Extent3d {
             width: CHUNK_SIZE as u32,
             height: CHUNK_SIZE as u32,
-            depth: 1,
+            depth_or_array_layers: 1,
         };
 
         let texture = renderer
@@ -184,21 +183,21 @@ impl Chunk {
 
         // Write this buffer to the GPU
         renderer.queue.write_texture(
-            vesta::wgpu::TextureCopyView {
+            vesta::wgpu::ImageCopyTexture {
                 texture: &self.texture,
                 mip_level: 0,
                 origin: vesta::wgpu::Origin3d::ZERO,
             },
             buffer.as_slice(),
-            vesta::wgpu::TextureDataLayout {
+            vesta::wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: (4 * CHUNK_SIZE) as u32,
-                rows_per_image: CHUNK_SIZE as u32,
+                bytes_per_row: NonZeroU32::new((4 * CHUNK_SIZE) as u32),
+                rows_per_image: NonZeroU32::new(CHUNK_SIZE as u32),
             },
             vesta::wgpu::Extent3d {
                 width: CHUNK_SIZE as u32,
                 height: CHUNK_SIZE as u32,
-                depth: 1,
+                depth_or_array_layers: 1,
             },
         );
     }

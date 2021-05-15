@@ -1,6 +1,4 @@
 use crate::chunk::Chunk;
-use vesta::cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector3};
-use vesta::DrawMesh;
 
 pub struct World {
     chunks: Vec<Chunk>,

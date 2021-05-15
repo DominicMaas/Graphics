@@ -8,7 +8,7 @@ pub struct RenderPipelineBuilder<'a> {
     texture_format: wgpu::TextureFormat,
     pipeline_name: &'a str,
     primitive_topology: wgpu::PrimitiveTopology,
-    cull_mode: wgpu::Face
+    cull_mode: Option<wgpu::Face>
 }
 
 impl<'a> RenderPipelineBuilder<'a> {
@@ -24,7 +24,7 @@ impl<'a> RenderPipelineBuilder<'a> {
             texture_format,
             pipeline_name,
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-            cull_mode: wgpu::Face::Back
+            cull_mode: Some(wgpu::Face::Back)
         }
     }
 
@@ -59,7 +59,7 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
     
     #[allow(dead_code)]
-    pub fn with_cull_mode(&mut self, face: wgpu::Face) -> &mut Self {
+    pub fn with_cull_mode(&mut self, face: Option<wgpu::Face>) -> &mut Self {
         self.cull_mode = face;
         self
     }
@@ -97,7 +97,7 @@ impl<'a> RenderPipelineBuilder<'a> {
                 topology: self.primitive_topology,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(self.cull_mode),
+                cull_mode: self.cull_mode,
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
                 // Setting this to true requires Features::DEPTH_CLAMPING

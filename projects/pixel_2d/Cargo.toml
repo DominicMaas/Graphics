@@ -11,14 +11,3 @@ env_logger = "0.8"
 log = "0.4"
 noise = "0.7"
 rand = "0.8.0"
-
-[build-dependencies]
-anyhow = "1.0"
-fs_extra = "1.2"
-glob = "0.3"
-cargo-wgsl = "0.0.3"
-
-[build-dependencies.naga]
-git = "https://github.com/gfx-rs/naga"
-tag = "gfx-19"
-features = ["wgsl-in", "spv-out"]
