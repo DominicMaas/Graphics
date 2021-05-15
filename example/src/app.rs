@@ -30,7 +30,7 @@ impl vesta::VestaApp for App {
             });
                     
         let render_pipeline = vesta::RenderPipelineBuilder::new(engine.renderer.swap_chain_desc.format, "Render Pipeline")
-            .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()), false)
+            .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()))
             .with_layout(&render_pipeline_layout)
             .build(&engine.renderer.device)
             .unwrap();

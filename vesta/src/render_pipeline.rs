@@ -8,6 +8,7 @@ pub struct RenderPipelineBuilder<'a> {
     texture_format: wgpu::TextureFormat,
     pipeline_name: &'a str,
     primitive_topology: wgpu::PrimitiveTopology,
+    cull_mode: wgpu::Face
 }
 
 impl<'a> RenderPipelineBuilder<'a> {
@@ -18,11 +19,12 @@ impl<'a> RenderPipelineBuilder<'a> {
         Self {
             layout: None,
             shader_source: None,
-            vertex_shader_entry: "vs_main",
-            fragment_shader_entry: "fs_main",
+            vertex_shader_entry: "main",
+            fragment_shader_entry: "main",
             texture_format,
             pipeline_name,
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
+            cull_mode: wgpu::Face::Back
         }
     }
 
@@ -31,17 +33,11 @@ impl<'a> RenderPipelineBuilder<'a> {
         self
     }
 
-    pub fn with_shader_source(&mut self, source: wgpu::ShaderSource<'a>, validate: bool) -> &mut Self {
-        // Determine if we should validate the shaders
-        let mut flags = wgpu::ShaderFlags::default();
-        if validate {
-            flags = wgpu::ShaderFlags::VALIDATION;
-        }
-        
+    pub fn with_shader_source(&mut self, source: wgpu::ShaderSource<'a>) -> &mut Self {
         self.shader_source = Some(wgpu::ShaderModuleDescriptor {
             label: None,
             source,
-            flags,
+            flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION,
         });
         self
     }
@@ -59,6 +55,12 @@ impl<'a> RenderPipelineBuilder<'a> {
     #[allow(dead_code)]
     pub fn with_topology(&mut self, topology: wgpu::PrimitiveTopology) -> &mut Self {
         self.primitive_topology = topology;
+        self
+    }
+    
+    #[allow(dead_code)]
+    pub fn with_cull_mode(&mut self, face: wgpu::Face) -> &mut Self {
+        self.cull_mode = face;
         self
     }
 
@@ -95,7 +97,7 @@ impl<'a> RenderPipelineBuilder<'a> {
                 topology: self.primitive_topology,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
+                cull_mode: Some(self.cull_mode),
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
                 // Setting this to true requires Features::DEPTH_CLAMPING
