@@ -1,12 +1,11 @@
 use std::time::Duration;
 
 use crate::{c_body::CBody, utils::LightUniform};
-use cgmath::{InnerSpace, Vector3, num_traits::FloatConst};
-use vesta::DrawMesh;
+use vesta::{DrawMesh, cgmath::{InnerSpace, Vector3, num_traits::FloatConst}};
 
 pub struct App {
-    render_pipeline: wgpu::RenderPipeline,
-    c_body_pipeline: wgpu::RenderPipeline,
+    render_pipeline: vesta::wgpu::RenderPipeline,
+    c_body_pipeline: vesta::wgpu::RenderPipeline,
     camera: vesta::Camera,
     camera_controller: vesta::CameraController,
     bodies: Vec<CBody>, 
@@ -14,24 +13,24 @@ pub struct App {
 }
 
 impl vesta::VestaApp for App {
-    fn init(engine: &vesta::Engine) -> Self {
+    fn init(engine: &mut vesta::Engine) -> Self {
         
         // Pipeline layout
         let render_pipeline_layout =
-            engine.renderer.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            engine.renderer.device.create_pipeline_layout(&vesta::wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[
                     &vesta::Texture::create_bind_group_layout(&engine.renderer.device),
                     &vesta::UniformBufferUtils::create_bind_group_layout(
-                        wgpu::ShaderStage::VERTEX,
+                        vesta::wgpu::ShaderStage::VERTEX,
                         &engine.renderer.device,
                     ),
                     &vesta::UniformBufferUtils::create_bind_group_layout(
-                        wgpu::ShaderStage::VERTEX,
+                        vesta::wgpu::ShaderStage::VERTEX,
                         &engine.renderer.device,
                     ),
                     &vesta::UniformBufferUtils::create_bind_group_layout(
-                        wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
+                        vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
                         &engine.renderer.device,
                     ),
                 ],
@@ -40,20 +39,18 @@ impl vesta::VestaApp for App {
             
         let render_pipeline =
             vesta::RenderPipelineBuilder::new(engine.renderer.swap_chain_desc.format, "Main Pipeline")
-                .with_shader_source(wgpu::util::make_spirv(include_bytes!(
-                    "shaders/main.spv"
-                )))
+                .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(include_str!("shaders/main.wgsl").into()))
                 .with_layout(&render_pipeline_layout)
                 .build(&engine.renderer.device)
                 .unwrap();
                 
         let c_body_pipeline =
             vesta::RenderPipelineBuilder::new(engine.renderer.swap_chain_desc.format, "C Body Pipeline")
-                    .with_shader_source(wgpu::util::make_spirv(include_bytes!("shaders/c_body.spv")))
-                    .with_layout(&render_pipeline_layout)
-                    //.with_topology(wgpu::PrimitiveTopology::LineList)
-                    .build(&engine.renderer.device)
-                    .unwrap();
+                .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(include_str!("shaders/c_body.wgsl").into()))        
+                .with_layout(&render_pipeline_layout)
+                //.with_topology(wgpu::PrimitiveTopology::LineList)
+                .build(&engine.renderer.device)
+                .unwrap();
         
         // Setup the main camera
         let camera = vesta::Camera::new(
@@ -61,7 +58,7 @@ impl vesta::VestaApp for App {
             vesta::PerspectiveProjection::new(
                 engine.window_size.width,
                 engine.window_size.height,
-                cgmath::Rad(70.0 / 180.0 * f32::PI()),
+                vesta::cgmath::Rad(70.0 / 180.0 * f32::PI()),
                 0.01,
                 1000.0,
             ),
@@ -72,7 +69,7 @@ impl vesta::VestaApp for App {
         
         let lights_uniform = vesta::UniformBuffer::new(
             "Light Uniform Buffer",
-            wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
+            vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
             LightUniform::new((2.0, 2.0, 2.0).into(), (1.0, 1.0, 1.0).into()),
             &engine.renderer.device,
         );   
@@ -88,8 +85,8 @@ impl vesta::VestaApp for App {
             "Sun".to_string(),
             1000000.0,
             32.0,
-            cgmath::Vector3::new(0.0, 0.0, 0.0),
-            cgmath::Vector3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
             sun_texture,
             &engine.renderer.device,
         );
@@ -98,8 +95,8 @@ impl vesta::VestaApp for App {
             "Earth".to_string(),
             10000.0,
             12.0,
-            cgmath::Vector3::new(200.0, 0.0, 0.0),
-            cgmath::Vector3::new(0.0, 0.0, -sun.calculate_velocity_at_radius(200.0)),
+            Vector3::new(200.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, -sun.calculate_velocity_at_radius(200.0)),
             earth_texture,
             &engine.renderer.device,
         );
@@ -108,8 +105,8 @@ impl vesta::VestaApp for App {
             "Moon".to_string(),
             0.1,
             2.0,
-            cgmath::Vector3::new(200.0 + 12.0, 0.0, 0.0),
-            cgmath::Vector3::new(0.0, 0.0, -earth.calculate_velocity_at_radius(12.0)),
+            Vector3::new(200.0 + 12.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, -earth.calculate_velocity_at_radius(12.0)),
             moon_texture,
             &engine.renderer.device,
         );
@@ -154,13 +151,13 @@ impl vesta::VestaApp for App {
             engine.renderer.queue.write_buffer(
                 &body.uniform_buffer.buffer,
                 0,
-                bytemuck::cast_slice(&[body.uniform_buffer.data]),
+                vesta::bytemuck::cast_slice(&[body.uniform_buffer.data]),
             );
         }
 
         // Update camera positions
         self.camera_controller.update_camera(&mut self.camera, dt);
-        self.camera.update_uniforms(&engine.renderer.queue);
+        self.camera.update_uniforms(&engine.renderer);
 
         // TEMP, THIS IS TEMP
         // Used to test how lighting is working
@@ -171,33 +168,33 @@ impl vesta::VestaApp for App {
         engine.renderer.queue.write_buffer(
             &self.lights_uniform.buffer,
             0,
-            bytemuck::cast_slice(&[self.lights_uniform.data]),
+            vesta::bytemuck::cast_slice(&[self.lights_uniform.data]),
         );
     }
     
-    fn render_ui(&mut self, ui: &imgui::Ui, engine: &vesta::Engine) {
+    fn render_ui(&mut self, ui: &vesta::imgui::Ui, _engine: &vesta::Engine) {
         let ui_bodies = self.bodies.iter();
             let cam = &self.camera;
 
-            let window = imgui::Window::new(imgui::im_str!("Debug"));
+            let window = vesta::imgui::Window::new(vesta::imgui::im_str!("Debug"));
             window
-                .size([400.0, 700.0], imgui::Condition::FirstUseEver)
+                .size([400.0, 700.0], vesta::imgui::Condition::FirstUseEver)
                 .build(&ui, || {
                     // All bodies
                     for b in ui_bodies {
                         let g = ui.begin_group();
-                        ui.text(imgui::im_str!("Body '{}':", b.name));
-                        ui.text(imgui::im_str!("Mass: {:.2} kg", b.mass));
-                        ui.text(imgui::im_str!("Radius: {:.2} m", b.radius));
-                        ui.text(imgui::im_str!(
+                        ui.text(vesta::imgui::im_str!("Body '{}':", b.name));
+                        ui.text(vesta::imgui::im_str!("Mass: {:.2} kg", b.mass));
+                        ui.text(vesta::imgui::im_str!("Radius: {:.2} m", b.radius));
+                        ui.text(vesta::imgui::im_str!(
                             "Velocity: {:.6} m/s",
                             b.velocity.magnitude()
                         ));
-                        ui.text(imgui::im_str!(
+                        ui.text(vesta::imgui::im_str!(
                             "Escape Velocity: {:.6} m/s",
                             b.escape_velocity()
                         ));
-                        ui.text(imgui::im_str!(
+                        ui.text(vesta::imgui::im_str!(
                             "Position: {:.2}, {:.2}, {:.2}",
                             b.position.x,
                             b.position.y,
@@ -212,21 +209,21 @@ impl vesta::VestaApp for App {
                     }
 
                     let cg = ui.begin_group();
-                    ui.text(imgui::im_str!("Camera:"));
-                    ui.text(imgui::im_str!(
+                    ui.text(vesta::imgui::im_str!("Camera:"));
+                    ui.text(vesta::imgui::im_str!(
                         "Position: {:.2}, {:.2}, {:.2}",
                         cam.position.x,
                         cam.position.y,
                         cam.position.z
                     ));
-                    ui.text(imgui::im_str!("Pitch: {:.2} rad", cam.pitch.0));
-                    ui.text(imgui::im_str!("Yaw: {:.2} rad", cam.yaw.0));
+                    ui.text(vesta::imgui::im_str!("Pitch: {:.2} rad", cam.pitch.0));
+                    ui.text(vesta::imgui::im_str!("Yaw: {:.2} rad", cam.yaw.0));
 
                     cg.end(&ui);
                 });
     }
     
-    fn render<'a>(&'a mut self, render_pass: &mut wgpu::RenderPass<'a>, _engine: &vesta::Engine) { 
+    fn render<'a>(&'a mut self, render_pass: &mut vesta::wgpu::RenderPass<'a>, _engine: &vesta::Engine) { 
         // General
         render_pass.set_pipeline(&self.render_pipeline);
         
@@ -242,20 +239,20 @@ impl vesta::VestaApp for App {
         }
     }
     
-    fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>, _engine: &vesta::Engine) {
+    fn resize(&mut self, size: vesta::winit::dpi::PhysicalSize<u32>, _engine: &vesta::Engine) {
         // The screen projection needs to be updated
         self.camera
             .projection
             .resize(size.width, size.height);
     }
     
-    fn input(&mut self, event: &winit::event::WindowEvent, _engine: &vesta::Engine) -> bool {
+    fn input(&mut self, event: &vesta::winit::event::WindowEvent, _engine: &mut vesta::Engine) -> bool {
         self.camera_controller.process_keyboard(event)
     }
     
-    fn device_input(&mut self, event: &winit::event::DeviceEvent, _engine: &vesta::Engine) -> bool {
+    fn device_input(&mut self, event: &vesta::winit::event::DeviceEvent, _engine: &mut vesta::Engine) -> bool {
         match event {
-            winit::event::DeviceEvent::MouseMotion { delta } => {
+            vesta::winit::event::DeviceEvent::MouseMotion { delta } => {
                 self.camera_controller.process_mouse(delta.0, delta.1);
                 true
             }

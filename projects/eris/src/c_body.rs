@@ -1,6 +1,6 @@
 use crate::utils::G;
-use cgmath::{num_traits::FloatConst, Matrix3, Matrix4};
-use cgmath::{Quaternion, Vector2, Vector3};
+use vesta::cgmath::{num_traits::FloatConst, Matrix3, Matrix4};
+use vesta::cgmath::{Quaternion, Vector2, Vector3};
 use std::time::Duration;
 
 pub struct CBody {
@@ -24,7 +24,7 @@ impl CBody {
         position: Vector3<f32>,
         velocity: Vector3<f32>,
         texture: vesta::Texture,
-        device: &wgpu::Device,
+        device: &vesta::wgpu::Device,
     ) -> Self {
         let gen = CBodyGenerator::new(radius);
 
@@ -39,7 +39,7 @@ impl CBody {
         let uniform_data = vesta::ModelUniform { model, normal };
         let uniform_buffer = vesta::UniformBuffer::new(
             "C-Body Uniform Buffer",
-            wgpu::ShaderStage::VERTEX,
+            vesta::wgpu::ShaderStage::VERTEX,
             uniform_data,
             device,
         );
@@ -110,7 +110,7 @@ impl CBody {
         self.uniform_buffer.data.normal = normal;
     }
 
-    fn build_mesh(radius: f32, gen: &CBodyGenerator, device: &wgpu::Device) -> vesta::Mesh {
+    fn build_mesh(radius: f32, gen: &CBodyGenerator, device: &vesta::wgpu::Device) -> vesta::Mesh {
         // Build the vertices for the mesh
         let mut vertices: Vec<vesta::Vertex> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
@@ -346,7 +346,7 @@ impl CBody {
         radius: f32,
         sector_count: u32,
         stack_count: u32,
-        device: &wgpu::Device,
+        device: &vesta::wgpu::Device,
     ) -> vesta::Mesh {
         // Build the vertices for the mesh
         let mut vertices: Vec<vesta::Vertex> = Vec::new();
@@ -387,20 +387,20 @@ impl CBody {
                 x = xy * sector_angle.cos(); // r * cos(u) * cos(v)
                 y = xy * sector_angle.sin(); // r * cos(u) * sin(v)
 
-                let position = cgmath::Vector3::new(x, y, z);
+                let position = Vector3::new(x, y, z);
 
                 // normalized vertex normal (nx, ny, nz)
                 nx = x * length_inv;
                 ny = y * length_inv;
                 nz = z * length_inv;
 
-                let normal = cgmath::Vector3::new(nx, ny, nz);
+                let normal = Vector3::new(nx, ny, nz);
 
                 // vertex tex coord (s, t) range between [0, 1]
                 s = (j / sector_count) as f32;
                 t = (i / stack_count) as f32;
 
-                let tex_coord = cgmath::Vector2::new(s, t);
+                let tex_coord = Vector2::new(s, t);
 
                 vertices.push(vesta::Vertex::with_tex_coords(position, normal, tex_coord));
             }

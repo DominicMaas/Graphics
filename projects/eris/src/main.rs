@@ -12,7 +12,8 @@ fn main() {
     
     // Config for the engine
     let config = vesta::Config {
-        window_title: "Eris".to_string()
+        window_title: "Eris".to_string(),
+        window_size: (1920, 1080).into(),
     };
     
     // Unable to run async in main, so block the async,
