@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use crate::{config::Config, renderer::Renderer, texture, VestaApp};
+use crate::{VestaApp, config::Config, io::{keyboard::Keyboard, mouse::Mouse}, renderer::Renderer, texture};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -13,8 +13,14 @@ struct GUI {
     gui_renderer: imgui_wgpu::Renderer,
 }
 
+pub struct IO {
+    pub keyboard: Keyboard,
+    pub mouse: Mouse
+}
+
 pub struct Engine {
     window: Window,
+    pub io: IO,
     pub renderer: Renderer,
     pub window_size: winit::dpi::PhysicalSize<u32>,
     cursor_captured: bool,
@@ -130,6 +136,10 @@ impl Engine {
         };
         let mut engine = Engine {
             window,
+            io: IO {
+                keyboard: Keyboard::new(),
+                mouse: Mouse::new()
+            },
             renderer,
             window_size,
             cursor_captured: false,
@@ -197,18 +207,46 @@ impl Engine {
                 app.device_input(event, self);
             }
             Event::WindowEvent { ref event, .. } => {
-                if !app.input(event, self) {
-                    match event {
-                        WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                        WindowEvent::Resized(physical_size) => {
-                            self.resize(app, *physical_size);
-                        }
-                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                            self.resize(app, **new_inner_size);
-                        }
-                        _ => {}
+                /*match event {
+                    WindowEvent::Resized(_) => {}
+                    WindowEvent::Moved(_) => {}
+                    WindowEvent::CloseRequested => {}
+                    WindowEvent::Destroyed => {}
+                    WindowEvent::DroppedFile(_) => {}
+                    WindowEvent::HoveredFile(_) => {}
+                    WindowEvent::HoveredFileCancelled => {}
+                    WindowEvent::ReceivedCharacter(_) => {}
+                    WindowEvent::Focused(_) => {}
+                    WindowEvent::KeyboardInput { device_id, input, is_synthetic } => {}
+                    WindowEvent::ModifiersChanged(_) => {}
+                    WindowEvent::CursorMoved { device_id, position, modifiers } => {}
+                    WindowEvent::CursorEntered { device_id } => {}
+                    WindowEvent::CursorLeft { device_id } => {}
+                    WindowEvent::MouseWheel { device_id, delta, phase, modifiers } => {}
+                    WindowEvent::MouseInput { device_id, state, button, modifiers } => {}
+                    WindowEvent::TouchpadPressure { device_id, pressure, stage } => {}
+                    WindowEvent::AxisMotion { device_id, axis, value } => {}
+                    WindowEvent::Touch(_) => {}
+                    WindowEvent::ScaleFactorChanged { scale_factor, new_inner_size } => {}
+                    WindowEvent::ThemeChanged(_) => {}
+                }*/
+                
+                match event {
+                    WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                    WindowEvent::Resized(physical_size) => {
+                        self.resize(app, *physical_size);
                     }
+                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                        self.resize(app, **new_inner_size);
+                    },
+                    WindowEvent::CursorMoved { position, .. } => {
+                        self.io.mouse.mouse_position = (position.x, position.y).into();
+                    }
+                    _ => { }
                 }
+                
+                // Now let the app do what it wants
+                app.input(event, self);
             }
             _ => {}
         }

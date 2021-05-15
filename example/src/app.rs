@@ -1,7 +1,7 @@
-use vesta::winit::{
+use vesta::{io::mouse, winit::{
     dpi::PhysicalSize,
     event::{DeviceEvent, WindowEvent},
-};
+}};
 use vesta::{
     cgmath::num_traits::FloatConst,
     winit::event::{KeyboardInput, VirtualKeyCode},
@@ -17,7 +17,7 @@ pub struct App {
 }
 
 impl vesta::VestaApp for App {
-    fn init(engine: &mut vesta::Engine) -> Self {
+    fn init(engine: &vesta::Engine) -> Self {
         let render_pipeline_layout =
             engine
                 .renderer
@@ -66,7 +66,7 @@ impl vesta::VestaApp for App {
 
         let camera_controller = vesta::CameraController::new(32.0, 0.2);
 
-        engine.set_cursor_captured(true);
+        //engine.set_cursor_captured(true);
 
         Self {
             render_pipeline,
@@ -82,6 +82,9 @@ impl vesta::VestaApp for App {
         self.camera.update_uniforms(&engine.renderer);
 
         self.cube.update(dt, &engine.renderer);
+        
+        let mouse_pos = engine.io.mouse.get_mouse_position();
+        println!("x: {}, y: {}", mouse_pos.x, mouse_pos.y);
     }
 
     fn render<'a>(
@@ -99,7 +102,7 @@ impl vesta::VestaApp for App {
         self.camera.projection.resize(size.width, size.height);
     }
 
-    fn input(&mut self, event: &WindowEvent, engine: &mut vesta::Engine) -> bool {
+    fn input(&mut self, event: &WindowEvent, engine: &vesta::Engine) -> bool {
         if !self.camera_controller.process_keyboard(event) {
             match event {
                 WindowEvent::KeyboardInput {
@@ -111,7 +114,7 @@ impl vesta::VestaApp for App {
                     ..
                 } => match keycode {
                     VirtualKeyCode::Escape => {
-                        engine.set_cursor_captured(false);
+                        //engine.set_cursor_captured(false);
                         true
                     }
                     _ => false,

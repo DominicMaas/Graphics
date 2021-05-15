@@ -16,7 +16,7 @@ pub struct App {
 }
 
 impl vesta::VestaApp for App {
-    fn init(engine: &mut vesta::Engine) -> Self {
+    fn init(engine: &vesta::Engine) -> Self {
         // Pipeline layout
         let render_pipeline_layout =
             engine
@@ -273,7 +273,7 @@ impl vesta::VestaApp for App {
     fn input(
         &mut self,
         event: &vesta::winit::event::WindowEvent,
-        _engine: &mut vesta::Engine,
+        _engine: &vesta::Engine,
     ) -> bool {
         self.camera_controller.process_keyboard(event)
     }

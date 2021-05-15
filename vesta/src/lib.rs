@@ -9,6 +9,8 @@ pub mod texture;
 pub mod uniform_buffer;
 pub mod vertex;
 
+pub mod io;
+
 pub use camera::*;
 pub use config::*;
 pub use engine::*;
@@ -38,7 +40,7 @@ pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
 #[allow(unused_variables)]
 pub trait VestaApp {
     /// Required: Create the application / game
-    fn init(engine: &mut Engine) -> Self;
+    fn init(engine: &Engine) -> Self;
 
     /// Optional: Update events
     fn update(&mut self, dt: f32, engine: &Engine) {}
@@ -54,7 +56,7 @@ pub trait VestaApp {
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>, engine: &Engine) {}
 
     /// Optional: Input Handling
-    fn input(&mut self, event: &winit::event::WindowEvent, engine: &mut Engine) -> bool {
+    fn input(&mut self, event: &winit::event::WindowEvent, engine: &Engine) -> bool {
         false
     }
 
