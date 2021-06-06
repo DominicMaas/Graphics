@@ -1,10 +1,7 @@
 use std::time::Duration;
 
 use crate::{c_body::CBody, utils::LightUniform};
-use vesta::{
-    cgmath::{num_traits::FloatConst, InnerSpace, Vector3},
-    DrawMesh,
-};
+use vesta::{DrawMesh, cgmath::{num_traits::FloatConst, InnerSpace, Vector3}, winit::event::{ButtonId, KeyboardInput, VirtualKeyCode, WindowEvent}};
 
 pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
@@ -136,6 +133,8 @@ impl vesta::VestaApp for App {
         bodies.push(sun);
         bodies.push(earth);
         bodies.push(moon);
+        
+        engine.set_cursor_captured(true);
 
         Self {
             render_pipeline,
@@ -273,19 +272,51 @@ impl vesta::VestaApp for App {
     fn input(
         &mut self,
         event: &vesta::winit::event::WindowEvent,
-        _engine: &mut vesta::Engine,
+        engine: &mut vesta::Engine,
     ) -> bool {
-        self.camera_controller.process_keyboard(event)
+        if !self.camera_controller.process_keyboard(event) {
+            match event {
+                WindowEvent::KeyboardInput {
+                    input:
+                        KeyboardInput {
+                            virtual_keycode: Some(keycode),
+                            ..
+                        },
+                    ..
+                } => match keycode {
+                    VirtualKeyCode::Escape => {
+                        engine.set_cursor_captured(false);
+                        true
+                    }
+                    _ => false,
+                },
+                WindowEvent::MouseInput { button, .. } => match button {
+                    vesta::winit::event::MouseButton::Left => {
+                        if engine.is_cursor_captured() == false {
+                            engine.set_cursor_captured(true);
+                        }
+                        
+                        true
+                    },
+                    _ => false
+                },
+                _ => false,
+            }
+        } else {
+            false
+        }
     }
 
     fn device_input(
         &mut self,
         event: &vesta::winit::event::DeviceEvent,
-        _engine: &mut vesta::Engine,
+        engine: &mut vesta::Engine,
     ) -> bool {
         match event {
             vesta::winit::event::DeviceEvent::MouseMotion { delta } => {
-                self.camera_controller.process_mouse(delta.0, delta.1);
+                if engine.is_cursor_captured() {
+                    self.camera_controller.process_mouse(delta.0, delta.1);
+                }
                 true
             }
             _ => false,

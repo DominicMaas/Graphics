@@ -1,11 +1,7 @@
 use std::time::Instant;
 
 use crate::{VestaApp, config::Config, io::{keyboard::Keyboard, mouse::Mouse}, renderer::Renderer, texture};
-use winit::{
-    event::{Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
-};
+use winit::{event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder}};
 
 struct GUI {
     gui_context: imgui::Context,
