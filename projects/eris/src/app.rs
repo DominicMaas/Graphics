@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::{c_body::CBody, utils::LightUniform};
-use vesta::{DrawMesh, cgmath::{num_traits::FloatConst, InnerSpace, Vector3}, winit::event::{ButtonId, KeyboardInput, VirtualKeyCode, WindowEvent}};
+use vesta::{DrawMesh, cgmath::{num_traits::FloatConst, InnerSpace, Vector3}, winit::event::{KeyboardInput, VirtualKeyCode, WindowEvent}};
 
 pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,

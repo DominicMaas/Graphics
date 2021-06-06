@@ -1,4 +1,4 @@
-use vesta::{io::mouse, winit::{
+use vesta::{winit::{
     dpi::PhysicalSize,
     event::{DeviceEvent, WindowEvent},
 }};
@@ -66,7 +66,7 @@ impl vesta::VestaApp for App {
 
         let camera_controller = vesta::CameraController::new(32.0, 0.2);
 
-        //engine.set_cursor_captured(true);
+        engine.set_cursor_captured(true);
 
         Self {
             render_pipeline,
@@ -114,7 +114,7 @@ impl vesta::VestaApp for App {
                     ..
                 } => match keycode {
                     VirtualKeyCode::Escape => {
-                        //engine.set_cursor_captured(false);
+                        engine.set_cursor_captured(false);
                         true
                     }
                     _ => false,
