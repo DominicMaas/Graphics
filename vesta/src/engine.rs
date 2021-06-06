@@ -22,7 +22,7 @@ pub struct Engine {
     window: Window,
     pub io: IO,
     pub renderer: Renderer,
-    pub window_size: winit::dpi::PhysicalSize<u32>,
+    window_size: winit::dpi::PhysicalSize<u32>,
     cursor_captured: bool,
     // Timing
     delta_time: f32,
@@ -353,6 +353,11 @@ impl Engine {
         Ok(())
     }
 
+    /// Gets the current window size
+    pub fn get_window_size(&self) -> winit::dpi::PhysicalSize<u32> {
+        self.window_size
+    }
+    
     /// Sets if the current cursor is captured
     pub fn set_cursor_captured(&mut self, captured: bool) {
         self.cursor_captured = captured;

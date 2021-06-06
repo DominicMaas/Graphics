@@ -51,8 +51,8 @@ impl vesta::VestaApp for App {
         let camera = vesta::Camera::new(
             (0.0, 0.0, 0.0).into(),
             vesta::OrthographicProjection::new(
-                engine.window_size.width,
-                engine.window_size.height,
+                engine.get_window_size().width,
+                engine.get_window_size().height,
                 0.0001,
                 1000.0,
             ),
@@ -71,7 +71,7 @@ impl vesta::VestaApp for App {
         }
     }
 
-    fn update(&mut self, dt: f32, engine: &vesta::Engine) {
+    fn update(&mut self, dt: f32, engine: &mut vesta::Engine) {
         self.camera_controller.update_camera(&mut self.camera, dt);
         self.camera.update_uniforms(&engine.renderer);
     }

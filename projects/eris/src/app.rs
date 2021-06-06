@@ -16,7 +16,7 @@ pub struct App {
 }
 
 impl vesta::VestaApp for App {
-    fn init(engine: &vesta::Engine) -> Self {
+    fn init(engine: &mut vesta::Engine) -> Self {
         // Pipeline layout
         let render_pipeline_layout =
             engine
@@ -69,8 +69,8 @@ impl vesta::VestaApp for App {
         let camera = vesta::Camera::new(
             (0.0, 0.0, 0.0).into(),
             vesta::PerspectiveProjection::new(
-                engine.window_size.width,
-                engine.window_size.height,
+                engine.get_window_size().width,
+                engine.get_window_size().height,
                 vesta::cgmath::Rad(70.0 / 180.0 * f32::PI()),
                 0.01,
                 1000.0,
@@ -147,7 +147,7 @@ impl vesta::VestaApp for App {
         }
     }
 
-    fn update(&mut self, dt: f32, engine: &vesta::Engine) {
+    fn update(&mut self, dt: f32, engine: &mut vesta::Engine) {
         // Loop through all bodies and apply updates
         for i in 0..self.bodies.len() {
             let (before, nonbefore) = self.bodies.split_at_mut(i);
@@ -273,7 +273,7 @@ impl vesta::VestaApp for App {
     fn input(
         &mut self,
         event: &vesta::winit::event::WindowEvent,
-        _engine: &vesta::Engine,
+        _engine: &mut vesta::Engine,
     ) -> bool {
         self.camera_controller.process_keyboard(event)
     }

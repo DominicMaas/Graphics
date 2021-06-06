@@ -40,10 +40,12 @@ pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
 #[allow(unused_variables)]
 pub trait VestaApp {
     /// Required: Create the application / game
-    fn init(engine: &Engine) -> Self;
+    /// Engine is mutable here on purpose
+    fn init(engine: &mut Engine) -> Self;
 
     /// Optional: Update events
-    fn update(&mut self, dt: f32, engine: &Engine) {}
+    /// Engine is mutable here on purpose
+    fn update(&mut self, dt: f32, engine: &mut Engine) {}
 
     /// Optional: Render your UI in this method using imgui
     fn render_ui(&mut self, ui: &imgui::Ui, engine: &Engine) {}
@@ -56,11 +58,13 @@ pub trait VestaApp {
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>, engine: &Engine) {}
 
     /// Optional: Input Handling
-    fn input(&mut self, event: &winit::event::WindowEvent, engine: &Engine) -> bool {
+    /// Engine is mutable here on purpose
+    fn input(&mut self, event: &winit::event::WindowEvent, engine: &mut Engine) -> bool {
         false
     }
 
     /// Optional: Input handling
+    /// Engine is mutable here on purpose
     fn device_input(&mut self, event: &winit::event::DeviceEvent, engine: &mut Engine) -> bool {
         false
     }

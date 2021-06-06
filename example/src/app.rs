@@ -17,7 +17,7 @@ pub struct App {
 }
 
 impl vesta::VestaApp for App {
-    fn init(engine: &vesta::Engine) -> Self {
+    fn init(engine: &mut vesta::Engine) -> Self {
         let render_pipeline_layout =
             engine
                 .renderer
@@ -55,8 +55,8 @@ impl vesta::VestaApp for App {
         let camera = vesta::Camera::new(
             (0.0, 0.0, 0.0).into(),
             vesta::PerspectiveProjection::new(
-                engine.window_size.width,
-                engine.window_size.height,
+                engine.get_window_size().width,
+                engine.get_window_size().height,
                 vesta::cgmath::Rad(70.0 / 180.0 * f32::PI()),
                 0.01,
                 1000.0,
@@ -76,14 +76,14 @@ impl vesta::VestaApp for App {
         }
     }
 
-    fn update(&mut self, dt: f32, engine: &vesta::Engine) {
+    fn update(&mut self, dt: f32, engine: &mut vesta::Engine) {
         // Update camera positions
         self.camera_controller.update_camera(&mut self.camera, dt);
         self.camera.update_uniforms(&engine.renderer);
 
         self.cube.update(dt, &engine.renderer);
         
-        let mouse_pos = engine.io.mouse.get_mouse_position();
+        let mouse_pos = engine.io.mouse.mouse_position;
         println!("x: {}, y: {}", mouse_pos.x, mouse_pos.y);
     }
 
@@ -102,7 +102,7 @@ impl vesta::VestaApp for App {
         self.camera.projection.resize(size.width, size.height);
     }
 
-    fn input(&mut self, event: &WindowEvent, engine: &vesta::Engine) -> bool {
+    fn input(&mut self, event: &WindowEvent, engine: &mut vesta::Engine) -> bool {
         if !self.camera_controller.process_keyboard(event) {
             match event {
                 WindowEvent::KeyboardInput {
