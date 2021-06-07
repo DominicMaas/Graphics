@@ -175,14 +175,13 @@ impl vesta::VestaApp for App {
                 vesta::bytemuck::cast_slice(&[body.uniform_buffer.data]),
             );
         }
-        
-        // Update camera position
-        self.camera_controller.update_camera(&mut self.camera, dt);
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {
         // Update the camera
-        self.camera_controller.update_keyboard(&engine.io);
+        self.camera_controller.process_input(&engine.io);    
+        self.camera_controller.update_camera(&mut self.camera, engine.is_cursor_captured());
+        
         self.camera.update_uniforms(&engine.renderer);
         
         // Add ability to escape out of camera
@@ -282,21 +281,5 @@ impl vesta::VestaApp for App {
     fn resize(&mut self, size: vesta::winit::dpi::PhysicalSize<u32>, _engine: &vesta::Engine) {
         // The screen projection needs to be updated
         self.camera.projection.resize(size.width, size.height);
-    }
-
-    fn device_input(
-        &mut self,
-        event: &vesta::winit::event::DeviceEvent,
-        engine: &mut vesta::Engine,
-    ) -> bool {
-        match event {
-            vesta::winit::event::DeviceEvent::MouseMotion { delta } => {
-                if engine.is_cursor_captured() {
-                    self.camera_controller.process_mouse(delta.0, delta.1);
-                }
-                true
-            }
-            _ => false,
-        }
     }
 }

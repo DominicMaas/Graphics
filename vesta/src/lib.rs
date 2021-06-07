@@ -60,10 +60,4 @@ pub trait VestaApp {
 
     /// Optional: Called when the window is resized, update your camera matrixes here
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>, engine: &Engine) {}
-
-    /// Optional: Input handling
-    /// Engine is mutable here on purpose
-    fn device_input(&mut self, event: &winit::event::DeviceEvent, engine: &mut Engine) -> bool {
-        false
-    }
 }

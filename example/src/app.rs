@@ -1,6 +1,6 @@
 use vesta::{
     cgmath::num_traits::FloatConst,
-    winit::{dpi::PhysicalSize, event::{DeviceEvent, MouseButton, VirtualKeyCode}},
+    winit::{dpi::PhysicalSize, event::{MouseButton, VirtualKeyCode}},
 };
 
 use crate::cube::Cube;
@@ -9,7 +9,7 @@ pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
     cube: Cube,
     camera: vesta::Camera,
-    camera_controller: vesta::CameraController,
+    camera_controller: vesta::CameraControllerTitan,
 }
 
 impl vesta::VestaApp for App {
@@ -60,7 +60,7 @@ impl vesta::VestaApp for App {
             &engine.renderer.device,
         );
 
-        let camera_controller = vesta::CameraController::new(32.0, 0.2);
+        let camera_controller = vesta::CameraControllerTitan::new();
 
         engine.set_cursor_captured(true);
 
@@ -72,13 +72,14 @@ impl vesta::VestaApp for App {
         }
     }
     
-    fn physics_update(&mut self, dt: f32, engine: &mut vesta::Engine) {
-        self.camera_controller.update_camera(&mut self.camera, dt);
+    fn physics_update(&mut self, dt: f32, engine: &mut vesta::Engine) {      
         self.cube.update(dt, &engine.renderer);
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {    
-        self.camera_controller.update_keyboard(&engine.io);
+        self.camera_controller.process_input(&mut self.camera, &engine.io, engine.is_cursor_captured());  
+        self.camera_controller.update_camera(&mut self.camera);
+        
         self.camera.update_uniforms(&engine.renderer);
         
         // Add ability to escape out of camera
@@ -105,18 +106,5 @@ impl vesta::VestaApp for App {
     fn resize(&mut self, size: PhysicalSize<u32>, _engine: &vesta::Engine) {
         // The screen projection needs to be updated
         self.camera.projection.resize(size.width, size.height);
-    }
-
-    fn device_input(&mut self, event: &DeviceEvent, engine: &mut vesta::Engine) -> bool {
-        match event {
-            DeviceEvent::MouseMotion { delta } => {
-                if engine.is_cursor_captured() {
-                    self.camera_controller.process_mouse(delta.0, delta.1);
-                }
-
-                true
-            }
-            _ => false,
-        }
     }
 }

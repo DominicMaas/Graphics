@@ -1,4 +1,4 @@
-use winit::event::{ElementState, MouseButton, WindowEvent};
+use winit::event::{DeviceEvent, ElementState, MouseButton, WindowEvent};
 
 #[derive(Clone)]
 enum MouseAction {
@@ -9,6 +9,8 @@ enum MouseAction {
 #[derive(Clone)]
 pub struct Mouse {
     position: cgmath::Vector2<f64>,
+    position_previous: cgmath::Vector2<f64>,
+    delta: cgmath::Vector2<f64>,
     actions: Vec<MouseAction>,
     held: [bool; 255],
 }
@@ -17,6 +19,8 @@ impl Mouse {
     pub(crate) fn new() -> Self {
         Self { 
             position: (0.0, 0.0).into(),
+            position_previous: (0.0, 0.0).into(),
+            delta: (0.0, 0.0).into(),
             actions: vec!(),
             held: [false; 255],
         }
@@ -57,6 +61,18 @@ impl Mouse {
         self.position
     }
     
+    pub fn get_position_f32(&self) -> cgmath::Vector2<f32> {
+        cgmath::Vector2::new(self.position.x as f32, self.position.y as f32)
+    }
+    
+    pub fn get_delta(&self) -> cgmath::Vector2<f64> {
+        self.delta
+    }
+    
+    pub fn get_delta_f32(&self) -> cgmath::Vector2<f32> {
+        cgmath::Vector2::new(self.delta.x as f32, self.delta.y as f32)
+    }
+    
     pub(crate) fn handle_event(&mut self, event: &WindowEvent) {
         match event {
             WindowEvent::CursorMoved { position, .. } => {
@@ -76,9 +92,20 @@ impl Mouse {
         }
     }
     
+    pub(crate) fn handle_device_event(&mut self, event: &DeviceEvent) {
+        match event {
+            DeviceEvent::MouseMotion { delta } => {
+                self.delta = (delta.0, delta.1).into();                
+            }
+            _ => {}
+        }
+    }
+    
     /// This function clears events at the end of an update frame
     pub(crate) fn clear_events(&mut self) {
         self.actions = vec!();
+        self.delta = cgmath::vec2(0.0, 0.0);
+        self.position_previous = self.position;
     }
 }
 

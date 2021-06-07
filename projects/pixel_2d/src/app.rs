@@ -71,12 +71,10 @@ impl vesta::VestaApp for App {
         }
     }
     
-    fn physics_update(&mut self, dt: f32, _engine: &mut vesta::Engine) {
-        self.camera_controller.update_camera(&mut self.camera, dt);
-    }
-
     fn update(&mut self, engine: &mut vesta::Engine) {  
-        self.camera_controller.update_keyboard(&engine.io);    
+        self.camera_controller.process_input(&engine.io);    
+        self.camera_controller.update_camera(&mut self.camera, engine.is_cursor_captured());
+        
         self.camera.update_uniforms(&engine.renderer);
         
         if engine.io.mouse.get_button_down(MouseButton::Left) {

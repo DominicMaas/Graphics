@@ -1,5 +1,5 @@
 use cgmath::num_traits::FloatConst;
-use cgmath::{Angle, EuclideanSpace, InnerSpace, Matrix4, Point3, Rad, SquareMatrix, Vector3};
+use cgmath::{Angle, Deg, EuclideanSpace, InnerSpace, Matrix4, Point3, Rad, SquareMatrix, Vector3};
 use std::f32::consts::FRAC_PI_2;
 use winit::event::VirtualKeyCode;
 
@@ -106,12 +106,11 @@ impl CameraController {
         }
     }
 
-    pub fn process_mouse(&mut self, mouse_dx: f64, mouse_dy: f64) {
-        self.rotate_horizontal = mouse_dx as f32;
-        self.rotate_vertical = mouse_dy as f32;
-    }
-
-    pub fn update_keyboard(&mut self, io: &IO) {
+    pub fn process_input(&mut self, io: &IO) {
+        let mouse_delta = io.mouse.get_delta_f32();
+        self.rotate_horizontal = mouse_delta.x;
+        self.rotate_vertical = mouse_delta.y;    
+        
         self.moving_up = io.keyboard.get_key(VirtualKeyCode::Space);
         self.moving_down = io.keyboard.get_key(VirtualKeyCode::LShift);
         
@@ -121,7 +120,8 @@ impl CameraController {
         self.moving_right = io.keyboard.get_key(VirtualKeyCode::D); 
     }
 
-    pub fn update_camera(&mut self, camera: &mut Camera, dt: f32) {
+    pub fn update_camera(&mut self, camera: &mut Camera, is_captured: bool) {
+        let dt = 0.01; // TODO: REMOVE
         let velocity = self.speed * dt;
 
         // Update Positions (left, right)
@@ -152,22 +152,23 @@ impl CameraController {
         }
 
         // Update mouse
+        if is_captured {
+            // Rotate
+            camera.yaw += Rad(self.rotate_horizontal) * self.sensitivity * dt;
+            camera.pitch += Rad(-self.rotate_vertical) * self.sensitivity * dt;
 
-        // Rotate
-        camera.yaw += Rad(self.rotate_horizontal) * self.sensitivity * dt;
-        camera.pitch += Rad(-self.rotate_vertical) * self.sensitivity * dt;
-
-        // If process_mouse isn't called every frame, these values
-        // will not get set to zero, and the camera will rotate
-        // when moving in a non cardinal direction.
-        self.rotate_horizontal = 0.0;
-        self.rotate_vertical = 0.0;
-
-        // Keep the camera's angle from going too high/low.
-        if camera.pitch < -Rad(FRAC_PI_2) {
-            camera.pitch = -Rad(FRAC_PI_2);
-        } else if camera.pitch > Rad(FRAC_PI_2) {
-            camera.pitch = Rad(FRAC_PI_2);
+            // If process_mouse isn't called every frame, these values
+            // will not get set to zero, and the camera will rotate
+            // when moving in a non cardinal direction.
+            self.rotate_horizontal = 0.0;
+            self.rotate_vertical = 0.0;
+            
+            // Keep the camera's angle from going too high/low.
+            if camera.pitch < -Rad(FRAC_PI_2) {
+                camera.pitch = -Rad(FRAC_PI_2);
+            } else if camera.pitch > Rad(FRAC_PI_2) {
+                camera.pitch = Rad(FRAC_PI_2);
+            }
         }
 
         // Update internals
@@ -185,5 +186,90 @@ impl CameraController {
         // to 0 the more you look up or down which results in slower movement.
         camera.right = camera.front.cross(camera.world_up).normalize();
         camera.up = camera.right.cross(camera.front).normalize();
+    }
+}
+
+/// Ported Camera controller from Project Titan
+pub struct CameraControllerTitan {
+    speed: f32,
+    mouse_sensitivity: f32
+}
+
+impl CameraControllerTitan {
+    pub fn new() -> Self {
+        Self {
+            speed: 20.0,
+            mouse_sensitivity: 5.0
+        }
+    }
+    
+    pub fn update_camera(&mut self, camera: &mut Camera) {
+        // Calculate the new Front vector
+        camera.front = Vector3::new(
+            camera.yaw.cos() * camera.pitch.cos(),
+            camera.pitch.sin(),
+            camera.yaw.sin() * camera.pitch.cos(),
+        )
+        .normalize();
+
+        // Also re-calculate the Right and Up vector
+        // Normalize the vectors, because their length gets closer to 0 the more you
+        // look up or down which results in slower movement.
+        camera.right = camera.front.cross(camera.world_up).normalize();
+        camera.up = camera.right.cross(camera.front).normalize();
+    }
+    
+    pub fn process_input(&mut self, camera: &mut Camera, io: &IO, is_captured: bool) {
+        let delta_time = 0.01; // TODO: REMOVE
+        // ----- MOUSE ----- //
+        if is_captured {
+            let mouse_delta = io.mouse.get_delta_f32();
+                
+            let mut x_offset = mouse_delta.x; //mouse_pos.x - self.last_mouse.x;
+            let mut y_offset = -mouse_delta.y; //self.last_mouse.y - mouse_pos.y; // reversed since y-coordinates go from bottom to top
+            
+            println!("Mouse Delta: {}, {}", x_offset, y_offset);
+            
+            x_offset *= self.mouse_sensitivity * delta_time;
+            y_offset *= self.mouse_sensitivity * delta_time;
+            
+            camera.yaw += Deg(x_offset).into();
+            camera.pitch += Deg(y_offset).into();
+            
+            // Make sure that when pitch is out of bounds, screen doesn't get flipped    
+            if camera.pitch > Deg(89.0).into() {
+                camera.pitch = Deg(89.0).into();
+            }
+                        
+            if camera.pitch < Deg(-89.0).into() {
+                camera.pitch = Deg(-89.0).into();
+            }
+        }
+        
+        // ----- KEYBOARD ----- //
+        
+        let mut loc_speed = self.speed;
+        
+        if io.keyboard.get_key(VirtualKeyCode::LShift) {
+            loc_speed *= 3.0;
+        }
+        
+        let velocity = loc_speed * delta_time;
+        
+        if io.keyboard.get_key(VirtualKeyCode::W) {
+            camera.position += camera.front * velocity;
+        }
+        
+        if io.keyboard.get_key(VirtualKeyCode::A) {
+            camera.position -= camera.right * velocity;
+        }
+        
+        if io.keyboard.get_key(VirtualKeyCode::S) {
+            camera.position -= camera.front * velocity;
+        }
+        
+        if io.keyboard.get_key(VirtualKeyCode::D) {
+            camera.position += camera.right * velocity;
+        }
     }
 }

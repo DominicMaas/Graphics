@@ -202,7 +202,7 @@ impl Engine {
                 self.window.request_redraw();
             }
             Event::DeviceEvent { ref event, .. } => {
-                app.device_input(event, self);
+                self.io.mouse.handle_device_event(event);
             }
             Event::WindowEvent { ref event, .. } => {
                 /*match event {
