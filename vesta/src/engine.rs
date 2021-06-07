@@ -173,11 +173,14 @@ impl Engine {
                     gui.gui_context
                         .io_mut()
                         .update_delta_time(std::time::Duration::from_secs_f32(self.delta_time));
-                    app.update(self.delta_time, self);
+                    app.physics_update(self.delta_time, self);
 
                     self.accumulator -= self.delta_time;
                 }
 
+                // Run the frame update
+                app.update(self);
+                
                 // Perform the actual rendering
                 match self.render(gui, app) {
                     Ok(_) => {}

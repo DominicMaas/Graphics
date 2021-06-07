@@ -75,15 +75,16 @@ impl vesta::VestaApp for App {
             camera_controller,
         }
     }
-
-    fn update(&mut self, dt: f32, engine: &mut vesta::Engine) {
-        // Update camera positions
+    
+    fn physics_update(&mut self, dt: f32, engine: &mut vesta::Engine) {
         self.camera_controller.update_camera(&mut self.camera, dt);
-        self.camera.update_uniforms(&engine.renderer);
-
         self.cube.update(dt, &engine.renderer);
-        
-        let mouse_pos = engine.io.mouse.get_mouse_position();
+    }
+
+    fn update(&mut self, engine: &mut vesta::Engine) {    
+        self.camera.update_uniforms(&engine.renderer);
+   
+        let mouse_pos = engine.io.mouse.get_position();
         println!("x: {}, y: {}", mouse_pos.x, mouse_pos.y);
     }
 

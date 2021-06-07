@@ -43,9 +43,13 @@ pub trait VestaApp {
     /// Engine is mutable here on purpose
     fn init(engine: &mut Engine) -> Self;
 
-    /// Optional: Update events
+    /// Optional: Update events. This is called multiple times per frame
     /// Engine is mutable here on purpose
-    fn update(&mut self, dt: f32, engine: &mut Engine) {}
+    fn physics_update(&mut self, dt: f32, engine: &mut Engine) {}
+    
+    /// Optional: Update events. This is called once per frame
+    /// Engine is mutable here on purpose
+    fn update(&mut self, engine: &mut Engine) {}
 
     /// Optional: Render your UI in this method using imgui
     fn render_ui(&mut self, ui: &imgui::Ui, engine: &Engine) {}

@@ -71,13 +71,16 @@ impl vesta::VestaApp for App {
             world,
         }
     }
-
-    fn update(&mut self, dt: f32, engine: &mut vesta::Engine) {
+    
+    fn physics_update(&mut self, dt: f32, _engine: &mut vesta::Engine) {
         self.camera_controller.update_camera(&mut self.camera, dt);
+    }
+
+    fn update(&mut self, engine: &mut vesta::Engine) {      
         self.camera.update_uniforms(&engine.renderer);
         
-        if engine.io.mouse.get_mouse_button_down(MouseButton::Left) {
-            let pos = engine.io.mouse.get_mouse_position();
+        if engine.io.mouse.get_button_down(MouseButton::Left) {
+            let pos = engine.io.mouse.get_position();
             
             println!("Left mouse button was clicked at x:{}, y:{}", pos.x, pos.y);
         }

@@ -23,7 +23,7 @@ impl Mouse {
         }
     }
     
-    pub fn get_mouse_button_down(&self, button: MouseButton) -> bool {
+    pub fn get_button_down(&self, button: MouseButton) -> bool {
         let button = mouse_button_to_int(button);
         
         for action in &self.mouse_actions {
@@ -37,7 +37,7 @@ impl Mouse {
         false
     }
     
-    pub fn get_mouse_position(&self) -> cgmath::Vector2<f64> {
+    pub fn get_position(&self) -> cgmath::Vector2<f64> {
         self.mouse_position
     }
     

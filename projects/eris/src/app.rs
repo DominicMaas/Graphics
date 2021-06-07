@@ -145,8 +145,8 @@ impl vesta::VestaApp for App {
             lights_uniform,
         }
     }
-
-    fn update(&mut self, dt: f32, engine: &mut vesta::Engine) {
+    
+    fn physics_update(&mut self, dt: f32, engine: &mut vesta::Engine) {
         // Loop through all bodies and apply updates
         for i in 0..self.bodies.len() {
             let (before, nonbefore) = self.bodies.split_at_mut(i);
@@ -175,9 +175,13 @@ impl vesta::VestaApp for App {
                 vesta::bytemuck::cast_slice(&[body.uniform_buffer.data]),
             );
         }
-
-        // Update camera positions
+        
+        // Update camera position
         self.camera_controller.update_camera(&mut self.camera, dt);
+    }
+
+    fn update(&mut self, engine: &mut vesta::Engine) {
+        // Update camera uniforms
         self.camera.update_uniforms(&engine.renderer);
 
         // TEMP, THIS IS TEMP
