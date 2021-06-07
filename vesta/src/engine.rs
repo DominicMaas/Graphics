@@ -162,7 +162,7 @@ impl Engine {
             // Handle gui events
             let io = gui.gui_context.io_mut();
             gui.gui_platform.handle_event(io, &engine.window, &event);
-
+            
             engine.handle_events(event, control_flow, &mut app, &mut gui);
         });
     }
@@ -244,11 +244,18 @@ impl Engine {
                     WindowEvent::ScaleFactorChanged { scale_factor, new_inner_size } => {}
                     WindowEvent::ThemeChanged(_) => {}
                 }*/
-                
+                                
                 // Handle mouse and keyboard events
-                self.io.mouse.handle_event(event);
-                self.io.keyboard.handle_event(event);
-                
+                // if the UI is not handling them
+                let gui_io = gui.gui_context.io_mut();
+                if !gui_io.want_capture_mouse {
+                    self.io.mouse.handle_event(event);
+                }
+               
+                if !gui_io.want_capture_keyboard {
+                    self.io.keyboard.handle_event(event);
+                }
+               
                 match event {
                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                     WindowEvent::Resized(physical_size) => self.resize(app, *physical_size),

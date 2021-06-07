@@ -74,6 +74,32 @@ impl Camera {
         self.uniform_buffer.data.view_proj = self.projection.calc_matrix() * self.calc_matrix();
         renderer.write_uniform_buffer(&self.uniform_buffer);
     }
+    
+    /// Transforms a point from screen space into world space
+    pub fn screen_to_world_point(&self, screen: cgmath::Vector3<f32>) -> cgmath::Vector3<f32> {
+        let size = self.projection.get_window_size();
+        
+        let proj = self.projection.calc_matrix();
+        let view = self.calc_matrix();
+        
+        let proj_view_inverse = (proj * view).invert().unwrap();
+        
+        let vec = cgmath::Vector4::new(
+            (2.0 * ((screen.x - 0.0) / ((size.width as f32) - 0.0))) - 1.0,
+            (2.0 * ((screen.y - 0.0) / ((size.height as f32) - 0.0))) - 1.0, 
+            screen.z, 
+            1.0
+        );
+        
+        let mut pos = proj_view_inverse * vec;
+        pos.w = 1.0 / pos.w;
+
+        pos.x *= pos.w;
+        pos.y *= pos.w;
+        pos.z *= pos.w;
+        
+        cgmath::Vector3::new(pos.x, pos.y, pos.z)
+    }
 }
 
 pub struct CameraController {

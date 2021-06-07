@@ -34,7 +34,7 @@ var<uniform> u_model: Model;
 fn main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.tex_coord = in.tex_coord;
-    out.position = u_camera.view_proj * vec4<f32>(in.position, 1.0);
+    out.position = u_camera.view_proj * u_model.model * vec4<f32>(in.position, 1.0);
     return out;
 }
 

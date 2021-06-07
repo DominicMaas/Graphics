@@ -1,4 +1,9 @@
+use crate::pixel::PixelType;
 use crate::world::World;
+use vesta::cgmath::Vector2;
+use vesta::cgmath::Vector3;
+use vesta::imgui;
+use vesta::imgui::im_str;
 use vesta::wgpu::RenderPass;
 use vesta::winit::dpi::PhysicalSize;
 use vesta::winit::event::{MouseButton, VirtualKeyCode};
@@ -9,6 +14,8 @@ pub struct App {
     camera: vesta::Camera,
     camera_controller: vesta::CameraController,
     world: World,
+    brush_size: i32,
+    brush_type: PixelType
 }
 
 impl vesta::VestaApp for App {
@@ -49,7 +56,7 @@ impl vesta::VestaApp for App {
 
         // Camera which will let us see around the world
         let camera = vesta::Camera::new(
-            (0.0, 0.0, 0.0).into(),
+            (0.0, 0.0, 100.0).into(),
             vesta::OrthographicProjection::new(
                 engine.get_window_size().width,
                 engine.get_window_size().height,
@@ -68,6 +75,8 @@ impl vesta::VestaApp for App {
             camera,
             camera_controller,
             world,
+            brush_size: 1,
+            brush_type: PixelType::Water
         }
     }
     
@@ -77,18 +86,41 @@ impl vesta::VestaApp for App {
         
         self.camera.update_uniforms(&engine.renderer);
         
-        if engine.io.mouse.get_button_down(MouseButton::Left) {
-            let pos = engine.io.mouse.get_position();
+        if engine.io.mouse.get_button(MouseButton::Left) {
+            let pos = engine.io.mouse.get_position_f32();
+            let world_pos = self.camera.screen_to_world_point(Vector3::new(pos.x, pos.y, 0.0001));
             
-            println!("Left mouse button was clicked at x:{}, y:{}", pos.x, pos.y);
+            self.world.paint(self.brush_type, self.brush_size, Vector2::new(world_pos.x, world_pos.y));
         }
         
         if engine.io.keyboard.get_key_down(VirtualKeyCode::R) {
-            println!("Rebuilding world...");
-            self.world.rebuild(&engine.renderer);
+            println!("Adding snow...");
+            self.world.add_snow();
         }
+        
+        self.world.update();
+        self.world.rebuild(&engine.renderer);
     }
 
+    fn render_ui(&mut self, ui: &imgui::Ui, _engine: &Engine) {
+        let window = vesta::imgui::Window::new(im_str!("Toolbox"));
+        window
+            .size([400.0, 700.0], vesta::imgui::Condition::FirstUseEver)
+            .build(&ui, || {
+                
+                let cg = ui.begin_group();
+                ui.input_int(im_str!("Brush Size"), &mut self.brush_size)
+                    .build();
+                    
+                ui.radio_button(im_str!("Brush: Air"), &mut self.brush_type, PixelType::Air);
+                ui.radio_button(im_str!("Brush: Ground"), &mut self.brush_type, PixelType::Ground);
+                ui.radio_button(im_str!("Brush: Snow"), &mut self.brush_type, PixelType::Snow);
+                ui.radio_button(im_str!("Brush: Water"), &mut self.brush_type, PixelType::Water);
+                    
+                cg.end(&ui);
+        });
+    }
+    
     fn render<'a>(&'a mut self, render_pass: &mut RenderPass<'a>, _engine: &Engine) {
         render_pass.set_pipeline(&self.pixel_pipeline);
         render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
