@@ -4,7 +4,7 @@ use std::f32::consts::FRAC_PI_2;
 use winit::event::VirtualKeyCode;
 
 use crate::io::IO;
-use crate::{Projection, UniformBuffer};
+use crate::{Engine, Projection, UniformBuffer};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -120,9 +120,8 @@ impl CameraController {
         self.moving_right = io.keyboard.get_key(VirtualKeyCode::D); 
     }
 
-    pub fn update_camera(&mut self, camera: &mut Camera, is_captured: bool) {
-        let dt = 0.01; // TODO: REMOVE
-        let velocity = self.speed * dt;
+    pub fn update_camera(&mut self, camera: &mut Camera, engine: &Engine, is_captured: bool) {
+        let velocity = self.speed * engine.time.get_delta_time();
 
         // Update Positions (left, right)
         if self.moving_left {
@@ -154,8 +153,8 @@ impl CameraController {
         // Update mouse
         if is_captured {
             // Rotate
-            camera.yaw += Rad(self.rotate_horizontal) * self.sensitivity * dt;
-            camera.pitch += Rad(-self.rotate_vertical) * self.sensitivity * dt;
+            camera.yaw += Rad(self.rotate_horizontal) * self.sensitivity * engine.time.get_delta_time();
+            camera.pitch += Rad(-self.rotate_vertical) * self.sensitivity * engine.time.get_delta_time();
 
             // If process_mouse isn't called every frame, these values
             // will not get set to zero, and the camera will rotate
@@ -199,7 +198,7 @@ impl CameraControllerTitan {
     pub fn new() -> Self {
         Self {
             speed: 20.0,
-            mouse_sensitivity: 5.0
+            mouse_sensitivity: 10.0
         }
     }
     
@@ -219,19 +218,16 @@ impl CameraControllerTitan {
         camera.up = camera.right.cross(camera.front).normalize();
     }
     
-    pub fn process_input(&mut self, camera: &mut Camera, io: &IO, is_captured: bool) {
-        let delta_time = 0.01; // TODO: REMOVE
+    pub fn process_input(&mut self, camera: &mut Camera, engine: &Engine, is_captured: bool) {
         // ----- MOUSE ----- //
         if is_captured {
-            let mouse_delta = io.mouse.get_delta_f32();
+            let mouse_delta = engine.io.mouse.get_delta_f32();
                 
             let mut x_offset = mouse_delta.x; //mouse_pos.x - self.last_mouse.x;
             let mut y_offset = -mouse_delta.y; //self.last_mouse.y - mouse_pos.y; // reversed since y-coordinates go from bottom to top
-            
-            println!("Mouse Delta: {}, {}", x_offset, y_offset);
-            
-            x_offset *= self.mouse_sensitivity * delta_time;
-            y_offset *= self.mouse_sensitivity * delta_time;
+                        
+            x_offset *= self.mouse_sensitivity * engine.time.get_delta_time();
+            y_offset *= self.mouse_sensitivity * engine.time.get_delta_time();
             
             camera.yaw += Deg(x_offset).into();
             camera.pitch += Deg(y_offset).into();
@@ -250,25 +246,25 @@ impl CameraControllerTitan {
         
         let mut loc_speed = self.speed;
         
-        if io.keyboard.get_key(VirtualKeyCode::LShift) {
-            loc_speed *= 3.0;
+        if engine.io.keyboard.get_key(VirtualKeyCode::LShift) {
+            loc_speed *= 5.0;
         }
         
-        let velocity = loc_speed * delta_time;
+        let velocity = loc_speed * engine.time.get_delta_time();
         
-        if io.keyboard.get_key(VirtualKeyCode::W) {
+        if engine.io.keyboard.get_key(VirtualKeyCode::W) {
             camera.position += camera.front * velocity;
         }
         
-        if io.keyboard.get_key(VirtualKeyCode::A) {
+        if engine.io.keyboard.get_key(VirtualKeyCode::A) {
             camera.position -= camera.right * velocity;
         }
         
-        if io.keyboard.get_key(VirtualKeyCode::S) {
+        if engine.io.keyboard.get_key(VirtualKeyCode::S) {
             camera.position -= camera.front * velocity;
         }
         
-        if io.keyboard.get_key(VirtualKeyCode::D) {
+        if engine.io.keyboard.get_key(VirtualKeyCode::D) {
             camera.position += camera.right * velocity;
         }
     }

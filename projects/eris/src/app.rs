@@ -180,7 +180,7 @@ impl vesta::VestaApp for App {
     fn update(&mut self, engine: &mut vesta::Engine) {
         // Update the camera
         self.camera_controller.process_input(&engine.io);    
-        self.camera_controller.update_camera(&mut self.camera, engine.is_cursor_captured());
+        self.camera_controller.update_camera(&mut self.camera, &engine, engine.is_cursor_captured());
         
         self.camera.update_uniforms(&engine.renderer);
         

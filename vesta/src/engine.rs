@@ -9,6 +9,19 @@ struct GUI {
     gui_renderer: imgui_wgpu::Renderer,
 }
 
+pub struct Time {
+    frame_delta_time: f32,
+    delta_time: f32,
+    current_time: Instant,
+    accumulator: f32,
+}
+
+impl Time {
+    pub fn get_delta_time(&self) -> f32 {
+        self.frame_delta_time
+    }
+}
+
 pub struct Engine {
     window: Window,
     pub io: IO,
@@ -16,9 +29,7 @@ pub struct Engine {
     window_size: winit::dpi::PhysicalSize<u32>,
     cursor_captured: bool,
     // Timing
-    delta_time: f32,
-    current_time: Instant,
-    accumulator: f32,
+    pub time: Time
 }
 
 impl Engine {
@@ -134,9 +145,12 @@ impl Engine {
             renderer,
             window_size,
             cursor_captured: false,
-            delta_time: 0.01,
-            current_time: Instant::now(),
-            accumulator: 0.0,
+            time: Time {
+                delta_time: 0.01,
+                frame_delta_time: 0.0,
+                current_time: Instant::now(),
+                accumulator: 0.0
+            },
         };
 
         // First initllize all the apps resources (shaders, pipelines etc.)
@@ -164,18 +178,20 @@ impl Engine {
             Event::RedrawRequested(_) => {
                 // Timing logic
                 let new_time = Instant::now();
-                let frame_time = new_time - self.current_time;
+                let frame_time = new_time - self.time.current_time;
+                
+                self.time.frame_delta_time = frame_time.as_secs_f32();
 
-                self.current_time = new_time;
-                self.accumulator += frame_time.as_secs_f32();
+                self.time.current_time = new_time;
+                self.time.accumulator += frame_time.as_secs_f32();
 
-                while self.accumulator >= self.delta_time {
+                while self.time.accumulator >= self.time.delta_time {
                     gui.gui_context
                         .io_mut()
-                        .update_delta_time(std::time::Duration::from_secs_f32(self.delta_time));
-                    app.physics_update(self.delta_time, self);
+                        .update_delta_time(std::time::Duration::from_secs_f32(self.time.delta_time));
+                    app.physics_update(self.time.delta_time, self);
 
-                    self.accumulator -= self.delta_time;
+                    self.time.accumulator -= self.time.delta_time;
                 }
 
                 // Run the frame update
@@ -367,3 +383,5 @@ impl Engine {
         self.cursor_captured
     }
 }
+
+
