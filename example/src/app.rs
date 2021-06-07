@@ -1,10 +1,6 @@
-use vesta::{winit::{
-    dpi::PhysicalSize,
-    event::{DeviceEvent, WindowEvent},
-}};
 use vesta::{
     cgmath::num_traits::FloatConst,
-    winit::event::{KeyboardInput, VirtualKeyCode},
+    winit::{dpi::PhysicalSize, event::{DeviceEvent, MouseButton, VirtualKeyCode}},
 };
 
 use crate::cube::Cube;
@@ -82,10 +78,18 @@ impl vesta::VestaApp for App {
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {    
+        self.camera_controller.update_keyboard(&engine.io);
         self.camera.update_uniforms(&engine.renderer);
-   
-        let mouse_pos = engine.io.mouse.get_position();
-        println!("x: {}, y: {}", mouse_pos.x, mouse_pos.y);
+        
+        // Add ability to escape out of camera
+        if engine.io.keyboard.get_key_down(VirtualKeyCode::Escape) && engine.is_cursor_captured() {
+            engine.set_cursor_captured(false);
+        }
+        
+        // Add ability to capture camera again
+        if engine.io.mouse.get_button_down(MouseButton::Left) && !engine.is_cursor_captured() {
+            engine.set_cursor_captured(true);
+        }
     }
 
     fn render<'a>(
@@ -101,30 +105,6 @@ impl vesta::VestaApp for App {
     fn resize(&mut self, size: PhysicalSize<u32>, _engine: &vesta::Engine) {
         // The screen projection needs to be updated
         self.camera.projection.resize(size.width, size.height);
-    }
-
-    fn input(&mut self, event: &WindowEvent, engine: &mut vesta::Engine) -> bool {
-        if !self.camera_controller.process_keyboard(event) {
-            match event {
-                WindowEvent::KeyboardInput {
-                    input:
-                        KeyboardInput {
-                            virtual_keycode: Some(keycode),
-                            ..
-                        },
-                    ..
-                } => match keycode {
-                    VirtualKeyCode::Escape => {
-                        engine.set_cursor_captured(false);
-                        true
-                    }
-                    _ => false,
-                },
-                _ => false,
-            }
-        } else {
-            false
-        }
     }
 
     fn device_input(&mut self, event: &DeviceEvent, engine: &mut vesta::Engine) -> bool {

@@ -1,8 +1,9 @@
 use cgmath::num_traits::FloatConst;
 use cgmath::{Angle, EuclideanSpace, InnerSpace, Matrix4, Point3, Rad, SquareMatrix, Vector3};
 use std::f32::consts::FRAC_PI_2;
-use winit::event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent};
+use winit::event::VirtualKeyCode;
 
+use crate::io::IO;
 use crate::{Projection, UniformBuffer};
 
 #[repr(C)]
@@ -110,48 +111,14 @@ impl CameraController {
         self.rotate_vertical = mouse_dy as f32;
     }
 
-    pub fn process_keyboard(&mut self, event: &WindowEvent) -> bool {
-        match event {
-            WindowEvent::KeyboardInput {
-                input:
-                    KeyboardInput {
-                        state,
-                        virtual_keycode: Some(keycode),
-                        ..
-                    },
-                ..
-            } => {
-                let is_pressed = *state == ElementState::Pressed;
-                match keycode {
-                    VirtualKeyCode::Space => {
-                        self.moving_up = is_pressed;
-                        true
-                    }
-                    VirtualKeyCode::LShift => {
-                        self.moving_down = is_pressed;
-                        true
-                    }
-                    VirtualKeyCode::W => {
-                        self.moving_forward = is_pressed;
-                        true
-                    }
-                    VirtualKeyCode::A => {
-                        self.moving_left = is_pressed;
-                        true
-                    }
-                    VirtualKeyCode::S => {
-                        self.moving_backward = is_pressed;
-                        true
-                    }
-                    VirtualKeyCode::D => {
-                        self.moving_right = is_pressed;
-                        true
-                    }
-                    _ => false,
-                }
-            }
-            _ => false,
-        }
+    pub fn update_keyboard(&mut self, io: &IO) {
+        self.moving_up = io.keyboard.get_key(VirtualKeyCode::Space);
+        self.moving_down = io.keyboard.get_key(VirtualKeyCode::LShift);
+        
+        self.moving_forward = io.keyboard.get_key(VirtualKeyCode::W);
+        self.moving_left = io.keyboard.get_key(VirtualKeyCode::A);
+        self.moving_backward = io.keyboard.get_key(VirtualKeyCode::S);
+        self.moving_right = io.keyboard.get_key(VirtualKeyCode::D); 
     }
 
     pub fn update_camera(&mut self, camera: &mut Camera, dt: f32) {

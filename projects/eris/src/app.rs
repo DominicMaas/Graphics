@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::{c_body::CBody, utils::LightUniform};
-use vesta::{DrawMesh, cgmath::{num_traits::FloatConst, InnerSpace, Vector3}, winit::event::{KeyboardInput, VirtualKeyCode, WindowEvent}};
+use vesta::{DrawMesh, cgmath::{num_traits::FloatConst, InnerSpace, Vector3}, winit::event::{MouseButton, VirtualKeyCode}};
 
 pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
@@ -181,8 +181,19 @@ impl vesta::VestaApp for App {
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {
-        // Update camera uniforms
+        // Update the camera
+        self.camera_controller.update_keyboard(&engine.io);
         self.camera.update_uniforms(&engine.renderer);
+        
+        // Add ability to escape out of camera
+        if engine.io.keyboard.get_key_down(VirtualKeyCode::Escape) && engine.is_cursor_captured() {
+            engine.set_cursor_captured(false);
+        }
+        
+        // Add ability to capture camera again
+        if engine.io.mouse.get_button_down(MouseButton::Left) && !engine.is_cursor_captured() {
+            engine.set_cursor_captured(true);
+        }
 
         // TEMP, THIS IS TEMP
         // Used to test how lighting is working
@@ -271,44 +282,6 @@ impl vesta::VestaApp for App {
     fn resize(&mut self, size: vesta::winit::dpi::PhysicalSize<u32>, _engine: &vesta::Engine) {
         // The screen projection needs to be updated
         self.camera.projection.resize(size.width, size.height);
-    }
-
-    fn input(
-        &mut self,
-        event: &vesta::winit::event::WindowEvent,
-        engine: &mut vesta::Engine,
-    ) -> bool {
-        if !self.camera_controller.process_keyboard(event) {
-            match event {
-                WindowEvent::KeyboardInput {
-                    input:
-                        KeyboardInput {
-                            virtual_keycode: Some(keycode),
-                            ..
-                        },
-                    ..
-                } => match keycode {
-                    VirtualKeyCode::Escape => {
-                        engine.set_cursor_captured(false);
-                        true
-                    }
-                    _ => false,
-                },
-                WindowEvent::MouseInput { button, .. } => match button {
-                    vesta::winit::event::MouseButton::Left => {
-                        if engine.is_cursor_captured() == false {
-                            engine.set_cursor_captured(true);
-                        }
-                        
-                        true
-                    },
-                    _ => false
-                },
-                _ => false,
-            }
-        } else {
-            false
-        }
     }
 
     fn device_input(

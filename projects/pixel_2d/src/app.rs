@@ -1,8 +1,7 @@
 use crate::world::World;
 use vesta::wgpu::RenderPass;
 use vesta::winit::dpi::PhysicalSize;
-use vesta::winit::event::MouseButton;
-use vesta::winit::event::{DeviceEvent, KeyboardInput, VirtualKeyCode, WindowEvent};
+use vesta::winit::event::{MouseButton, VirtualKeyCode};
 use vesta::Engine;
 
 pub struct App {
@@ -76,13 +75,19 @@ impl vesta::VestaApp for App {
         self.camera_controller.update_camera(&mut self.camera, dt);
     }
 
-    fn update(&mut self, engine: &mut vesta::Engine) {      
+    fn update(&mut self, engine: &mut vesta::Engine) {  
+        self.camera_controller.update_keyboard(&engine.io);    
         self.camera.update_uniforms(&engine.renderer);
         
         if engine.io.mouse.get_button_down(MouseButton::Left) {
             let pos = engine.io.mouse.get_position();
             
             println!("Left mouse button was clicked at x:{}, y:{}", pos.x, pos.y);
+        }
+        
+        if engine.io.keyboard.get_key_down(VirtualKeyCode::R) {
+            println!("Rebuilding world...");
+            self.world.rebuild(&engine.renderer);
         }
     }
 
@@ -95,39 +100,5 @@ impl vesta::VestaApp for App {
 
     fn resize(&mut self, size: PhysicalSize<u32>, _engine: &vesta::Engine) {
         self.camera.projection.resize(size.width, size.height);
-    }
-
-    fn input(&mut self, event: &WindowEvent, engine: &mut vesta::Engine) -> bool {
-        if !self.camera_controller.process_keyboard(event) {
-            match event {
-                WindowEvent::KeyboardInput {
-                    input:
-                        KeyboardInput {
-                            virtual_keycode: Some(keycode),
-                            ..
-                        },
-                    ..
-                } => match keycode {
-                    VirtualKeyCode::R => {
-                        self.world.rebuild(&engine.renderer);
-                        true
-                    }
-                    _ => false,
-                },
-                _ => false,
-            }
-        } else {
-            false
-        }
-    }
-
-    fn device_input(&mut self, event: &DeviceEvent, _engine: &mut vesta::Engine) -> bool {
-        match event {
-            DeviceEvent::MouseMotion { delta: _ } => {
-                //self.camera_controller.process_mouse(delta.0, delta.1);
-                true
-            }
-            _ => false,
-        }
     }
 }

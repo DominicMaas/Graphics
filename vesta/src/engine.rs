@@ -196,6 +196,7 @@ impl Engine {
             }
             Event::NewEvents (_) => {
                 self.io.mouse.clear_events();
+                self.io.keyboard.clear_events();
             }
             Event::MainEventsCleared => { 
                 self.window.request_redraw();
@@ -230,6 +231,7 @@ impl Engine {
                 
                 // Handle mouse and keyboard events
                 self.io.mouse.handle_event(event);
+                self.io.keyboard.handle_event(event);
                 
                 match event {
                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
@@ -237,9 +239,6 @@ impl Engine {
                     WindowEvent::ScaleFactorChanged { new_inner_size, .. } => self.resize(app, **new_inner_size),
                     _ => { }
                 }
-                
-                // Now let the app do what it wants
-                app.input(event, self);
             }
             _ => {}
         }
