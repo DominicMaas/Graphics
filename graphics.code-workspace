@@ -17,20 +17,84 @@
 			"name": "Project Eris"
 		}
 	],
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"type": "shell",
+				"command": "cargo build",
+				"options": {
+                    "cwd": "${workspaceFolder:Example}",
+                },
+				"problemMatcher": [
+					"$rustc"
+				],
+				"group": "build",
+				"label": "Build: Example"
+			},
+			{
+				"type": "shell",
+				"command": "cargo build",
+				"options": {
+                    "cwd": "${workspaceFolder:Pixel 2D}",
+                },
+				"problemMatcher": [
+					"$rustc"
+				],
+				"group": "build",
+				"label": "Build: Pixel 2D"
+			},
+			{
+				"type": "shell",
+				"command": "cargo build",
+				"options": {
+                    "cwd": "${workspaceFolder:Project Eris}",
+                },
+				"problemMatcher": [
+					"$rustc"
+				],
+				"group": "build",
+				"label": "Build: Project Eris"
+			}
+		]
+	},
 	"settings": {},
 	"launch": {
 		"version": "0.2.0",
 		"configurations": [
 			{
-				"name": "Pixel 2D (Unix)",
+				"name": "Debug: Example",
+				"type": "lldb",
+				"request": "launch",
+				"program": "${workspaceFolder:Example}/target/debug/vesta_example",
+				"sourceLanguages": ["rust"],
+				"args": [],
+				"cwd": "${workspaceFolder:Example}",
+				"terminal": "console",
+				"preLaunchTask": "Build: Example"
+			},
+			{
+				"name": "Pixel 2D",
 				"type": "lldb",
 				"request": "launch",
 				"program": "${workspaceFolder:Pixel 2D}/target/debug/pixel_2d",
 				"sourceLanguages": ["rust"],
 				"args": [],
 				"cwd": "${workspaceFolder:Pixel 2D}",
-				"terminal": "console"
-			}
+				"terminal": "console",
+				"preLaunchTask": "Build: Pixel 2D"
+			},
+			{
+				"name": "Project Eris",
+				"type": "lldb",
+				"request": "launch",
+				"program": "${workspaceFolder:Project Eris}/target/debug/eris",
+				"sourceLanguages": ["rust"],
+				"args": [],
+				"cwd": "${workspaceFolder:Project Eris}",
+				"terminal": "console",
+				"preLaunchTask": "Build: Project Eris"
+			},
 		]
 	}
 }
