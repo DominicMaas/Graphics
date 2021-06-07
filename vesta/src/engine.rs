@@ -191,7 +191,10 @@ impl Engine {
                     Err(e) => eprintln!("{:?}", e),
                 }
             }
-            Event::MainEventsCleared => {
+            Event::NewEvents (_) => {
+                self.io.mouse.clear_events();
+            }
+            Event::MainEventsCleared => { 
                 self.window.request_redraw();
             }
             Event::DeviceEvent { ref event, .. } => {
@@ -222,17 +225,13 @@ impl Engine {
                     WindowEvent::ThemeChanged(_) => {}
                 }*/
                 
+                // Handle mouse and keyboard events
+                self.io.mouse.handle_event(event);
+                
                 match event {
                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                    WindowEvent::Resized(physical_size) => {
-                        self.resize(app, *physical_size);
-                    }
-                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                        self.resize(app, **new_inner_size);
-                    },
-                    WindowEvent::CursorMoved { position, .. } => {
-                        self.io.mouse.mouse_position = (position.x, position.y).into();
-                    }
+                    WindowEvent::Resized(physical_size) => self.resize(app, *physical_size),
+                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => self.resize(app, **new_inner_size),
                     _ => { }
                 }
                 

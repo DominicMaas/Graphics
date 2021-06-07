@@ -1,6 +1,7 @@
 use crate::world::World;
 use vesta::wgpu::RenderPass;
 use vesta::winit::dpi::PhysicalSize;
+use vesta::winit::event::MouseButton;
 use vesta::winit::event::{DeviceEvent, KeyboardInput, VirtualKeyCode, WindowEvent};
 use vesta::Engine;
 
@@ -74,6 +75,12 @@ impl vesta::VestaApp for App {
     fn update(&mut self, dt: f32, engine: &mut vesta::Engine) {
         self.camera_controller.update_camera(&mut self.camera, dt);
         self.camera.update_uniforms(&engine.renderer);
+        
+        if engine.io.mouse.get_mouse_button_down(MouseButton::Left) {
+            let pos = engine.io.mouse.get_mouse_position();
+            
+            println!("Left mouse button was clicked at x:{}, y:{}", pos.x, pos.y);
+        }
     }
 
     fn render<'a>(&'a mut self, render_pass: &mut RenderPass<'a>, _engine: &Engine) {

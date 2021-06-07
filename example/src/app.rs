@@ -83,7 +83,7 @@ impl vesta::VestaApp for App {
 
         self.cube.update(dt, &engine.renderer);
         
-        let mouse_pos = engine.io.mouse.mouse_position;
+        let mouse_pos = engine.io.mouse.get_mouse_position();
         println!("x: {}, y: {}", mouse_pos.x, mouse_pos.y);
     }
 
