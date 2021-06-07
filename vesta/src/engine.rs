@@ -1,17 +1,12 @@
 use std::time::Instant;
 
-use crate::{VestaApp, config::Config, io::{keyboard::Keyboard, mouse::Mouse}, renderer::Renderer, texture};
+use crate::{VestaApp, config::Config, io::{IO, Keyboard, Mouse}, renderer::Renderer, texture};
 use winit::{event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder}};
 
 struct GUI {
     gui_context: imgui::Context,
     gui_platform: imgui_winit_support::WinitPlatform,
     gui_renderer: imgui_wgpu::Renderer,
-}
-
-pub struct IO {
-    pub keyboard: Keyboard,
-    pub mouse: Mouse
 }
 
 pub struct Engine {
