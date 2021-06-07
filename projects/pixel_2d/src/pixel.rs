@@ -24,14 +24,14 @@ impl Pixel {
     pub fn new() -> Self {
         Self {
             pixel_type: PixelType::Air,
-            color: Color { r: 135, g: 206, b: 235 }
+            color: Color { r: 0, g: 191, b: 255 }
         }
     }
     
     pub fn set(&mut self, pixel_type: PixelType) {
         self.pixel_type = pixel_type;
         self.color = match pixel_type {
-            PixelType::Air =>  Color { r: 135, g: 206, b: 235 },
+            PixelType::Air =>  Color { r: 0, g: 191, b: 255 },
             PixelType::Water =>  Color { r: 212, g: 241, b: 249 },
             PixelType::Ground => vary_color(Color { r: 30, g: 160, b: 30 }),
             PixelType::Snow => vary_color(Color { r: 255, g: 255, b: 255 }),
@@ -57,7 +57,7 @@ pub enum PixelType {
 
 fn vary_color(color: Color) -> Color {
     let mut rng = rand::thread_rng();
-    let val = (rng.gen_range(0..20) % 4) * 6;
+    let val = (rng.gen_range(0..20) % 3) * 5;
     
     Color {
         r: color.r - val,

@@ -1,17 +1,36 @@
 {
 	"folders": [
 		{
-			"path": "vesta"
+			"path": "vesta",
+			"name": "Vesta Engine"
 		},
 		{
-			"path": "example"
+			"path": "example",
+			"name": "Example"
 		},
 		{
-			"path": "projects/pixel_2d"
+			"path": "projects/pixel_2d",
+			"name": "Pixel 2D"
 		},
 		{
-			"path": "projects/eris"
+			"path": "projects/eris",
+			"name": "Project Eris"
 		}
 	],
-	"settings": {}
+	"settings": {},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Pixel 2D (Unix)",
+				"type": "lldb",
+				"request": "launch",
+				"program": "${workspaceFolder:Pixel 2D}/target/debug/pixel_2d",
+				"sourceLanguages": ["rust"],
+				"args": [],
+				"cwd": "${workspaceFolder:Pixel 2D}",
+				"terminal": "console"
+			}
+		]
+	}
 }
