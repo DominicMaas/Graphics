@@ -1,7 +1,11 @@
 use std::time::Duration;
 
 use crate::{c_body::CBody, utils::LightUniform};
-use vesta::{DrawMesh, cgmath::{num_traits::FloatConst, InnerSpace, Vector3}, winit::event::{MouseButton, VirtualKeyCode}};
+use vesta::{
+    cgmath::{num_traits::FloatConst, InnerSpace, Vector3},
+    winit::event::{MouseButton, VirtualKeyCode},
+    DrawMesh,
+};
 
 pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
@@ -133,7 +137,7 @@ impl vesta::VestaApp for App {
         bodies.push(sun);
         bodies.push(earth);
         bodies.push(moon);
-        
+
         engine.set_cursor_captured(true);
 
         Self {
@@ -145,7 +149,7 @@ impl vesta::VestaApp for App {
             lights_uniform,
         }
     }
-    
+
     fn physics_update(&mut self, dt: f32, engine: &mut vesta::Engine) {
         // Loop through all bodies and apply updates
         for i in 0..self.bodies.len() {
@@ -179,16 +183,20 @@ impl vesta::VestaApp for App {
 
     fn update(&mut self, engine: &mut vesta::Engine) {
         // Update the camera
-        self.camera_controller.process_input(&engine.io);    
-        self.camera_controller.update_camera(&mut self.camera, &engine, engine.is_cursor_captured());
-        
+        self.camera_controller.process_input(&engine.io);
+        self.camera_controller.update_camera(
+            &mut self.camera,
+            &engine,
+            engine.is_cursor_captured(),
+        );
+
         self.camera.update_uniforms(&engine.renderer);
-        
+
         // Add ability to escape out of camera
         if engine.io.keyboard.get_key_down(VirtualKeyCode::Escape) && engine.is_cursor_captured() {
             engine.set_cursor_captured(false);
         }
-        
+
         // Add ability to capture camera again
         if engine.io.mouse.get_button_down(MouseButton::Left) && !engine.is_cursor_captured() {
             engine.set_cursor_captured(true);

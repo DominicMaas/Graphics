@@ -4,8 +4,8 @@ use vesta::winit::dpi::PhysicalSize;
 
 mod app;
 mod chunk;
-mod world;
 mod pixel;
+mod world;
 
 fn main() {
     // Get log events

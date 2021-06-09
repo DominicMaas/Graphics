@@ -1,6 +1,9 @@
 use vesta::{
     cgmath::num_traits::FloatConst,
-    winit::{dpi::PhysicalSize, event::{MouseButton, VirtualKeyCode}},
+    winit::{
+        dpi::PhysicalSize,
+        event::{MouseButton, VirtualKeyCode},
+    },
 };
 
 use crate::cube::Cube;
@@ -71,22 +74,26 @@ impl vesta::VestaApp for App {
             camera_controller,
         }
     }
-    
-    fn physics_update(&mut self, dt: f32, engine: &mut vesta::Engine) {      
+
+    fn physics_update(&mut self, dt: f32, engine: &mut vesta::Engine) {
         self.cube.update(dt, &engine.renderer);
     }
 
-    fn update(&mut self, engine: &mut vesta::Engine) {    
-        self.camera_controller.process_input(&mut self.camera, &engine, engine.is_cursor_captured());  
+    fn update(&mut self, engine: &mut vesta::Engine) {
+        self.camera_controller.process_input(
+            &mut self.camera,
+            &engine,
+            engine.is_cursor_captured(),
+        );
         self.camera_controller.update_camera(&mut self.camera);
-        
+
         self.camera.update_uniforms(&engine.renderer);
-        
+
         // Add ability to escape out of camera
         if engine.io.keyboard.get_key_down(VirtualKeyCode::Escape) && engine.is_cursor_captured() {
             engine.set_cursor_captured(false);
         }
-        
+
         // Add ability to capture camera again
         if engine.io.mouse.get_button_down(MouseButton::Left) && !engine.is_cursor_captured() {
             engine.set_cursor_captured(true);

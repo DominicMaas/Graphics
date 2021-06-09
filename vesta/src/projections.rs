@@ -6,7 +6,7 @@ pub trait Projection {
     /// When the window resizes, this updates the internal
     /// aspect ratio to ensure everything still looks correct
     fn resize(&mut self, width: u32, height: u32);
-    
+
     /// The current window size, this is used for internal calculations
     fn get_window_size(&self) -> winit::dpi::PhysicalSize<u32>;
 
@@ -19,9 +19,9 @@ pub struct PerspectiveProjection {
     pub fov: Rad<f32>,
     pub z_near: f32,
     pub z_far: f32,
-    
+
     window_width: u32,
-    window_height: u32
+    window_height: u32,
 }
 
 impl PerspectiveProjection {
@@ -31,7 +31,7 @@ impl PerspectiveProjection {
             fov,
             z_near,
             z_far,
-            
+
             window_width: width,
             window_height: height,
         }
@@ -42,7 +42,7 @@ impl Projection for PerspectiveProjection {
     fn calc_matrix(&self) -> Matrix4<f32> {
         OPENGL_TO_WGPU_MATRIX * cgmath::perspective(self.fov, self.aspect, self.z_near, self.z_far)
     }
-    
+
     fn get_window_size(&self) -> winit::dpi::PhysicalSize<u32> {
         winit::dpi::PhysicalSize::new(self.window_width, self.window_height)
     }
@@ -50,7 +50,7 @@ impl Projection for PerspectiveProjection {
     fn resize(&mut self, width: u32, height: u32) {
         self.window_width = width;
         self.window_height = height;
-        
+
         self.aspect = width as f32 / height as f32;
     }
 }
@@ -59,9 +59,9 @@ pub struct OrthographicProjection {
     pub aspect: f32,
     pub z_near: f32,
     pub z_far: f32,
-    
+
     window_width: u32,
-    window_height: u32
+    window_height: u32,
 }
 
 impl OrthographicProjection {
@@ -70,7 +70,7 @@ impl OrthographicProjection {
             aspect: width as f32 / height as f32,
             z_near,
             z_far,
-            
+
             window_width: width,
             window_height: height,
         }
@@ -89,7 +89,7 @@ impl Projection for OrthographicProjection {
                 self.z_far,
             )
     }
-    
+
     fn get_window_size(&self) -> winit::dpi::PhysicalSize<u32> {
         winit::dpi::PhysicalSize::new(self.window_width, self.window_height)
     }
@@ -97,7 +97,7 @@ impl Projection for OrthographicProjection {
     fn resize(&mut self, width: u32, height: u32) {
         self.window_width = width;
         self.window_height = height;
-        
+
         self.aspect = width as f32 / height as f32;
     }
 }

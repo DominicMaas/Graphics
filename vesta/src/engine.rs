@@ -1,7 +1,16 @@
 use std::time::Instant;
 
-use crate::{VestaApp, config::Config, io::{IO, Keyboard, Mouse}, renderer::Renderer, texture};
-use winit::{event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder}};
+use crate::{
+    config::Config,
+    io::{Keyboard, Mouse, IO},
+    renderer::Renderer,
+    texture, VestaApp,
+};
+use winit::{
+    event::{Event, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::{Window, WindowBuilder},
+};
 
 struct GUI {
     gui_context: imgui::Context,
@@ -29,7 +38,7 @@ pub struct Engine {
     window_size: winit::dpi::PhysicalSize<u32>,
     cursor_captured: bool,
     // Timing
-    pub time: Time
+    pub time: Time,
 }
 
 impl Engine {
@@ -140,7 +149,7 @@ impl Engine {
             window,
             io: IO {
                 keyboard: Keyboard::new(),
-                mouse: Mouse::new()
+                mouse: Mouse::new(),
             },
             renderer,
             window_size,
@@ -149,7 +158,7 @@ impl Engine {
                 delta_time: 0.01,
                 frame_delta_time: 0.0,
                 current_time: Instant::now(),
-                accumulator: 0.0
+                accumulator: 0.0,
             },
         };
 
@@ -162,7 +171,7 @@ impl Engine {
             // Handle gui events
             let io = gui.gui_context.io_mut();
             gui.gui_platform.handle_event(io, &engine.window, &event);
-            
+
             engine.handle_events(event, control_flow, &mut app, &mut gui);
         });
     }
@@ -179,7 +188,7 @@ impl Engine {
                 // Timing logic
                 let new_time = Instant::now();
                 let frame_time = new_time - self.time.current_time;
-                
+
                 self.time.frame_delta_time = frame_time.as_secs_f32();
 
                 self.time.current_time = new_time;
@@ -188,7 +197,9 @@ impl Engine {
                 while self.time.accumulator >= self.time.delta_time {
                     gui.gui_context
                         .io_mut()
-                        .update_delta_time(std::time::Duration::from_secs_f32(self.time.delta_time));
+                        .update_delta_time(std::time::Duration::from_secs_f32(
+                            self.time.delta_time,
+                        ));
                     app.physics_update(self.time.delta_time, self);
 
                     self.time.accumulator -= self.time.delta_time;
@@ -196,7 +207,7 @@ impl Engine {
 
                 // Run the frame update
                 app.update(self);
-                
+
                 // Perform the actual rendering
                 match self.render(gui, app) {
                     Ok(_) => {}
@@ -210,11 +221,11 @@ impl Engine {
                     Err(e) => eprintln!("{:?}", e),
                 }
             }
-            Event::NewEvents (_) => {
+            Event::NewEvents(_) => {
                 self.io.mouse.clear_events();
                 self.io.keyboard.clear_events();
             }
-            Event::MainEventsCleared => { 
+            Event::MainEventsCleared => {
                 self.window.request_redraw();
             }
             Event::DeviceEvent { ref event, .. } => {
@@ -244,23 +255,25 @@ impl Engine {
                     WindowEvent::ScaleFactorChanged { scale_factor, new_inner_size } => {}
                     WindowEvent::ThemeChanged(_) => {}
                 }*/
-                                
+
                 // Handle mouse and keyboard events
                 // if the UI is not handling them
                 let gui_io = gui.gui_context.io_mut();
                 if !gui_io.want_capture_mouse {
                     self.io.mouse.handle_event(event);
                 }
-               
+
                 if !gui_io.want_capture_keyboard {
                     self.io.keyboard.handle_event(event);
                 }
-               
+
                 match event {
                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                     WindowEvent::Resized(physical_size) => self.resize(app, *physical_size),
-                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => self.resize(app, **new_inner_size),
-                    _ => { }
+                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                        self.resize(app, **new_inner_size)
+                    }
+                    _ => {}
                 }
             }
             _ => {}
@@ -372,7 +385,7 @@ impl Engine {
     pub fn get_window_size(&self) -> winit::dpi::PhysicalSize<u32> {
         self.window_size
     }
-    
+
     /// Sets if the current cursor is captured
     pub fn set_cursor_captured(&mut self, captured: bool) {
         self.cursor_captured = captured;
@@ -390,5 +403,3 @@ impl Engine {
         self.cursor_captured
     }
 }
-
-

@@ -74,30 +74,30 @@ impl Camera {
         self.uniform_buffer.data.view_proj = self.projection.calc_matrix() * self.calc_matrix();
         renderer.write_uniform_buffer(&self.uniform_buffer);
     }
-    
+
     /// Transforms a point from screen space into world space
     pub fn screen_to_world_point(&self, screen: cgmath::Vector3<f32>) -> cgmath::Vector3<f32> {
         let size = self.projection.get_window_size();
-        
+
         let proj = self.projection.calc_matrix();
         let view = self.calc_matrix();
-        
+
         let proj_view_inverse = (proj * view).invert().unwrap();
-        
+
         let vec = cgmath::Vector4::new(
             (2.0 * ((screen.x - 0.0) / ((size.width as f32) - 0.0))) - 1.0,
-            (2.0 * ((screen.y - 0.0) / ((size.height as f32) - 0.0))) - 1.0, 
-            screen.z, 
-            1.0
+            (2.0 * ((screen.y - 0.0) / ((size.height as f32) - 0.0))) - 1.0,
+            screen.z,
+            1.0,
         );
-        
+
         let mut pos = proj_view_inverse * vec;
         pos.w = 1.0 / pos.w;
 
         pos.x *= pos.w;
         pos.y *= pos.w;
         pos.z *= pos.w;
-        
+
         cgmath::Vector3::new(pos.x, pos.y, pos.z)
     }
 }
@@ -135,15 +135,15 @@ impl CameraController {
     pub fn process_input(&mut self, io: &IO) {
         let mouse_delta = io.mouse.get_delta_f32();
         self.rotate_horizontal = mouse_delta.x;
-        self.rotate_vertical = mouse_delta.y;    
-        
+        self.rotate_vertical = mouse_delta.y;
+
         self.moving_up = io.keyboard.get_key(VirtualKeyCode::Space);
         self.moving_down = io.keyboard.get_key(VirtualKeyCode::LShift);
-        
+
         self.moving_forward = io.keyboard.get_key(VirtualKeyCode::W);
         self.moving_left = io.keyboard.get_key(VirtualKeyCode::A);
         self.moving_backward = io.keyboard.get_key(VirtualKeyCode::S);
-        self.moving_right = io.keyboard.get_key(VirtualKeyCode::D); 
+        self.moving_right = io.keyboard.get_key(VirtualKeyCode::D);
     }
 
     pub fn update_camera(&mut self, camera: &mut Camera, engine: &Engine, is_captured: bool) {
@@ -179,15 +179,17 @@ impl CameraController {
         // Update mouse
         if is_captured {
             // Rotate
-            camera.yaw += Rad(self.rotate_horizontal) * self.sensitivity * engine.time.get_delta_time();
-            camera.pitch += Rad(-self.rotate_vertical) * self.sensitivity * engine.time.get_delta_time();
+            camera.yaw +=
+                Rad(self.rotate_horizontal) * self.sensitivity * engine.time.get_delta_time();
+            camera.pitch +=
+                Rad(-self.rotate_vertical) * self.sensitivity * engine.time.get_delta_time();
 
             // If process_mouse isn't called every frame, these values
             // will not get set to zero, and the camera will rotate
             // when moving in a non cardinal direction.
             self.rotate_horizontal = 0.0;
             self.rotate_vertical = 0.0;
-            
+
             // Keep the camera's angle from going too high/low.
             if camera.pitch < -Rad(FRAC_PI_2) {
                 camera.pitch = -Rad(FRAC_PI_2);
@@ -217,17 +219,17 @@ impl CameraController {
 /// Ported Camera controller from Project Titan
 pub struct CameraControllerTitan {
     speed: f32,
-    mouse_sensitivity: f32
+    mouse_sensitivity: f32,
 }
 
 impl CameraControllerTitan {
     pub fn new() -> Self {
         Self {
             speed: 20.0,
-            mouse_sensitivity: 10.0
+            mouse_sensitivity: 10.0,
         }
     }
-    
+
     pub fn update_camera(&mut self, camera: &mut Camera) {
         // Calculate the new Front vector
         camera.front = Vector3::new(
@@ -243,53 +245,53 @@ impl CameraControllerTitan {
         camera.right = camera.front.cross(camera.world_up).normalize();
         camera.up = camera.right.cross(camera.front).normalize();
     }
-    
+
     pub fn process_input(&mut self, camera: &mut Camera, engine: &Engine, is_captured: bool) {
         // ----- MOUSE ----- //
         if is_captured {
             let mouse_delta = engine.io.mouse.get_delta_f32();
-                
+
             let mut x_offset = mouse_delta.x; //mouse_pos.x - self.last_mouse.x;
             let mut y_offset = -mouse_delta.y; //self.last_mouse.y - mouse_pos.y; // reversed since y-coordinates go from bottom to top
-                        
+
             x_offset *= self.mouse_sensitivity * engine.time.get_delta_time();
             y_offset *= self.mouse_sensitivity * engine.time.get_delta_time();
-            
+
             camera.yaw += Deg(x_offset).into();
             camera.pitch += Deg(y_offset).into();
-            
-            // Make sure that when pitch is out of bounds, screen doesn't get flipped    
+
+            // Make sure that when pitch is out of bounds, screen doesn't get flipped
             if camera.pitch > Deg(89.0).into() {
                 camera.pitch = Deg(89.0).into();
             }
-                        
+
             if camera.pitch < Deg(-89.0).into() {
                 camera.pitch = Deg(-89.0).into();
             }
         }
-        
+
         // ----- KEYBOARD ----- //
-        
+
         let mut loc_speed = self.speed;
-        
+
         if engine.io.keyboard.get_key(VirtualKeyCode::LShift) {
             loc_speed *= 5.0;
         }
-        
+
         let velocity = loc_speed * engine.time.get_delta_time();
-        
+
         if engine.io.keyboard.get_key(VirtualKeyCode::W) {
             camera.position += camera.front * velocity;
         }
-        
+
         if engine.io.keyboard.get_key(VirtualKeyCode::A) {
             camera.position -= camera.right * velocity;
         }
-        
+
         if engine.io.keyboard.get_key(VirtualKeyCode::S) {
             camera.position -= camera.front * velocity;
         }
-        
+
         if engine.io.keyboard.get_key(VirtualKeyCode::D) {
             camera.position += camera.right * velocity;
         }
