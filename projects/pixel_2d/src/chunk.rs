@@ -1,8 +1,7 @@
 use std::num::NonZeroU32;
-use std::time::Instant;
 
-use noise::NoiseFn;
-use noise::OpenSimplex;
+//use noise::NoiseFn;
+//use noise::OpenSimplex;
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use vesta::cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector2, Vector3};
@@ -15,6 +14,8 @@ pub const CHUNK_SIZE: isize = 256;
 
 pub const CHUNK_RENDER_SIZE: f32 = 2.0;
 
+pub const GRAVITY: f32 = -10.0;
+
 pub struct Chunk {
     pub position: Vector2<f32>,
     texture_mesh: vesta::Mesh,
@@ -25,7 +26,7 @@ pub struct Chunk {
     color_buffer: Vec<u8>,
     loaded: bool,
     rng: ThreadRng,
-    noise: OpenSimplex,
+    //noise: OpenSimplex,
     dirty: bool,
 }
 
@@ -113,7 +114,7 @@ impl Chunk {
         let data = vec![Pixel::default(); (CHUNK_SIZE * CHUNK_SIZE) as usize];
         let rng = rand::thread_rng();
 
-        let noise = OpenSimplex::new();
+        //let noise = OpenSimplex::new();
 
         Self {
             position,
@@ -125,7 +126,7 @@ impl Chunk {
             color_buffer: vec![0u8; (4 * CHUNK_SIZE * CHUNK_SIZE) as usize],
             loaded: false,
             rng,
-            noise,
+            //noise,
             dirty: false,
         }
     }
@@ -149,14 +150,17 @@ impl Chunk {
     pub fn rand_noise(&mut self) {
         for x in 0..CHUNK_SIZE {
             for y in 0..CHUNK_SIZE {
-                let n = self
-                    .noise
-                    .get([(self.position.x as f64 + x as f64) / 0.001, 0.0])
-                    * 32.0;
-                let yn = y as f64;
+                //let n = self
+                //    .noise
+                //    .get([(self.position.x as f64 + x as f64) / 0.0001, 0.0])
+                //    * 64.0;
+                //let yn = y as f64;
 
-                if n > yn {
+                if 10 > self.rng.gen_range(0..100) {
+                    //e.g. n = 5
                     self.set_pixel_raw(x, y, Pixel::new(PixelType::Ground));
+                } else {
+                    self.set_pixel_raw(x, y, Pixel::new(PixelType::Air));
                 }
             }
         }
@@ -180,19 +184,6 @@ impl Chunk {
 
     /// Write the raw data to the GPU via a texture
     fn write_to_gpu(&mut self, renderer: &vesta::Renderer) {
-        let now = Instant::now();
-
-        // Create a buffer of the pixel colors
-        for i in 0..self.data.len() {
-            let color = self.data[i].get_color();
-            self.color_buffer[(i * 4)] = color.r;
-            self.color_buffer[(i * 4) + 1] = color.g;
-            self.color_buffer[(i * 4) + 2] = color.b;
-            self.color_buffer[(i * 4) + 3] = 255;
-        }
-
-        println!("Data pack took {}ms", now.elapsed().as_millis());
-
         // Write this buffer to the GPU
         renderer.queue.write_texture(
             vesta::wgpu::ImageCopyTexture {
@@ -216,28 +207,34 @@ impl Chunk {
 
     #[inline(always)]
     fn get_pixel_raw(&mut self, x: isize, y: isize) -> Option<&mut Pixel> {
-        if x >= CHUNK_SIZE || x < 0 {
+        if Self::pixel_in_bounds(x, y) == false {
             return None;
         }
 
-        if y >= CHUNK_SIZE || y < 0 {
+        Some(&mut self.data[Self::pixel_index(x, y)])
+    }
+
+    /// Grab a read only version of the pixel
+    pub fn get_pixel(&self, x: isize, y: isize) -> Option<Pixel> {
+        if Self::pixel_in_bounds(x, y) == false {
             return None;
         }
 
-        Some(&mut self.data[(CHUNK_SIZE * x + y) as usize])
+        Some(self.data[Self::pixel_index(x, y)])
     }
 
     #[inline(always)]
     fn set_pixel_raw(&mut self, x: isize, y: isize, pixel: Pixel) {
-        if x >= CHUNK_SIZE || x < 0 {
+        if Self::pixel_in_bounds(x, y) == false {
             return;
         }
 
-        if y >= CHUNK_SIZE || y < 0 {
-            return;
-        }
+        self.data[Self::pixel_index(x, y)] = pixel;
 
-        self.data[(CHUNK_SIZE * x + y) as usize] = pixel;
+        pixel
+            .get_color()
+            .write_color_to_buffer(Self::pixel_index(x, y), &mut self.color_buffer);
+
         self.dirty = true;
     }
 
@@ -257,33 +254,117 @@ impl Chunk {
     }
 
     pub fn rebuild(&mut self, renderer: &vesta::Renderer) {
-        let now = Instant::now();
         if self.dirty {
             self.write_to_gpu(renderer);
             self.dirty = false;
         }
-        println!("Rebuild took {}ms", now.elapsed().as_millis());
     }
 
-    pub fn update(&mut self) {
-        let now = Instant::now();
+    pub fn update(&mut self, engine: &vesta::Engine) {
+        let dt = engine.time.get_delta_time();
+
         for x in 0..CHUNK_SIZE {
             for y in 0..CHUNK_SIZE {
                 match self.get_pixel_raw(x, y) {
                     Some(pixel) => match pixel.get_type() {
-                        PixelType::Ground => self.update_sand(x, y),
-                        PixelType::Water => self.update_water(x, y),
-                        PixelType::Snow => self.update_sand(x, y),
+                        PixelType::Ground => self.update_sand_old(x, y),
+                        PixelType::Water => self.update_water(x, y, dt),
+                        PixelType::Snow => self.update_sand_old(x, y),
+                        PixelType::Sand => self.update_sand(x, y, dt),
                         _ => {}
                     },
                     None => {}
                 }
             }
         }
-        println!("Update took {}ms", now.elapsed().as_millis());
     }
 
-    fn update_sand(&mut self, x: isize, y: isize) {
+    fn update_sand(&mut self, x: isize, y: isize, dt: f32) {
+        let pos = Vector2::new(x, y);
+        let b_pos = Vector2::new(x, y - 1);
+        let br_pos = Vector2::new(x + 1, y - 1);
+        let bl_pos = Vector2::new(x - 1, y - 1);
+
+        // Update the velocity
+        let pixel = self.get_pixel_raw(x, y).unwrap();
+        pixel.velocity.y = f32::clamp(pixel.velocity.y + (GRAVITY * dt), -10.0, 10.0);
+
+        // Just check if can move directly below, if not, then reset velocity
+        if !self.pixel_is(b_pos, PixelType::Air) {
+            let pixel = self.get_pixel_raw(x, y).unwrap();
+            pixel.velocity.y /= 2.0;
+        }
+
+        let pixel = self.get_pixel(x, y).unwrap();
+        let v_pos = Vector2::new(x + pixel.velocity.x as isize, y + pixel.velocity.y as isize);
+
+        // Physics
+        if self.pixel_is(v_pos, PixelType::Air) || (self.pixel_is(v_pos, PixelType::Water)) {
+            if self.pixel_is(v_pos, PixelType::Air) {
+                self.swap_pixel_pos(pos, v_pos);
+            }
+        } else if self.pixel_is(b_pos, PixelType::Air) || self.pixel_is(b_pos, PixelType::Water) {
+            let pixel = self.get_pixel_raw(x, y).unwrap();
+            pixel.velocity.y += GRAVITY * dt;
+
+            self.swap_pixel_pos(pos, b_pos);
+        } else if self.pixel_is(bl_pos, PixelType::Air) || self.pixel_is(bl_pos, PixelType::Water) {
+            let pixel = self.get_pixel_raw(x, y).unwrap();
+            pixel.velocity.x = 0.0;
+            pixel.velocity.y += GRAVITY * dt;
+
+            self.swap_pixel_pos(pos, bl_pos);
+        } else if self.pixel_is(br_pos, PixelType::Air) || self.pixel_is(br_pos, PixelType::Water) {
+            let pixel = self.get_pixel_raw(x, y).unwrap();
+            pixel.velocity.x = 0.0;
+            pixel.velocity.y += GRAVITY * dt;
+
+            self.swap_pixel_pos(pos, br_pos);
+        } else {
+            // Do Nothing
+        }
+
+        //if let Some(p) = b_pixel {
+        //    if p.get_type() == PixelType::Air {
+        // TOOD
+        //    }
+        //}
+
+        //if !self.pixel_empty(x, y - 1) {
+        // If down empty
+        ////    self.swap_pixel(x, y, x, y - 1);
+        //    return;
+        //}
+
+        // TODO: Better way of inverting
+        //if self.rng.gen_bool(0.5) {
+        //if !self.pixel_empty(x - 1, y - 1) {
+        // If down and left empty
+        //    self.swap_pixel(x, y, x - 1, y - 1);
+        //    return;
+        // }
+
+        //if !self.pixel_empty(x + 1, y - 1) {
+        // If down and right empty
+        //   self.swap_pixel(x, y, x + 1, y - 1);
+        //   return;
+        //}
+        //} else {
+        //    if !self.pixel_at(x + 1, y - 1) {
+        // If down and right empty
+        //        self.swap_pixel(x, y, x + 1, y - 1);
+        //        return;
+        //    }
+
+        //   if !self.pixel_at(x - 1, y - 1) {
+        // If down and left empty
+        //      self.swap_pixel(x, y, x - 1, y - 1);
+        //      return;
+        //  }
+        // }
+    }
+
+    fn update_sand_old(&mut self, x: isize, y: isize) {
         if !self.pixel_at(x, y - 1) {
             // If down empty
             self.swap_pixel(x, y, x, y - 1);
@@ -291,34 +372,45 @@ impl Chunk {
         }
 
         // TODO: Better way of inverting
-        if self.rng.gen_bool(0.5) {
-            if !self.pixel_at(x - 1, y - 1) {
-                // If down and left empty
-                self.swap_pixel(x, y, x - 1, y - 1);
-                return;
-            }
-
-            if !self.pixel_at(x + 1, y - 1) {
-                // If down and right empty
-                self.swap_pixel(x, y, x + 1, y - 1);
-                return;
-            }
-        } else {
-            if !self.pixel_at(x + 1, y - 1) {
-                // If down and right empty
-                self.swap_pixel(x, y, x + 1, y - 1);
-                return;
-            }
-
-            if !self.pixel_at(x - 1, y - 1) {
-                // If down and left empty
-                self.swap_pixel(x, y, x - 1, y - 1);
-                return;
-            }
+        //if self.rng.gen_bool(0.5) {
+        if !self.pixel_at(x - 1, y - 1) {
+            // If down and left empty
+            self.swap_pixel(x, y, x - 1, y - 1);
+            return;
         }
+
+        if !self.pixel_at(x + 1, y - 1) {
+            // If down and right empty
+            self.swap_pixel(x, y, x + 1, y - 1);
+            return;
+        }
+        //} else {
+        //    if !self.pixel_at(x + 1, y - 1) {
+        // If down and right empty
+        //        self.swap_pixel(x, y, x + 1, y - 1);
+        //        return;
+        //    }
+
+        //   if !self.pixel_at(x - 1, y - 1) {
+        // If down and left empty
+        //      self.swap_pixel(x, y, x - 1, y - 1);
+        //      return;
+        //  }
+        // }
     }
 
-    fn update_water(&mut self, x: isize, y: isize) {
+    fn update_water(&mut self, x: isize, y: isize, dt: f32) {
+        // We know that this pixel exists
+        let pixel = self.get_pixel_raw(x, y).unwrap();
+
+        let fall_rate: u32 = 2;
+
+        // Update the velocity
+        pixel.velocity.y = f32::clamp(pixel.velocity.y + (GRAVITY * dt), -10.0, 10.0);
+
+        //let yv = f32::clamp(pixel_velocity.y + (GRAVITY * dt), -10.0, 10.0);
+        //pixel.set_velocity(Vector2::new(pixel_velocity.x, yv));
+
         if !self.pixel_at(x, y - 1) {
             // If down empty
             self.swap_pixel(x, y, x, y - 1);
@@ -346,20 +438,43 @@ impl Chunk {
         self.set_pixel_raw(to_x, to_y, from);
     }
 
+    pub fn swap_pixel_pos(&mut self, from: Vector2<isize>, to: Vector2<isize>) {
+        let p_from = self.get_pixel_raw(from.x, from.y).unwrap().clone();
+        let p_to = self.get_pixel_raw(to.x, to.y).unwrap().clone();
+
+        self.set_pixel_raw(from.x, from.y, p_to);
+        self.set_pixel_raw(to.x, to.y, p_from);
+    }
+
     /// Overwrite a pixel at the specific index with a certain type. This will
     /// create a brand new pixel with a random color based on the type.
     pub fn overwrite_pixel(&mut self, x: isize, y: isize, pixel_type: PixelType) {
         self.set_pixel_raw(x, y, Pixel::new(pixel_type));
     }
 
-    fn pixel_at(&mut self, x: isize, y: isize) -> bool {
-        let pixel = self.get_pixel_raw(x, y);
-        match pixel {
-            Some(pixel) => match pixel.get_type() {
-                PixelType::Air => false,
-                _ => true,
-            },
-            None => true,
+    // OLD: Returns true if there is a pixel at this area (not air)
+    fn pixel_at(&self, x: isize, y: isize) -> bool {
+        let is_air_or_out_of_bounds = self.pixel_is(Vector2::new(x, y), PixelType::Air);
+        return !is_air_or_out_of_bounds;
+    }
+
+    fn pixel_is(&self, pos: Vector2<isize>, pixel_type: PixelType) -> bool {
+        match self.get_pixel(pos.x, pos.y) {
+            Some(pixel) => pixel.get_type() == pixel_type,
+            None => false,
         }
+    }
+
+    // ---------- Helpers ---------- //
+    fn pixel_index(x: isize, y: isize) -> usize {
+        CHUNK_SIZE as usize * x as usize + y as usize
+    }
+
+    fn pixel_in_bounds(x: isize, y: isize) -> bool {
+        if x >= CHUNK_SIZE || y >= CHUNK_SIZE || x < 0 || y < 0 {
+            return false;
+        }
+
+        return true;
     }
 }

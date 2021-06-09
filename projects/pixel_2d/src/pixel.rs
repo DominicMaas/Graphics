@@ -1,4 +1,5 @@
 use rand::Rng;
+use vesta::cgmath::Vector2;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Color {
@@ -7,10 +8,21 @@ pub struct Color {
     pub b: u8,
 }
 
+impl Color {
+    pub fn write_color_to_buffer(&self, i: usize, buffer: &mut Vec<u8>) {
+        buffer[(i * 4)] = self.r;
+        buffer[(i * 4) + 1] = self.g;
+        buffer[(i * 4) + 2] = self.b;
+        buffer[(i * 4) + 3] = 255;
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 pub struct Pixel {
     color: Color,
     pixel_type: PixelType,
+    pub velocity: Vector2<f32>,
+    pub updated_this_frame: bool,
 }
 
 impl Default for Pixel {
@@ -44,7 +56,14 @@ impl Pixel {
                     g: 255,
                     b: 255,
                 }),
+                PixelType::Sand => vary_color(Color {
+                    r: 194,
+                    g: 178,
+                    b: 128,
+                }),
             },
+            velocity: Vector2::new(0.0, 0.0),
+            updated_this_frame: false,
         }
     }
 
@@ -62,6 +81,7 @@ pub enum PixelType {
     Air,
     Water,
     Snow,
+    Sand,
     Ground,
 }
 

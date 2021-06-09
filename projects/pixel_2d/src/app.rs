@@ -1,3 +1,4 @@
+use crate::pixel::Pixel;
 use crate::pixel::PixelType;
 use crate::world::World;
 use vesta::cgmath::Vector2;
@@ -16,6 +17,7 @@ pub struct App {
     world: World,
     brush_size: i32,
     brush_type: PixelType,
+    selected_pixel: Option<Pixel>,
 }
 
 impl vesta::VestaApp for App {
@@ -77,6 +79,7 @@ impl vesta::VestaApp for App {
             world,
             brush_size: 1,
             brush_type: PixelType::Water,
+            selected_pixel: None,
         }
     }
 
@@ -100,12 +103,21 @@ impl vesta::VestaApp for App {
             );
         }
 
+        if engine.io.mouse.get_button_down(MouseButton::Right) {
+            let pos = engine.io.mouse.get_position_f32();
+            let world_pos = self
+                .camera
+                .screen_to_world_point(Vector3::new(pos.x, pos.y, 0.0001));
+
+            self.selected_pixel = self.world.get_pixel(Vector2::new(world_pos.x, world_pos.y));
+        }
+
         if engine.io.keyboard.get_key_down(VirtualKeyCode::R) {
             println!("Adding snow...");
             self.world.add_snow();
         }
 
-        self.world.update();
+        self.world.update(&engine);
         self.world.rebuild(&engine.renderer);
     }
 
@@ -134,8 +146,36 @@ impl vesta::VestaApp for App {
                     &mut self.brush_type,
                     PixelType::Water,
                 );
+                ui.radio_button(
+                    im_str!("Brush: Sand"),
+                    &mut self.brush_type,
+                    PixelType::Sand,
+                );
 
                 cg.end(&ui);
+
+                match self.selected_pixel {
+                    Some(pixel) => {
+                        let pixel_ground = ui.begin_group();
+
+                        ui.text(im_str!("Selected Pixel:"));
+                        ui.text(im_str!("Type: {:?}", pixel.get_type()));
+                        ui.text(im_str!(
+                            "Color: {},{},{}",
+                            pixel.get_color().r,
+                            pixel.get_color().g,
+                            pixel.get_color().b
+                        ));
+                        ui.text(im_str!(
+                            "Velocity: {},{}:",
+                            pixel.velocity.x,
+                            pixel.velocity.y
+                        ));
+
+                        pixel_ground.end(&ui);
+                    }
+                    None => {}
+                }
             });
     }
 
