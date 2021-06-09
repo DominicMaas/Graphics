@@ -1,3 +1,4 @@
+use std::f32::consts::PI;
 use std::num::NonZeroU32;
 
 //use noise::NoiseFn;
@@ -156,7 +157,17 @@ impl Chunk {
                 //    * 64.0;
                 //let yn = y as f64;
 
-                if 10 > self.rng.gen_range(0..100) {
+                let x_scale = 0.05;
+                let y_scale = 5.5;
+                let y_offset = 60.0;
+
+                let gx = x as f32 + self.position.x;
+                let gy = y as f32 + self.position.y;
+
+                let r =
+                    (((2.0 * gx * x_scale).sin() + (PI * gy * x_scale).sin()) * y_scale) + y_offset;
+
+                if r >= y as f32 {
                     //e.g. n = 5
                     self.set_pixel_raw(x, y, Pixel::new(PixelType::Ground));
                 } else {
@@ -267,7 +278,7 @@ impl Chunk {
             for y in 0..CHUNK_SIZE {
                 match self.get_pixel_raw(x, y) {
                     Some(pixel) => match pixel.get_type() {
-                        PixelType::Ground => self.update_sand_old(x, y),
+                        //PixelType::Ground => self.update_sand_old(x, y),
                         PixelType::Water => self.update_water(x, y, dt),
                         PixelType::Snow => self.update_sand_old(x, y),
                         PixelType::Sand => self.update_sand(x, y, dt),

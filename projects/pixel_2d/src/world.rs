@@ -1,5 +1,6 @@
 use std::time::Instant;
 
+use rand::Rng;
 use vesta::cgmath::Vector2;
 
 use crate::{
@@ -97,6 +98,7 @@ impl World {
         let range_max = 1.0;
 
         let radius = radius as isize;
+        let mut rng = rand::thread_rng();
 
         // Determine which chunk should receive this paint event
         for c in self.chunks.iter_mut() {
@@ -116,7 +118,9 @@ impl World {
                     for x in -radius..radius {
                         for y in -radius..radius {
                             if x * x + y * y <= radius * radius {
-                                c.overwrite_pixel(x_base + x, y_base + y, pixel_type);
+                                if rng.gen_range(0..10) == 5 {
+                                    c.overwrite_pixel(x_base + x, y_base + y, pixel_type);
+                                }
                             }
                         }
                     }
