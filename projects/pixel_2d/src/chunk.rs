@@ -1,5 +1,7 @@
 use std::num::NonZeroU32;
 
+use noise::NoiseFn;
+use noise::OpenSimplex;
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use vesta::cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector2, Vector3};
@@ -21,6 +23,7 @@ pub struct Chunk {
     data: Vec<Pixel>,
     loaded: bool,
     rng: ThreadRng,
+    noise: OpenSimplex,
     dirty: bool,
 }
 
@@ -105,6 +108,8 @@ impl Chunk {
         let data = vec![Pixel::default(); (CHUNK_SIZE * CHUNK_SIZE) as usize];
         let rng = rand::thread_rng();
 
+        let noise = OpenSimplex::new();
+        
         Self {
             position,
             texture_mesh,
@@ -114,6 +119,7 @@ impl Chunk {
             data,
             loaded: false,
             rng,
+            noise,
             dirty: false
         }
     }
@@ -137,9 +143,12 @@ impl Chunk {
     pub fn rand_noise(&mut self) {
         for x in 0..CHUNK_SIZE {
             for y in 0..CHUNK_SIZE {
-                let s = self.rng.gen_range(0..100);
+                let n = self.noise.get([(self.position.x as f64 + x as f64) / 0.001, 0.0]) * 32.0;
+                let yn = y as f64;
+                
+                //let s = self.rng.gen_range(0..100);
                 let p = self.get_pixel(x, y).unwrap();
-                if s > 80 {
+                if n > yn {
                     p.set(PixelType::Ground)
                 }
             }
@@ -252,10 +261,30 @@ impl Chunk {
     fn update_sand(&mut self, x: isize, y: isize)  {                     
         if !self.pixel_at(x, y - 1) {  // If down empty        
             self.swap_pixel(x, y, x, y - 1);
-        } else if !self.pixel_at(x - 1, y - 1) {  // If down and left empty        
-            self.swap_pixel(x, y, x - 1, y - 1);
-        } else if !self.pixel_at(x + 1, y - 1) {  // If down and right empty        
-            self.swap_pixel(x, y, x + 1, y - 1);
+            return;
+        } 
+        
+        // TODO: Better way of inverting
+        if self.rng.gen_bool(0.5) {
+            if !self.pixel_at(x - 1, y - 1) {  // If down and left empty        
+                self.swap_pixel(x, y, x - 1, y - 1);
+                return
+            } 
+            
+            if !self.pixel_at(x + 1, y - 1) {  // If down and right empty        
+                self.swap_pixel(x, y, x + 1, y - 1);
+                return
+            }
+        } else {
+            if !self.pixel_at(x + 1, y - 1) {  // If down and right empty        
+                self.swap_pixel(x, y, x + 1, y - 1);
+                return
+            }
+            
+            if !self.pixel_at(x - 1, y - 1) {  // If down and left empty        
+                self.swap_pixel(x, y, x - 1, y - 1);
+                return
+            } 
         }
     }
     
