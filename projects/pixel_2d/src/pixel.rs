@@ -15,45 +15,36 @@ pub struct Pixel {
 
 impl Default for Pixel {
     fn default() -> Self {
-        Self::new()
+        Self::new(PixelType::Air)
     }
 }
 
 impl Pixel {
-    pub fn new() -> Self {
+    pub fn new(pixel_type: PixelType) -> Self {
         Self {
-            pixel_type: PixelType::Air,
-            color: Color {
-                r: 0,
-                g: 191,
-                b: 255,
+            pixel_type,
+            color: match pixel_type {
+                PixelType::Air => Color {
+                    r: 0,
+                    g: 191,
+                    b: 255,
+                },
+                PixelType::Water => Color {
+                    r: 212,
+                    g: 241,
+                    b: 249,
+                },
+                PixelType::Ground => vary_color(Color {
+                    r: 30,
+                    g: 160,
+                    b: 30,
+                }),
+                PixelType::Snow => vary_color(Color {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                }),
             },
-        }
-    }
-
-    pub fn set(&mut self, pixel_type: PixelType) {
-        self.pixel_type = pixel_type;
-        self.color = match pixel_type {
-            PixelType::Air => Color {
-                r: 0,
-                g: 191,
-                b: 255,
-            },
-            PixelType::Water => Color {
-                r: 212,
-                g: 241,
-                b: 249,
-            },
-            PixelType::Ground => vary_color(Color {
-                r: 30,
-                g: 160,
-                b: 30,
-            }),
-            PixelType::Snow => vary_color(Color {
-                r: 255,
-                g: 255,
-                b: 255,
-            }),
         }
     }
 
