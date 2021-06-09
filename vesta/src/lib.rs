@@ -46,7 +46,7 @@ pub trait VestaApp {
     /// Optional: Update events. This is called multiple times per frame
     /// Engine is mutable here on purpose
     fn physics_update(&mut self, dt: f32, engine: &mut Engine) {}
-    
+
     /// Optional: Update events. This is called once per frame
     /// Engine is mutable here on purpose
     fn update(&mut self, engine: &mut Engine) {}

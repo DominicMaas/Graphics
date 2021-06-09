@@ -6,5 +6,5 @@ pub use mouse::*;
 
 pub struct IO {
     pub keyboard: Keyboard,
-    pub mouse: Mouse
+    pub mouse: Mouse,
 }

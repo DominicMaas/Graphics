@@ -28,15 +28,18 @@ impl Chunk {
     pub fn new(renderer: &vesta::Renderer, position: Vector2<f32>) -> Self {
         // Simple square which the texture will be rendered onto
         let mut vertices = Vec::new();
-        vertices.push(Self::create_vertex( 1.0,  1.0, 1.0, 0.0)); // Top Right      1,1   0,1   0,0   1,0   1,1
-        vertices.push(Self::create_vertex( 1.0, -1.0, 0.0, 0.0)); // Bottom Right   1,0   1,1   0,1   0,0   1,0
+        vertices.push(Self::create_vertex(1.0, 1.0, 1.0, 0.0)); // Top Right      1,1   0,1   0,0   1,0   1,1
+        vertices.push(Self::create_vertex(1.0, -1.0, 0.0, 0.0)); // Bottom Right   1,0   1,1   0,1   0,0   1,0
         vertices.push(Self::create_vertex(-1.0, -1.0, 0.0, 1.0)); // Bottom Left    0,0   1,0   1,1   0,1   0,0
-        vertices.push(Self::create_vertex(-1.0,  1.0, 1.0, 1.0)); // Top Left       0,1   0,0   1,0   1,1   0,1
+        vertices.push(Self::create_vertex(-1.0, 1.0, 1.0, 1.0)); // Top Left       0,1   0,0   1,0   1,1   0,1
 
-        let texture_mesh = renderer.create_mesh(vertices, vec![
-            0, 1, 3, // first triangle
-            1, 2, 3  // second triangle
-        ]);
+        let texture_mesh = renderer.create_mesh(
+            vertices,
+            vec![
+                0, 1, 3, // first triangle
+                1, 2, 3, // second triangle
+            ],
+        );
 
         // Uniform for adjusting the position of this chunk in the world
         let model = Self::create_model_matrix(position);
@@ -114,7 +117,7 @@ impl Chunk {
             data,
             loaded: false,
             rng,
-            dirty: false
+            dirty: false,
         }
     }
 
@@ -144,10 +147,10 @@ impl Chunk {
                 }
             }
         }
-        
+
         self.dirty = true;
     }
-    
+
     pub fn add_snow(&mut self) {
         for x in 0..CHUNK_SIZE {
             for y in 0..CHUNK_SIZE {
@@ -163,10 +166,10 @@ impl Chunk {
                 }
             }
         }
-        
+
         self.dirty = true;
     }
-    
+
     /// Write the raw data to the GPU via a texture
     fn write_to_gpu(&self, renderer: &vesta::Renderer) {
         // Create a buffer of the pixel colors
@@ -204,17 +207,18 @@ impl Chunk {
         if x >= CHUNK_SIZE as isize || x < 0 {
             return None;
         }
-        
+
         if y >= CHUNK_SIZE as isize || y < 0 {
             return None;
         }
-        
+
         Some(&mut self.data[(CHUNK_SIZE * x + y) as usize])
     }
 
     fn create_model_matrix(position: Vector2<f32>) -> Matrix4<f32> {
         let rotation: Quaternion<f32> = Quaternion::new(0.0, 0.0, 0.0, 0.0);
-        Matrix4::from_translation(Vector3::new(position.x, position.y, 0.0)) * Matrix4::from(rotation)
+        Matrix4::from_translation(Vector3::new(position.x, position.y, 0.0))
+            * Matrix4::from(rotation)
     }
 
     fn create_vertex(x: f32, y: f32, u: f32, v: f32) -> vesta::Vertex {
@@ -225,15 +229,15 @@ impl Chunk {
             normal: Vector3::new(0.0, 0.0, 0.0),
         }
     }
-    
+
     pub fn rebuild(&mut self, renderer: &vesta::Renderer) {
         if self.dirty {
             self.write_to_gpu(renderer);
             self.dirty = false;
-        } 
+        }
     }
-    
-    pub fn update(&mut self) {     
+
+    pub fn update(&mut self) {
         for x in 0..CHUNK_SIZE {
             for y in 0..CHUNK_SIZE {
                 match self.get_pixel(x, y) {
@@ -246,61 +250,67 @@ impl Chunk {
                     None => {}
                 }
             }
-        } 
+        }
     }
-    
-    fn update_sand(&mut self, x: isize, y: isize)  {                     
-        if !self.pixel_at(x, y - 1) {  // If down empty        
+
+    fn update_sand(&mut self, x: isize, y: isize) {
+        if !self.pixel_at(x, y - 1) {
+            // If down empty
             self.swap_pixel(x, y, x, y - 1);
-        } else if !self.pixel_at(x - 1, y - 1) {  // If down and left empty        
+        } else if !self.pixel_at(x - 1, y - 1) {
+            // If down and left empty
             self.swap_pixel(x, y, x - 1, y - 1);
-        } else if !self.pixel_at(x + 1, y - 1) {  // If down and right empty        
+        } else if !self.pixel_at(x + 1, y - 1) {
+            // If down and right empty
             self.swap_pixel(x, y, x + 1, y - 1);
         }
     }
-    
-    fn update_water(&mut self, x: isize, y: isize) {                     
-        if !self.pixel_at(x, y - 1) {  // If down empty        
+
+    fn update_water(&mut self, x: isize, y: isize) {
+        if !self.pixel_at(x, y - 1) {
+            // If down empty
             self.swap_pixel(x, y, x, y - 1);
-        } else if !self.pixel_at(x - 1, y - 1) {  // If down and left empty        
+        } else if !self.pixel_at(x - 1, y - 1) {
+            // If down and left empty
             self.swap_pixel(x, y, x - 1, y - 1);
-        } else if !self.pixel_at(x + 1, y - 1) {  // If down and right empty        
+        } else if !self.pixel_at(x + 1, y - 1) {
+            // If down and right empty
             self.swap_pixel(x, y, x + 1, y - 1);
-        } else if !self.pixel_at(x - 1, y) {  // If left empty        
+        } else if !self.pixel_at(x - 1, y) {
+            // If left empty
             self.swap_pixel(x, y, x - 1, y);
-        } else if !self.pixel_at(x + 1, y) {  // If right empty        
+        } else if !self.pixel_at(x + 1, y) {
+            // If right empty
             self.swap_pixel(x, y, x + 1, y);
         }
     }
-    
+
     pub fn swap_pixel(&mut self, from_x: isize, from_y: isize, to_x: isize, to_y: isize) {
         let from_pixel_type = self.get_pixel(from_x, from_y).unwrap().get_type();
         let to_pixel_type = self.get_pixel(to_x, to_y).unwrap().get_type();
-                
+
         self.get_pixel(to_x, to_y).unwrap().set(from_pixel_type);
-        self.get_pixel(from_x, from_y).unwrap().set(to_pixel_type); 
-        
+        self.get_pixel(from_x, from_y).unwrap().set(to_pixel_type);
+
         self.dirty = true;
     }
-    
+
     pub fn overwrite_pixel(&mut self, x: isize, y: isize, pixel_type: PixelType) {
         match self.get_pixel(x, y) {
             Some(p) => {
                 p.set(pixel_type);
                 self.dirty = true;
-            },
+            }
             None => {}
         }
     }
-    
+
     fn pixel_at(&mut self, x: isize, y: isize) -> bool {
         let pixel = self.get_pixel(x, y);
         match pixel {
-            Some(pixel) => {
-                match pixel.get_type() {
-                    PixelType::Air => false,
-                    _ => true
-                }
+            Some(pixel) => match pixel.get_type() {
+                PixelType::Air => false,
+                _ => true,
             },
             None => true,
         }
