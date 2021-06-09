@@ -155,8 +155,6 @@ impl Chunk {
                     * 32.0;
                 let yn = y as f64;
 
-                //let s = self.rng.gen_range(0..100);
-                let p = self.get_pixel(x, y).unwrap();
                 if n > yn {
                     self.set_pixel_raw(x, y, Pixel::new(PixelType::Ground));
                 }
