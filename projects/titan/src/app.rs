@@ -1,15 +1,18 @@
 use vesta::{
-    cgmath::num_traits::FloatConst,
+    cgmath::{num_traits::FloatConst, Vector3},
     winit::{
         dpi::PhysicalSize,
         event::{MouseButton, VirtualKeyCode},
     },
 };
 
+use crate::world::Chunk;
+
 pub struct App {
     chunk_render_pipeline: vesta::wgpu::RenderPipeline,
     camera: vesta::Camera,
     camera_controller: vesta::CameraControllerTitan,
+    chunk: Chunk,
 }
 
 impl vesta::VestaApp for App {
@@ -22,14 +25,17 @@ impl vesta::VestaApp for App {
                 .create_pipeline_layout(&vesta::wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
                     bind_group_layouts: &[
+                        // Camera Uniform Buffer
                         &vesta::UniformBufferUtils::create_bind_group_layout(
                             vesta::wgpu::ShaderStage::VERTEX,
                             &engine.renderer.device,
                         ),
+                        // Chunk Uniform buffer
                         &vesta::UniformBufferUtils::create_bind_group_layout(
                             vesta::wgpu::ShaderStage::VERTEX,
                             &engine.renderer.device,
                         ),
+                        // Chunk Texture
                         &vesta::Texture::create_bind_group_layout(&engine.renderer.device),
                     ],
                     push_constant_ranges: &[],
@@ -62,24 +68,36 @@ impl vesta::VestaApp for App {
 
         let camera_controller = vesta::CameraControllerTitan::new();
 
+        let chunk = Chunk::new(Vector3::new(0.0, 0.0, 0.0)); // Temp
+
         // Init the engine
         Self {
             chunk_render_pipeline,
             camera,
             camera_controller,
+            chunk,
         }
     }
 
     fn render<'a>(
         &'a mut self,
         render_pass: &mut vesta::wgpu::RenderPass<'a>,
-        _engine: &vesta::Engine,
+        engine: &vesta::Engine,
     ) {
         render_pass.set_pipeline(&self.chunk_render_pipeline);
         render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
+
+        self.chunk.render(render_pass, engine);
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {
+        // Process Chunk
+        match self.chunk.get_state() {
+            crate::world::ChunkState::Created => self.chunk.load(),
+            crate::world::ChunkState::Dirty => self.chunk.rebuild(&engine.renderer),
+            _ => {}
+        }
+
         self.camera_controller.process_input(
             &mut self.camera,
             &engine,

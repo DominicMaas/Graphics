@@ -1,4 +1,5 @@
 mod app;
+mod world;
 
 use app::App;
 use futures::executor::block_on;
