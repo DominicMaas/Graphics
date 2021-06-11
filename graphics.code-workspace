@@ -23,6 +23,10 @@
     {
       "path": "projects/eris",
       "name": "Project Eris"
+    },
+    {
+      "path": "projects/titan",
+      "name": "Project Titan"
     }
   ],
   "tasks": {
@@ -57,6 +61,16 @@
         "problemMatcher": ["$rustc"],
         "group": "build",
         "label": "Build: Project Eris"
+      },
+      {
+        "type": "shell",
+        "command": "cargo build",
+        "options": {
+          "cwd": "${workspaceFolder:Project Titan}"
+        },
+        "problemMatcher": ["$rustc"],
+        "group": "build",
+        "label": "Build: Project Titan"
       }
     ]
   },
@@ -98,6 +112,17 @@
         "cwd": "${workspaceFolder:Project Eris}",
         "terminal": "console",
         "preLaunchTask": "Build: Project Eris"
+      },
+      {
+        "name": "Project Titan",
+        "type": "lldb",
+        "request": "launch",
+        "program": "${workspaceFolder:Project Titan}/target/debug/titan",
+        "sourceLanguages": ["rust"],
+        "args": [],
+        "cwd": "${workspaceFolder:Project Titan}",
+        "terminal": "console",
+        "preLaunchTask": "Build: Project Titan"
       }
     ]
   }

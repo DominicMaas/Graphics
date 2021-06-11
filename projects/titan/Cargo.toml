@@ -1,0 +1,11 @@
+[package]
+name = "titan"
+version = "0.1.0"
+authors = ["Dominic Maas <dominic.maas@live.com>"]
+edition = "2018"
+
+[dependencies]
+vesta = { path = "../../vesta" }
+futures = "0.3"
+env_logger = "0.8"
+log = "0.4"
