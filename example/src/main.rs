@@ -19,3 +19,13 @@ fn main() {
     // create for App, and pass in the config
     block_on(vesta::Engine::run::<App>(config));
 }
+
+#[cfg(target_arch = "wasm32")]
+mod wasm {
+    use wasm_bindgen::prelude::*;
+
+    #[wasm_bindgen(start)]
+    pub fn run() {
+        super::main();
+    }
+}

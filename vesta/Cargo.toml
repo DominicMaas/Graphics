@@ -16,3 +16,9 @@ anyhow = "1.0.40"
 imgui = "0.7"
 imgui-wgpu = "0.15"
 imgui-winit-support = { version = "0.7", default-features = false, features = [ "winit-25" ] }
+
+# Web Assembly
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2.74"
+winit = { version = "0.25", features = [ "web-sys" ] }
+imgui = { version = "0.7", features = ["wasm"] }
