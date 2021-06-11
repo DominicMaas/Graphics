@@ -36,6 +36,7 @@ Initial goals required to get this project to the supported features of SpaceChu
 - [ ] Debug information stating the current position etc
 - [ ] World with multiple chunks
 - [ ] Correct culling of unwanted faces and faces between chunks
+- [ ] Frustum Culling (probably make this generic and chuck in vesta as well tbh)
 - [ ] Only render chunks in view of the camera
 - [ ] Generate new chunks on the fly (and delete old chunks from memory)
 - [ ] Normals and lighting
