@@ -7,6 +7,8 @@ Other projects not included in this repo:
 - [Project Tital](https://github.com/DominicMaas/ProjectTitan) A rewrite of SpaceChunks but in Vulkan (as a learning exercise to understand Vulkan).
 - [Project Apollo](https://github.com/DominicMaas/Apollo) Another game of some sorts, never really finished. Ideas used in this project are incoroperated into Vesta.
 
+Eventually the goal is for all these games to be WebGPU and WebAssembly compatable, so they may be played in the browser. This is probably only going to happen late 2021 when browser support is stablised. 
+
 ## Vesta
 
 A light game engine that wraps around WGPU. Is extended when I need new features. Supports 2D and 3D games.
