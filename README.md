@@ -29,12 +29,14 @@ A very simple example using the Vesta engine. Shows the absolute minimum to rend
 
 (Under Development) A port of project titan / Space Chunks to the vesta engine. Hopefully actually getting things like physics, infinite chunks, and raycasting working.
 
+![image](https://user-images.githubusercontent.com/5589453/121789150-b062fc00-cc27-11eb-8c96-9bcbdc080f6c.png)
+
 ### Initial Goals
 Initial goals required to get this project to the supported features of SpaceChunks (OpenGL) and ProjectTitan (Vulkan). Where appropiate, some features will be built into the Vesta engine so other projects can use them (lighting, skybox etc.)
 
-- [ ] Move around the world with a camera
-- [ ] Debug information stating the current position etc
-- [ ] World with multiple chunks
+- [x] Move around the world with a camera
+- [x] Debug information stating the current position etc
+- [x] World with multiple chunks
 - [ ] Correct culling of unwanted faces and faces between chunks
 - [ ] Frustum Culling (probably make this generic and chuck in vesta as well tbh)
 - [ ] Only render chunks in view of the camera
