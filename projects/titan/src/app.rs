@@ -8,6 +8,8 @@ use vesta::{
     TextureConfig,
 };
 
+use rand::Rng;
+
 use crate::{
     sky_shader::SkyShader,
     world::{Chunk, CHUNK_WIDTH},
@@ -77,11 +79,18 @@ impl vesta::VestaApp for App {
 
         let mut chunks = Vec::new();
 
-        for x in 0..5 {
-            for z in 0..5 {
+        let mut rng = rand::thread_rng();
+        let seed = rng.gen();
+
+        for x in -4..4 {
+            for z in -4..4 {
                 let chunk = Chunk::new(
-                    Vector3::new((x * CHUNK_WIDTH) as f32, 0.0, (z * CHUNK_WIDTH) as f32),
-                    453445254,
+                    Vector3::new(
+                        (x as i32 * CHUNK_WIDTH as i32) as f32,
+                        0.0,
+                        (z as i32 * CHUNK_WIDTH as i32) as f32,
+                    ),
+                    seed,
                     &engine.renderer,
                 ); // Temp
                 chunks.push(chunk);

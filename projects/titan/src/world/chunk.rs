@@ -317,7 +317,13 @@ impl Chunk {
 
         // Outside of this chunk
         if (x < 0) || (z < 0) || (x >= CHUNK_WIDTH as i32) || (z >= CHUNK_WIDTH as i32) {
-            return 0; // For now, always 0
+            // TODO: Check for existing chunks
+
+            // This chunk is not loaded / does not exist, get the theoretical block type
+            let mut world_pos = Vector3::new(x as f32, y as f32, z as f32);
+            world_pos += self.position;
+
+            return self.generator.get_theoretical_block_type(world_pos);
         }
 
         // Get the block type within the chunk
@@ -331,7 +337,7 @@ impl Chunk {
     fn is_transparent(&self, x: i32, y: i32, z: i32) -> bool {
         // Never render the bottom face of the world
         if y < 0 {
-            return true; // TODO: make false
+            return false;
         }
 
         return self.get_block_type(x, y, z) == 0;
