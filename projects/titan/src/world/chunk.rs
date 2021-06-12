@@ -1,11 +1,11 @@
 use vesta::{
-    cgmath::{Matrix4, Vector2, Vector3},
+    cgmath::{Matrix3, Matrix4, Quaternion, Vector2, Vector3},
     DrawMesh, Mesh,
 };
 
 use super::{
     BlockType, CHUNK_HEIGHT, CHUNK_WIDTH, FACE_BACK, FACE_BOTTOM, FACE_FRONT, FACE_LEFT,
-    FACE_RIGHT, FACE_TOP, INDEX_MAP, NORMAL_MAP, VERTEX_MAP,
+    FACE_RIGHT, FACE_TOP, INDEX_MAP, NORMAL_MAP, TEXTURE_MAP, TEX_X_STEP, VERTEX_MAP,
 };
 
 #[derive(Copy, Clone, Debug)]
@@ -30,26 +30,38 @@ pub struct Chunk {
     /// The mesh for the chunk
     mesh: Option<Mesh>,
 
-    /// The model matrix telling the GPU how to render this chunk
-    model_matrix: Matrix4<f32>,
-
     /// What state the chunks is in, this determines how this chunk is treated in the world
     state: ChunkState,
 
     /// 1D Array of all blocks in this chunk
     blocks: Vec<BlockType>,
+
+    /// Tells the GPU how to render the object
+    uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
 }
 
 impl Chunk {
     /// Create a new chunk, this only performs the bare minimum in order to maximise
     /// parallel processing later on
-    pub fn new(position: Vector3<f32>) -> Self {
+    pub fn new(position: Vector3<f32>, renderer: &vesta::Renderer) -> Self {
+        let rotation: Quaternion<f32> = Quaternion::new(0.0, 0.0, 0.0, 0.0);
+        let model = Matrix4::from_translation(position) * Matrix4::from(rotation);
+        let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
+
+        let uniform_data = vesta::ModelUniform { model, normal };
+        let uniform_buffer = vesta::UniformBuffer::new(
+            "C-Body Uniform Buffer",
+            vesta::wgpu::ShaderStage::VERTEX,
+            uniform_data,
+            &renderer.device,
+        );
+
         Self {
             position,
             mesh: None,
-            model_matrix: Matrix4::from_translation(position),
             state: ChunkState::Created,
             blocks: vec![0; (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT) as usize],
+            uniform_buffer,
         }
     }
 
@@ -105,18 +117,27 @@ impl Chunk {
         for x in 0..CHUNK_WIDTH {
             for y in 0..CHUNK_HEIGHT {
                 for z in 0..CHUNK_WIDTH {
+                    let pos = Vector3::new(x as f32, y as f32, z as f32);
+
                     let block_type = self.get_block(x, y, z);
                     if block_type == 0 {
                         continue;
                     }
 
+                    let front_tex = Vector2::new(TEX_X_STEP * 0.0, 0.0);
+                    let back_tex = Vector2::new(TEX_X_STEP * 2.0, 0.0);
+                    let left_tex = Vector2::new(TEX_X_STEP * 4.0, 0.0);
+                    let right_tex = Vector2::new(TEX_X_STEP * 1.0, 0.0);
+                    let top_tex = Vector2::new(TEX_X_STEP * 3.0, 0.0);
+                    let bottom_tex = Vector2::new(TEX_X_STEP * 5.0, 0.0);
+
                     // Front Face
                     if true {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
-                                VERTEX_MAP[FACE_FRONT][i],
+                                pos + VERTEX_MAP[FACE_FRONT][i],
                                 NORMAL_MAP[FACE_FRONT][i],
-                                Vector2::new(0.0, 0.0),
+                                front_tex + TEXTURE_MAP[FACE_FRONT][i],
                             ));
                         }
 
@@ -128,12 +149,12 @@ impl Chunk {
                     }
 
                     // Back Face
-                    if false {
+                    if true {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
-                                VERTEX_MAP[FACE_BACK][i],
+                                pos + VERTEX_MAP[FACE_BACK][i],
                                 NORMAL_MAP[FACE_BACK][i],
-                                Vector2::new(0.0, 0.0),
+                                back_tex + TEXTURE_MAP[FACE_BACK][i],
                             ));
                         }
 
@@ -145,12 +166,12 @@ impl Chunk {
                     }
 
                     // Left Face
-                    if false {
+                    if true {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
-                                VERTEX_MAP[FACE_LEFT][i],
+                                pos + VERTEX_MAP[FACE_LEFT][i],
                                 NORMAL_MAP[FACE_LEFT][i],
-                                Vector2::new(0.0, 0.0),
+                                left_tex + TEXTURE_MAP[FACE_LEFT][i],
                             ));
                         }
 
@@ -162,12 +183,12 @@ impl Chunk {
                     }
 
                     // Right Face
-                    if false {
+                    if true {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
-                                VERTEX_MAP[FACE_RIGHT][i],
+                                pos + VERTEX_MAP[FACE_RIGHT][i],
                                 NORMAL_MAP[FACE_RIGHT][i],
-                                Vector2::new(0.0, 0.0),
+                                right_tex + TEXTURE_MAP[FACE_RIGHT][i],
                             ));
                         }
 
@@ -179,12 +200,12 @@ impl Chunk {
                     }
 
                     // Top Face
-                    if false {
+                    if true {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
-                                VERTEX_MAP[FACE_TOP][i],
+                                pos + VERTEX_MAP[FACE_TOP][i],
                                 NORMAL_MAP[FACE_TOP][i],
-                                Vector2::new(0.0, 0.0),
+                                top_tex + TEXTURE_MAP[FACE_TOP][i],
                             ));
                         }
 
@@ -196,12 +217,12 @@ impl Chunk {
                     }
 
                     // Bottom Face
-                    if false {
+                    if true {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
-                                VERTEX_MAP[FACE_BOTTOM][i],
+                                pos + VERTEX_MAP[FACE_BOTTOM][i],
                                 NORMAL_MAP[FACE_BOTTOM][i],
-                                Vector2::new(0.0, 0.0),
+                                bottom_tex + TEXTURE_MAP[FACE_BOTTOM][i],
                             ));
                         }
 
@@ -215,7 +236,7 @@ impl Chunk {
             }
         }
 
-        self.mesh = Some(Mesh::new(vertices, indices, &renderer.device));
+        self.mesh = Some(renderer.create_mesh(vertices, indices));
         self.state = ChunkState::Loaded;
     }
 
@@ -237,9 +258,7 @@ impl Chunk {
             return;
         }
 
-        // TODO: Bind
-        //render_pass.set_bind_group(1, &self.camera.uniform_buffer.bind_group, &[]);
-
+        render_pass.set_bind_group(1, &self.uniform_buffer.bind_group, &[]);
         render_pass.draw_mesh(self.mesh.as_ref().unwrap());
     }
 

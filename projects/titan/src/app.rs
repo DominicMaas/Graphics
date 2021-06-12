@@ -1,5 +1,6 @@
 use vesta::{
     cgmath::{num_traits::FloatConst, Vector3},
+    imgui::{self, im_str},
     winit::{
         dpi::PhysicalSize,
         event::{MouseButton, VirtualKeyCode},
@@ -13,6 +14,7 @@ pub struct App {
     camera: vesta::Camera,
     camera_controller: vesta::CameraControllerTitan,
     chunk: Chunk,
+    block_map_texture: vesta::Texture,
 }
 
 impl vesta::VestaApp for App {
@@ -68,7 +70,15 @@ impl vesta::VestaApp for App {
 
         let camera_controller = vesta::CameraControllerTitan::new();
 
-        let chunk = Chunk::new(Vector3::new(0.0, 0.0, 0.0)); // Temp
+        let chunk = Chunk::new(Vector3::new(0.0, 0.0, 0.0), &engine.renderer); // Temp
+
+        let block_map_texture = engine
+            .renderer
+            .create_texture_from_bytes(
+                include_bytes!("res/img/block_map.png"),
+                Some("res/img/block_map.png"),
+            )
+            .unwrap();
 
         // Init the engine
         Self {
@@ -76,6 +86,7 @@ impl vesta::VestaApp for App {
             camera,
             camera_controller,
             chunk,
+            block_map_texture,
         }
     }
 
@@ -86,6 +97,7 @@ impl vesta::VestaApp for App {
     ) {
         render_pass.set_pipeline(&self.chunk_render_pipeline);
         render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
+        render_pass.set_bind_group(2, &self.block_map_texture.bind_group.as_ref().unwrap(), &[]);
 
         self.chunk.render(render_pass, engine);
     }
@@ -121,5 +133,26 @@ impl vesta::VestaApp for App {
     fn resize(&mut self, size: PhysicalSize<u32>, _engine: &vesta::Engine) {
         // The screen projection needs to be updated
         self.camera.projection.resize(size.width, size.height);
+    }
+
+    fn render_ui(&mut self, ui: &imgui::Ui, _engine: &vesta::Engine) {
+        let cam = &self.camera;
+        let window = vesta::imgui::Window::new(im_str!("Toolbox"));
+        window
+            .size([300.0, 300.0], vesta::imgui::Condition::FirstUseEver)
+            .build(&ui, || {
+                let cg = ui.begin_group();
+                ui.text(vesta::imgui::im_str!("Camera:"));
+                ui.text(vesta::imgui::im_str!(
+                    "Position: {:.2}, {:.2}, {:.2}",
+                    cam.position.x,
+                    cam.position.y,
+                    cam.position.z
+                ));
+                ui.text(vesta::imgui::im_str!("Pitch: {:.2} rad", cam.pitch.0));
+                ui.text(vesta::imgui::im_str!("Yaw: {:.2} rad", cam.yaw.0));
+
+                cg.end(&ui);
+            });
     }
 }
