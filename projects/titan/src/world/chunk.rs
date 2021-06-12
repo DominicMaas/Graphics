@@ -3,6 +3,8 @@ use vesta::{
     DrawMesh, Mesh,
 };
 
+use crate::world::Generator;
+
 use super::{
     BlockType, CHUNK_HEIGHT, CHUNK_WIDTH, FACE_BACK, FACE_BOTTOM, FACE_FRONT, FACE_LEFT,
     FACE_RIGHT, FACE_TOP, INDEX_MAP, NORMAL_MAP, TEXTURE_MAP, TEX_X_STEP, VERTEX_MAP,
@@ -38,12 +40,15 @@ pub struct Chunk {
 
     /// Tells the GPU how to render the object
     uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
+
+    /// Tells the chunk how to construct itself
+    generator: Generator,
 }
 
 impl Chunk {
     /// Create a new chunk, this only performs the bare minimum in order to maximise
     /// parallel processing later on
-    pub fn new(position: Vector3<f32>, renderer: &vesta::Renderer) -> Self {
+    pub fn new(position: Vector3<f32>, seed: u32, renderer: &vesta::Renderer) -> Self {
         let rotation: Quaternion<f32> = Quaternion::new(0.0, 0.0, 0.0, 0.0);
         let model = Matrix4::from_translation(position) * Matrix4::from(rotation);
         let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
@@ -56,12 +61,15 @@ impl Chunk {
             &renderer.device,
         );
 
+        let generator = Generator::new(seed, 0.0, 0, 0.0, 0.0);
+
         Self {
             position,
             mesh: None,
             state: ChunkState::Created,
             blocks: vec![0; (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT) as usize],
             uniform_buffer,
+            generator,
         }
     }
 
@@ -73,10 +81,9 @@ impl Chunk {
         for x in 0..CHUNK_WIDTH {
             for y in 0..CHUNK_HEIGHT {
                 for z in 0..CHUNK_WIDTH {
-                    let _global_pos = Vector3::new(x as f32, y as f32, z as f32) + self.position;
-
-                    // For now set everyting as 1
-                    self.set_block(x, y, z, 1);
+                    let global_pos = Vector3::new(x as f32, y as f32, z as f32) + self.position;
+                    let block_type = self.generator.get_theoretical_block_type(global_pos);
+                    self.set_block(x, y, z, block_type);
                 }
             }
         }
@@ -119,6 +126,11 @@ impl Chunk {
                 for z in 0..CHUNK_WIDTH {
                     let pos = Vector3::new(x as f32, y as f32, z as f32);
 
+                    // We need signed integers for transparency checks
+                    let ix = x as i32;
+                    let iy = y as i32;
+                    let iz = z as i32;
+
                     let block_type = self.get_block(x, y, z);
                     if block_type == 0 {
                         continue;
@@ -132,7 +144,7 @@ impl Chunk {
                     let bottom_tex = Vector2::new(TEX_X_STEP * 5.0, 0.0);
 
                     // Front Face
-                    if true {
+                    if self.is_transparent(ix, iy, iz + 1) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_FRONT][i],
@@ -149,7 +161,7 @@ impl Chunk {
                     }
 
                     // Back Face
-                    if true {
+                    if self.is_transparent(ix, iy, iz - 1) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_BACK][i],
@@ -166,7 +178,7 @@ impl Chunk {
                     }
 
                     // Left Face
-                    if true {
+                    if self.is_transparent(ix - 1, iy, iz) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_LEFT][i],
@@ -183,7 +195,7 @@ impl Chunk {
                     }
 
                     // Right Face
-                    if true {
+                    if self.is_transparent(ix + 1, iy, iz) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_RIGHT][i],
@@ -200,7 +212,7 @@ impl Chunk {
                     }
 
                     // Top Face
-                    if true {
+                    if self.is_transparent(ix, iy + 1, iz) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_TOP][i],
@@ -217,7 +229,7 @@ impl Chunk {
                     }
 
                     // Bottom Face
-                    if true {
+                    if self.is_transparent(ix, iy - 1, iz) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_BOTTOM][i],
@@ -297,7 +309,31 @@ impl Chunk {
         }
     }
 
+    fn get_block_type(&self, x: i32, y: i32, z: i32) -> BlockType {
+        // Above the max possible chunk
+        if y >= CHUNK_HEIGHT as i32 {
+            return 0;
+        }
+
+        // Outside of this chunk
+        if (x < 0) || (z < 0) || (x >= CHUNK_WIDTH as i32) || (z >= CHUNK_WIDTH as i32) {
+            return 0; // For now, always 0
+        }
+
+        // Get the block type within the chunk
+        return self.get_block(x as u32, y as u32, z as u32);
+    }
+
     pub fn get_state(&self) -> ChunkState {
         self.state
+    }
+
+    fn is_transparent(&self, x: i32, y: i32, z: i32) -> bool {
+        // Never render the bottom face of the world
+        if y < 0 {
+            return true; // TODO: make false
+        }
+
+        return self.get_block_type(x, y, z) == 0;
     }
 }

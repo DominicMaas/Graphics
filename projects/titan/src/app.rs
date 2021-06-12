@@ -70,7 +70,7 @@ impl vesta::VestaApp for App {
 
         let camera_controller = vesta::CameraControllerTitan::new();
 
-        let chunk = Chunk::new(Vector3::new(0.0, 0.0, 0.0), &engine.renderer); // Temp
+        let chunk = Chunk::new(Vector3::new(0.0, 0.0, 0.0), 453445254, &engine.renderer); // Temp
 
         let block_map_texture = engine
             .renderer
