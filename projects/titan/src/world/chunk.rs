@@ -136,12 +136,13 @@ impl Chunk {
                         continue;
                     }
 
-                    let front_tex = Vector2::new(TEX_X_STEP * 0.0, 0.0);
-                    let back_tex = Vector2::new(TEX_X_STEP * 2.0, 0.0);
-                    let left_tex = Vector2::new(TEX_X_STEP * 4.0, 0.0);
+                    // TODO: Fancy Texture map thing (maybe from file?)
+                    let front_tex = Vector2::new(TEX_X_STEP * 1.0, 0.0);
+                    let back_tex = Vector2::new(TEX_X_STEP * 1.0, 0.0);
+                    let left_tex = Vector2::new(TEX_X_STEP * 1.0, 0.0);
                     let right_tex = Vector2::new(TEX_X_STEP * 1.0, 0.0);
-                    let top_tex = Vector2::new(TEX_X_STEP * 3.0, 0.0);
-                    let bottom_tex = Vector2::new(TEX_X_STEP * 5.0, 0.0);
+                    let top_tex = Vector2::new(TEX_X_STEP * 2.0, 0.0);
+                    let bottom_tex = Vector2::new(TEX_X_STEP * 0.0, 0.0);
 
                     // Front Face
                     if self.is_transparent(ix, iy, iz + 1) {

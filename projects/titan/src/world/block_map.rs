@@ -9,7 +9,7 @@ pub const FACE_RIGHT: BlockFace = 3;
 pub const FACE_TOP: BlockFace = 4;
 pub const FACE_BOTTOM: BlockFace = 5;
 
-pub const TEX_X_STEP: f32 = 1.0 / 6.0;
+pub const TEX_X_STEP: f32 = 1.0 / 16.0;
 pub const TEX_Y_STEP: f32 = 1.0;
 
 pub const TEXTURE_MAP: [[Vector2<f32>; 4]; 6] = [
