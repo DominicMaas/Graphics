@@ -1,5 +1,5 @@
 use vesta::{
-    cgmath::{num_traits::FloatConst, Vector3},
+    cgmath::{num_traits::FloatConst, SquareMatrix, Vector3, Vector4},
     imgui::{self, im_str},
     winit::{
         dpi::PhysicalSize,
@@ -7,10 +7,11 @@ use vesta::{
     },
 };
 
-use crate::world::Chunk;
+use crate::{sky_shader::SkyShader, world::Chunk};
 
 pub struct App {
     chunk_render_pipeline: vesta::wgpu::RenderPipeline,
+    sky_shader: SkyShader,
     camera: vesta::Camera,
     camera_controller: vesta::CameraControllerTitan,
     chunk: Chunk,
@@ -80,9 +81,12 @@ impl vesta::VestaApp for App {
             )
             .unwrap();
 
+        let sky_shader = SkyShader::new(&engine);
+
         // Init the engine
         Self {
             chunk_render_pipeline,
+            sky_shader,
             camera,
             camera_controller,
             chunk,
@@ -100,6 +104,8 @@ impl vesta::VestaApp for App {
         render_pass.set_bind_group(2, &self.block_map_texture.bind_group.as_ref().unwrap(), &[]);
 
         self.chunk.render(render_pass, engine);
+
+        self.sky_shader.render(render_pass, engine);
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {
@@ -119,6 +125,16 @@ impl vesta::VestaApp for App {
 
         self.camera.update_uniforms(&engine.renderer);
 
+        self.sky_shader.uniform_buffer.data.view = self.camera.calc_matrix();
+        self.sky_shader.uniform_buffer.data.cam_pos = Vector4::new(
+            self.camera.position.x,
+            self.camera.position.y,
+            self.camera.position.z,
+            0.0,
+        );
+
+        self.sky_shader.update(&engine.renderer);
+
         // Add ability to escape out of camera
         if engine.io.keyboard.get_key_down(VirtualKeyCode::Escape) && engine.is_cursor_captured() {
             engine.set_cursor_captured(false);
@@ -130,9 +146,15 @@ impl vesta::VestaApp for App {
         }
     }
 
-    fn resize(&mut self, size: PhysicalSize<u32>, _engine: &vesta::Engine) {
+    fn resize(&mut self, size: PhysicalSize<u32>, engine: &vesta::Engine) {
         // The screen projection needs to be updated
         self.camera.projection.resize(size.width, size.height);
+
+        self.sky_shader.uniform_buffer.data.proj = self.camera.projection.calc_matrix();
+        self.sky_shader.uniform_buffer.data.proj_inv =
+            self.camera.projection.calc_matrix().invert().unwrap();
+
+        self.sky_shader.update(&engine.renderer);
     }
 
     fn render_ui(&mut self, ui: &imgui::Ui, _engine: &vesta::Engine) {

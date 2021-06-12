@@ -61,7 +61,7 @@ impl Camera {
     }
 
     /// Calculate the view matrix for the camera
-    fn calc_matrix(&self) -> cgmath::Matrix4<f32> {
+    pub fn calc_matrix(&self) -> cgmath::Matrix4<f32> {
         Matrix4::look_at_rh(
             Point3::from_vec(self.position),
             Point3::from_vec(self.position + self.front),

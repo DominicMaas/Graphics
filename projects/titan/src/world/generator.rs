@@ -45,10 +45,7 @@ impl Generator {
             .noise_func
             .get([position.x as f64, position.y as f64, position.z as f64]);
 
-        v = clamp(v, 0.0, 1.0);
         v += 10.0;
-
-        println!("V: {}", v);
 
         if v > position.y as f64 {
             return 1;

@@ -165,6 +165,9 @@ impl Engine {
         // First initllize all the apps resources (shaders, pipelines etc.)
         let mut app = V::init(&mut engine);
 
+        // Trigger a resize straight away to ensure any sizing code is run
+        app.resize(window_size, &engine);
+
         event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Poll;
 

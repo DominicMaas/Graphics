@@ -1,4 +1,5 @@
 mod app;
+mod sky_shader;
 mod world;
 
 use app::App;

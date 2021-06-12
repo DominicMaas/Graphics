@@ -9,6 +9,8 @@ pub struct RenderPipelineBuilder<'a> {
     pipeline_name: &'a str,
     primitive_topology: wgpu::PrimitiveTopology,
     cull_mode: Option<wgpu::Face>,
+    front_face: wgpu::FrontFace,
+    vertex_buffer_layout: Option<&'a [wgpu::VertexBufferLayout<'a>]>,
 }
 
 impl<'a> RenderPipelineBuilder<'a> {
@@ -25,6 +27,8 @@ impl<'a> RenderPipelineBuilder<'a> {
             pipeline_name,
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
             cull_mode: Some(wgpu::Face::Back),
+            front_face: wgpu::FrontFace::Ccw,
+            vertex_buffer_layout: None,
         }
     }
 
@@ -64,6 +68,15 @@ impl<'a> RenderPipelineBuilder<'a> {
         self
     }
 
+    #[allow(dead_code)]
+    pub fn with_vertex_buffer_layout(
+        &mut self,
+        layout: &'a [wgpu::VertexBufferLayout<'a>],
+    ) -> &mut Self {
+        self.vertex_buffer_layout = Some(layout);
+        self
+    }
+
     pub fn build(&mut self, device: &wgpu::Device) -> Result<wgpu::RenderPipeline> {
         // Ensure layout
         if self.layout.is_none() {
@@ -84,6 +97,14 @@ impl<'a> RenderPipelineBuilder<'a> {
                 .context("No shader source supplied!")?,
         );
 
+        // I really don't like this, but I don't know how to do this correctly in rust,
+        // may need to rewrite this entire class...
+        let mut buffers: &[wgpu::VertexBufferLayout] = &[crate::Vertex::layout()];
+        if self.vertex_buffer_layout.is_some() {
+            // Use the provided
+            buffers = self.vertex_buffer_layout.unwrap()
+        }
+
         // Create the actual pipeline
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some(self.pipeline_name),
@@ -91,12 +112,12 @@ impl<'a> RenderPipelineBuilder<'a> {
             vertex: wgpu::VertexState {
                 module: &shader_module,
                 entry_point: self.vertex_shader_entry,
-                buffers: &[crate::Vertex::layout()],
+                buffers,
             },
             primitive: wgpu::PrimitiveState {
                 topology: self.primitive_topology,
                 strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw, // counter clockwise order: top, bottom left, bottom right etc.
+                front_face: self.front_face,
                 cull_mode: self.cull_mode,
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
