@@ -47,6 +47,6 @@ fn main([[builtin(vertex_index)]] vertex_index: u32) -> VertexOutput {
 
 [[stage(fragment)]]
 fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-    return vec4<f32>(1.0, 1.0, 1.0, 1.0);
+    return vec4<f32>(in.uv.x, in.uv.y, in.uv.z, 1.0);
 }
 

@@ -11,6 +11,8 @@ pub struct RenderPipelineBuilder<'a> {
     cull_mode: Option<wgpu::Face>,
     front_face: wgpu::FrontFace,
     vertex_buffer_layout: Option<&'a [wgpu::VertexBufferLayout<'a>]>,
+    depth_write_enabled: bool,
+    depth_compare: wgpu::CompareFunction,
 }
 
 impl<'a> RenderPipelineBuilder<'a> {
@@ -29,6 +31,8 @@ impl<'a> RenderPipelineBuilder<'a> {
             cull_mode: Some(wgpu::Face::Back),
             front_face: wgpu::FrontFace::Ccw,
             vertex_buffer_layout: None,
+            depth_write_enabled: true,
+            depth_compare: wgpu::CompareFunction::Less,
         }
     }
 
@@ -69,11 +73,29 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
 
     #[allow(dead_code)]
+    pub fn with_front_face(&mut self, front_face: wgpu::FrontFace) -> &mut Self {
+        self.front_face = front_face;
+        self
+    }
+
+    #[allow(dead_code)]
     pub fn with_vertex_buffer_layout(
         &mut self,
         layout: &'a [wgpu::VertexBufferLayout<'a>],
     ) -> &mut Self {
         self.vertex_buffer_layout = Some(layout);
+        self
+    }
+
+    #[allow(dead_code)]
+    pub fn with_depth_write_enabled(&mut self, depth_write_enabled: bool) -> &mut Self {
+        self.depth_write_enabled = depth_write_enabled;
+        self
+    }
+
+    #[allow(dead_code)]
+    pub fn with_depth_compare(&mut self, depth_compare: wgpu::CompareFunction) -> &mut Self {
+        self.depth_compare = depth_compare;
         self
     }
 
@@ -128,8 +150,8 @@ impl<'a> RenderPipelineBuilder<'a> {
             },
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: crate::texture::Texture::DEPTH_FORMAT,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
+                depth_write_enabled: self.depth_write_enabled,
+                depth_compare: self.depth_compare,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),

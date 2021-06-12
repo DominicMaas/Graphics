@@ -46,6 +46,10 @@ impl SkyShader {
         ))
         .with_layout(&layout)
         .with_vertex_buffer_layout(&[])
+        .with_depth_write_enabled(false)
+        .with_depth_compare(vesta::wgpu::CompareFunction::LessEqual)
+        .with_front_face(vesta::wgpu::FrontFace::Cw)
+        .with_cull_mode(None)
         .build(&engine.renderer.device)
         .unwrap();
 
