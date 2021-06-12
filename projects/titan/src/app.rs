@@ -8,14 +8,17 @@ use vesta::{
     TextureConfig,
 };
 
-use crate::{sky_shader::SkyShader, world::Chunk};
+use crate::{
+    sky_shader::SkyShader,
+    world::{Chunk, CHUNK_WIDTH},
+};
 
 pub struct App {
     chunk_render_pipeline: vesta::wgpu::RenderPipeline,
     sky_shader: SkyShader,
     camera: vesta::Camera,
     camera_controller: vesta::CameraControllerTitan,
-    chunk: Chunk,
+    chunks: Vec<Chunk>,
     block_map_texture: vesta::Texture,
 }
 
@@ -72,7 +75,18 @@ impl vesta::VestaApp for App {
 
         let camera_controller = vesta::CameraControllerTitan::new();
 
-        let chunk = Chunk::new(Vector3::new(0.0, 0.0, 0.0), 453445254, &engine.renderer); // Temp
+        let mut chunks = Vec::new();
+
+        for x in 0..5 {
+            for z in 0..5 {
+                let chunk = Chunk::new(
+                    Vector3::new((x * CHUNK_WIDTH) as f32, 0.0, (z * CHUNK_WIDTH) as f32),
+                    453445254,
+                    &engine.renderer,
+                ); // Temp
+                chunks.push(chunk);
+            }
+        }
 
         let block_map_texture = engine
             .renderer
@@ -96,7 +110,7 @@ impl vesta::VestaApp for App {
             sky_shader,
             camera,
             camera_controller,
-            chunk,
+            chunks,
             block_map_texture,
         }
     }
@@ -110,17 +124,21 @@ impl vesta::VestaApp for App {
         render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
         render_pass.set_bind_group(2, &self.block_map_texture.bind_group.as_ref().unwrap(), &[]);
 
-        self.chunk.render(render_pass, engine);
+        for chunk in self.chunks.iter_mut() {
+            chunk.render(render_pass, engine);
+        }
 
         self.sky_shader.render(render_pass, engine);
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {
-        // Process Chunk
-        match self.chunk.get_state() {
-            crate::world::ChunkState::Created => self.chunk.load(),
-            crate::world::ChunkState::Dirty => self.chunk.rebuild(&engine.renderer),
-            _ => {}
+        // Process Chunks
+        for chunk in self.chunks.iter_mut() {
+            match chunk.get_state() {
+                crate::world::ChunkState::Created => chunk.load(),
+                crate::world::ChunkState::Dirty => chunk.rebuild(&engine.renderer),
+                _ => {}
+            }
         }
 
         self.camera_controller.process_input(
