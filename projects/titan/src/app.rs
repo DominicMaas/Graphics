@@ -5,6 +5,7 @@ use vesta::{
         dpi::PhysicalSize,
         event::{MouseButton, VirtualKeyCode},
     },
+    TextureConfig,
 };
 
 use crate::{sky_shader::SkyShader, world::Chunk};
@@ -78,6 +79,12 @@ impl vesta::VestaApp for App {
             .create_texture_from_bytes(
                 include_bytes!("res/img/block_map.png"),
                 Some("res/img/block_map.png"),
+                TextureConfig {
+                    sampler_mag_filter: vesta::wgpu::FilterMode::Nearest,
+                    sampler_min_filter: vesta::wgpu::FilterMode::Nearest,
+                    sampler_mipmap_filter: vesta::wgpu::FilterMode::Nearest,
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -159,6 +166,8 @@ impl vesta::VestaApp for App {
 
     fn render_ui(&mut self, ui: &imgui::Ui, _engine: &vesta::Engine) {
         let cam = &self.camera;
+        let sky_shader = &mut self.sky_shader;
+
         let window = vesta::imgui::Window::new(im_str!("Toolbox"));
         window
             .size([300.0, 300.0], vesta::imgui::Condition::FirstUseEver)
@@ -173,6 +182,12 @@ impl vesta::VestaApp for App {
                 ));
                 ui.text(vesta::imgui::im_str!("Pitch: {:.2} rad", cam.pitch.0));
                 ui.text(vesta::imgui::im_str!("Yaw: {:.2} rad", cam.yaw.0));
+
+                ui.separator();
+
+                imgui::Slider::new(im_str!("Sky Scatter Amount"))
+                    .range(0.0..=1.0)
+                    .build(&ui, &mut sky_shader.frag_uniform_buffer.data.scatter_amount);
 
                 cg.end(&ui);
             });

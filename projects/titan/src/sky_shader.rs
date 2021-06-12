@@ -16,9 +16,19 @@ pub struct SkyUniform {
 unsafe impl bytemuck::Zeroable for SkyUniform {}
 unsafe impl bytemuck::Pod for SkyUniform {}
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct SkyFragUniform {
+    pub scatter_amount: f32,
+}
+
+unsafe impl bytemuck::Zeroable for SkyFragUniform {}
+unsafe impl bytemuck::Pod for SkyFragUniform {}
+
 pub struct SkyShader {
     render_pipeline: vesta::wgpu::RenderPipeline,
     pub uniform_buffer: UniformBuffer<SkyUniform>,
+    pub frag_uniform_buffer: UniformBuffer<SkyFragUniform>,
 }
 
 impl SkyShader {
@@ -29,10 +39,16 @@ impl SkyShader {
                 .device
                 .create_pipeline_layout(&vesta::wgpu::PipelineLayoutDescriptor {
                     label: Some("Sky Render Pipeline Layout"),
-                    bind_group_layouts: &[&vesta::UniformBufferUtils::create_bind_group_layout(
-                        vesta::wgpu::ShaderStage::VERTEX,
-                        &engine.renderer.device,
-                    )],
+                    bind_group_layouts: &[
+                        &vesta::UniformBufferUtils::create_bind_group_layout(
+                            vesta::wgpu::ShaderStage::VERTEX,
+                            &engine.renderer.device,
+                        ),
+                        &vesta::UniformBufferUtils::create_bind_group_layout(
+                            vesta::wgpu::ShaderStage::FRAGMENT,
+                            &engine.renderer.device,
+                        ),
+                    ],
                     push_constant_ranges: &[],
                 });
 
@@ -55,7 +71,7 @@ impl SkyShader {
 
         // The uniform buffer
         let uniform_buffer = vesta::UniformBuffer::new(
-            "Sky Uniform Buffer",
+            "Sky Uniform Buffer (Vertex)",
             vesta::wgpu::ShaderStage::VERTEX,
             SkyUniform {
                 proj: Matrix4::identity(),
@@ -66,14 +82,26 @@ impl SkyShader {
             &engine.renderer.device,
         );
 
+        // The uniform buffer
+        let frag_uniform_buffer = vesta::UniformBuffer::new(
+            "Sky Uniform Buffer (Fragment)",
+            vesta::wgpu::ShaderStage::FRAGMENT,
+            SkyFragUniform {
+                scatter_amount: 0.0,
+            },
+            &engine.renderer.device,
+        );
+
         Self {
             render_pipeline,
             uniform_buffer,
+            frag_uniform_buffer,
         }
     }
 
     pub fn update(&self, renderer: &vesta::Renderer) {
         renderer.write_uniform_buffer(&self.uniform_buffer);
+        renderer.write_uniform_buffer(&self.frag_uniform_buffer);
     }
 
     pub fn render<'a>(
@@ -83,6 +111,7 @@ impl SkyShader {
     ) {
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.uniform_buffer.bind_group, &[]);
+        render_pass.set_bind_group(1, &self.frag_uniform_buffer.bind_group, &[]);
         render_pass.draw(0..3, 0..1);
     }
 }

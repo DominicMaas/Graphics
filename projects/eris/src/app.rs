@@ -91,15 +91,27 @@ impl vesta::VestaApp for App {
         // Bodies Setup
         let sun_texture = engine
             .renderer
-            .create_texture_from_bytes(include_bytes!("images/sun.png"), Some("sun.png"))
+            .create_texture_from_bytes(
+                include_bytes!("images/sun.png"),
+                Some("sun.png"),
+                Default::default(),
+            )
             .unwrap();
         let earth_texture = engine
             .renderer
-            .create_texture_from_bytes(include_bytes!("images/earth.png"), Some("earth.png"))
+            .create_texture_from_bytes(
+                include_bytes!("images/earth.png"),
+                Some("earth.png"),
+                Default::default(),
+            )
             .unwrap();
         let moon_texture = engine
             .renderer
-            .create_texture_from_bytes(include_bytes!("images/earth.png"), Some("earth.png"))
+            .create_texture_from_bytes(
+                include_bytes!("images/earth.png"),
+                Some("earth.png"),
+                Default::default(),
+            )
             .unwrap();
 
         let mut bodies = Vec::new();

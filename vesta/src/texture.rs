@@ -5,6 +5,28 @@ use image::GenericImageView;
 
 use crate::renderer::Renderer;
 
+pub struct TextureConfig {
+    pub sampler_address_mode_u: wgpu::AddressMode,
+    pub sampler_address_mode_v: wgpu::AddressMode,
+    pub sampler_address_mode_w: wgpu::AddressMode,
+    pub sampler_mag_filter: wgpu::FilterMode,
+    pub sampler_min_filter: wgpu::FilterMode,
+    pub sampler_mipmap_filter: wgpu::FilterMode,
+}
+
+impl Default for TextureConfig {
+    fn default() -> Self {
+        Self {
+            sampler_address_mode_u: wgpu::AddressMode::ClampToEdge,
+            sampler_address_mode_v: wgpu::AddressMode::ClampToEdge,
+            sampler_address_mode_w: wgpu::AddressMode::ClampToEdge,
+            sampler_mag_filter: wgpu::FilterMode::Linear,
+            sampler_min_filter: wgpu::FilterMode::Nearest,
+            sampler_mipmap_filter: wgpu::FilterMode::Nearest,
+        }
+    }
+}
+
 /// Represents a texture inside this application
 pub struct Texture {
     pub texture: wgpu::Texture,
@@ -14,16 +36,22 @@ pub struct Texture {
 }
 
 impl Renderer {
-    pub fn create_texture_from_bytes(&self, bytes: &[u8], label: Option<&str>) -> Result<Texture> {
-        Texture::from_bytes(&self.device, &self.queue, &bytes, label)
+    pub fn create_texture_from_bytes(
+        &self,
+        bytes: &[u8],
+        label: Option<&str>,
+        config: TextureConfig,
+    ) -> Result<Texture> {
+        Texture::from_bytes(&self.device, &self.queue, &bytes, label, config)
     }
 
     pub fn create_texture_from_image(
         &self,
         image: &image::DynamicImage,
         label: Option<&str>,
+        config: TextureConfig,
     ) -> Result<Texture> {
-        Texture::from_image(&self.device, &self.queue, &image, label)
+        Texture::from_image(&self.device, &self.queue, &image, label, config)
     }
 
     /// Create a depth texture. This is a special type of texture that can be used for the
@@ -43,9 +71,10 @@ impl Texture {
         queue: &wgpu::Queue,
         bytes: &[u8],
         label: Option<&str>,
+        config: TextureConfig,
     ) -> Result<Self> {
         let img = image::load_from_memory(bytes)?;
-        Self::from_image(device, queue, &img, label)
+        Self::from_image(device, queue, &img, label, config)
     }
 
     /// Create a texture from an image
@@ -54,6 +83,7 @@ impl Texture {
         queue: &wgpu::Queue,
         img: &image::DynamicImage,
         label: Option<&str>,
+        config: TextureConfig,
     ) -> Result<Self> {
         let rgba = img.as_rgba8().unwrap();
         let dimensions = img.dimensions();
@@ -90,12 +120,12 @@ impl Texture {
 
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::FilterMode::Nearest,
+            address_mode_u: config.sampler_address_mode_u,
+            address_mode_v: config.sampler_address_mode_v,
+            address_mode_w: config.sampler_address_mode_w,
+            mag_filter: config.sampler_mag_filter,
+            min_filter: config.sampler_min_filter,
+            mipmap_filter: config.sampler_mipmap_filter,
             ..Default::default()
         });
 

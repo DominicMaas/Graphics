@@ -224,7 +224,11 @@ impl Cube {
         );
 
         let texture = renderer
-            .create_texture_from_bytes(include_bytes!("square.png"), Some("square.png"))
+            .create_texture_from_bytes(
+                include_bytes!("square.png"),
+                Some("square.png"),
+                Default::default(),
+            )
             .unwrap();
 
         Self {

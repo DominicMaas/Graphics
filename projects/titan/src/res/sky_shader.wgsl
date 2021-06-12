@@ -15,8 +15,16 @@ struct Data {
     cam_pos: vec4<f32>;
 };
 
+[[block]]
+struct FragData {
+    scatter_amount: f32;
+};
+
 [[group(0), binding(0)]]
 var r_data: Data;
+
+[[group(1), binding(0)]]
+var frag_data: FragData;
 
 [[stage(vertex)]]
 fn main([[builtin(vertex_index)]] vertex_index: u32) -> VertexOutput {
@@ -41,12 +49,26 @@ fn main([[builtin(vertex_index)]] vertex_index: u32) -> VertexOutput {
     return out;
 }
 
-//mat4 modelViewMatrix = modelUBO.model * sceneUBO.view;
- //   vec3 position = mat3(modelViewMatrix) * inPosition.xyz;
-  //  gl_Position = (sceneUBO.proj * vec4( position, 0.0 )).xyzz;
+fn get_sky(uv: vec2<f32>, scatter: f32) -> vec3<f32>
+{
+    let atmosphere = 1.0 - uv.y; //sqrt(1.0 - uv.y);
+    let sky_color = vec3<f32>(0.2, 0.4, 0.8);
+    
+   // let scatter = pow(iMouse.y / iResolution.y,1.0 / 15.0);
+   // scatter = 1.0 - clamp(scatter,0.8,1.0);
+    
+    let scatterColor = mix(vec3<f32>(1.0), vec3<f32>(1.0,0.3,0.0) * 1.5, vec3<f32>(scatter, scatter, scatter));
+    
+    let val = atmosphere / 2.3;
+    return mix(sky_color, scatterColor, vec3<f32>(val, val, val));
+}
 
+//mat4 modelViewMatrix = modelUBO.model * sceneUBO.view;
 [[stage(fragment)]]
 fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-    return vec4<f32>(in.uv.x, in.uv.y, in.uv.z, 1.0);
+    
+    let sky = get_sky(in.uv.xy, frag_data.scatter_amount);
+    
+    return vec4<f32>(sky.x, sky.y, sky.z, 1.0);
 }
 
