@@ -38,7 +38,8 @@ fn main(in: VertexInput) -> VertexOutput {
     
     var out: VertexOutput;
     out.tex_coord = in.tex_coord;
-    out.position = u_camera.view_proj * u_model.model * vec4<f32>(in.position, 1.0); 
+    out.position = u_camera.view_proj * u_model.model * vec4<f32>(in.position, 1.0);
+    out.vertex_position = (u_model.model * vec4<f32>(in.position, 1.0)).xyz;
     return out;
 }
 
@@ -50,11 +51,53 @@ var u_diffuse_texture: texture_2d<f32>;
 [[group(2), binding(1)]]
 var u_sampler: sampler;
 
+
+
+fn get_fog(d: f32) -> f32
+{
+    let FogMax = 2000.0;
+    let FogMin = 200.0;
+
+    if (d >= FogMax) {
+        return 1.0;
+    }
+    
+    if (d <= FogMin) {
+        return 0.0;
+    }
+
+    return 1.0 - (FogMax - d) / (FogMax - FogMin);
+}
+
+fn apply_fog(rgb: vec3<f32>, d: f32, b: f32) -> vec3<f32> {    
+    let fog_amount = 1.0 - exp(-d * b);
+    let fog_color = vec3<f32>(0.5, 0.6, 0.7);
+    return mix(rgb, fog_color, vec3<f32>(fog_amount));
+}
+
 // Fragment Shader
 [[stage(fragment)]]
 fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-    return textureSample(u_diffuse_texture, u_sampler, in.tex_coord);
     
-    // we now have access to u_camera.view_pos
-    //return vec4<f32>(1.0, 0.0, 0.0, 0.0);
+   
+    
+    
+    let color = textureSample(u_diffuse_texture, u_sampler, in.tex_coord).xyz;    
+    
+    
+    
+    
+    // Ambient Lighting
+    let ambient_strength = 0.1;
+    let ambient_color = vec3<f32>(1.0) * ambient_strength;
+    
+    let color = color * ambient_color;
+    
+    // Fog
+    let d = abs(distance(u_camera.view_pos.xyz, in.vertex_position));
+    let fog_mix = apply_fog(color, d, 0.00007);
+    
+    // Gamma Correction
+    let gamma_correction = pow(fog_mix, vec3<f32>(1.0/2.2));
+    return vec4<f32>(gamma_correction, 1.0);    
 }
