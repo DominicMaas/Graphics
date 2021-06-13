@@ -9,11 +9,13 @@ pub mod texture;
 pub mod uniform_buffer;
 pub mod vertex;
 
+pub mod frustum;
 pub mod io;
 
 pub use camera::*;
 pub use config::*;
 pub use engine::*;
+pub use frustum::*;
 pub use mesh::*;
 pub use projections::*;
 pub use render_pipeline::*;

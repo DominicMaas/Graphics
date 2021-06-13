@@ -275,6 +275,10 @@ impl Chunk {
         render_pass.draw_mesh(self.mesh.as_ref().unwrap());
     }
 
+    pub fn get_position(&self) -> Vector3<f32> {
+        self.position
+    }
+
     // ----- Block Array Helpers ----- //
 
     /// Set the block type at the provided position and mark the chunk as dirty

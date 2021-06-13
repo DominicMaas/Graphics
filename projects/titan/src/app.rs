@@ -1,18 +1,18 @@
 use vesta::{
-    cgmath::{num_traits::FloatConst, SquareMatrix, Vector3, Vector4},
+    cgmath::{num_traits::FloatConst, Matrix4, SquareMatrix, Vector3, Vector4},
     imgui::{self, im_str},
     winit::{
         dpi::PhysicalSize,
         event::{MouseButton, VirtualKeyCode},
     },
-    TextureConfig,
+    IntersectType, TextureConfig,
 };
 
 use rand::Rng;
 
 use crate::{
     sky_shader::SkyShader,
-    world::{Chunk, CHUNK_WIDTH},
+    world::{Chunk, CHUNK_HEIGHT, CHUNK_WIDTH},
 };
 
 pub struct App {
@@ -133,8 +133,17 @@ impl vesta::VestaApp for App {
         render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
         render_pass.set_bind_group(2, &self.block_map_texture.bind_group.as_ref().unwrap(), &[]);
 
+        let frustum =
+            vesta::Frustum::new(self.camera.projection.calc_matrix() * self.camera.calc_matrix());
+
         for chunk in self.chunks.iter_mut() {
-            chunk.render(render_pass, engine);
+            if frustum.test_aabb(
+                chunk.get_position(),
+                chunk.get_position()
+                    + Vector3::new(CHUNK_WIDTH as f32, CHUNK_HEIGHT as f32, CHUNK_WIDTH as f32),
+            ) {
+                chunk.render(render_pass, engine);
+            }
         }
 
         self.sky_shader.render(render_pass, engine);
