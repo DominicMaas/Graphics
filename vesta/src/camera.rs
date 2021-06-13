@@ -1,5 +1,7 @@
 use cgmath::num_traits::FloatConst;
-use cgmath::{Angle, Deg, EuclideanSpace, InnerSpace, Matrix4, Point3, Rad, SquareMatrix, Vector3};
+use cgmath::{
+    Angle, Deg, EuclideanSpace, InnerSpace, Matrix4, Point3, Rad, SquareMatrix, Vector3, Vector4,
+};
 use std::f32::consts::FRAC_PI_2;
 use winit::event::VirtualKeyCode;
 
@@ -9,11 +11,61 @@ use crate::{Engine, Projection, UniformBuffer};
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct CameraUniform {
-    pub view_proj: cgmath::Matrix4<f32>, // 4x4 matrix
+    pub view_proj: Matrix4<f32>,
+    pub view_pos: Vector4<f32>,
 }
 
 unsafe impl bytemuck::Zeroable for CameraUniform {}
 unsafe impl bytemuck::Pod for CameraUniform {}
+
+pub struct CameraBuilder<'a> {
+    position: Vector3<f32>,
+    uniform_buffer_name: &'a str,
+    uniform_buffer_visibility: wgpu::ShaderStage,
+}
+
+impl<'a> CameraBuilder<'a> {
+    pub fn new() -> Self {
+        Self {
+            position: Vector3::new(0.0, 0.0, 0.0),
+            uniform_buffer_name: "None",
+            uniform_buffer_visibility: wgpu::ShaderStage::VERTEX,
+        }
+    }
+
+    /// The initial position to place the camera
+    pub fn with_position(&mut self, position: Vector3<f32>) -> &mut Self {
+        self.position = position;
+        self
+    }
+
+    /// Set a custom name for the uniform buffer
+    pub fn with_uniform_buffer_name(&mut self, name: &'a str) -> &mut Self {
+        self.uniform_buffer_name = name;
+        self
+    }
+
+    /// Set a custom visibility for the uniform buffer
+    pub fn with_uniform_buffer_visibility(&mut self, visibility: wgpu::ShaderStage) -> &mut Self {
+        self.uniform_buffer_visibility = visibility;
+        self
+    }
+
+    /// Build a camera with a projection and required device
+    pub fn build(
+        &mut self,
+        projection: impl Projection + 'static,
+        device: &wgpu::Device,
+    ) -> Camera {
+        Camera::new_internal(
+            self.position,
+            projection,
+            self.uniform_buffer_visibility,
+            self.uniform_buffer_name,
+            device,
+        )
+    }
+}
 
 // Holds the camera position, yaw and pitch
 pub struct Camera {
@@ -32,17 +84,20 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(
+    pub(crate) fn new_internal(
         position: Vector3<f32>,
         projection: impl Projection + 'static,
+        uniform_buffer_visibility: wgpu::ShaderStage,
+        uniform_buffer_name: &str,
         device: &wgpu::Device,
     ) -> Self {
         // The uniform buffer
         let uniform_buffer = UniformBuffer::new(
-            "Camera Uniform Buffer",
-            wgpu::ShaderStage::VERTEX,
+            uniform_buffer_name,
+            uniform_buffer_visibility,
             CameraUniform {
                 view_proj: Matrix4::identity(),
+                view_pos: Vector4::new(0.0, 0.0, 0.0, 0.0),
             },
             &device,
         );
@@ -60,6 +115,17 @@ impl Camera {
         }
     }
 
+    #[deprecated(note = "Use CameraBuilder instead")]
+    pub fn new(
+        position: Vector3<f32>,
+        projection: impl Projection + 'static,
+        device: &wgpu::Device,
+    ) -> Self {
+        CameraBuilder::new()
+            .with_position(position)
+            .build(projection, device)
+    }
+
     /// Calculate the view matrix for the camera
     pub fn calc_matrix(&self) -> cgmath::Matrix4<f32> {
         Matrix4::look_at_rh(
@@ -72,6 +138,8 @@ impl Camera {
     /// Update the uniforms for the camera, and write to the GPU
     pub fn update_uniforms(&mut self, renderer: &crate::Renderer) {
         self.uniform_buffer.data.view_proj = self.projection.calc_matrix() * self.calc_matrix();
+        self.uniform_buffer.data.view_pos =
+            Vector4::new(self.position.x, self.position.y, self.position.z, 1.0);
         renderer.write_uniform_buffer(&self.uniform_buffer);
     }
 

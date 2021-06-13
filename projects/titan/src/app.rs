@@ -1,11 +1,11 @@
 use vesta::{
-    cgmath::{num_traits::FloatConst, Matrix4, SquareMatrix, Vector3, Vector4},
+    cgmath::{num_traits::FloatConst, SquareMatrix, Vector3, Vector4},
     imgui::{self, im_str},
     winit::{
         dpi::PhysicalSize,
         event::{MouseButton, VirtualKeyCode},
     },
-    IntersectType, TextureConfig,
+    TextureConfig,
 };
 
 use rand::Rng;
@@ -37,7 +37,7 @@ impl vesta::VestaApp for App {
                     bind_group_layouts: &[
                         // Camera Uniform Buffer
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX,
+                            vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
                             &engine.renderer.device,
                         ),
                         // Chunk Uniform buffer
@@ -64,17 +64,21 @@ impl vesta::VestaApp for App {
         .unwrap();
 
         // Setup the main camera
-        let camera = vesta::Camera::new(
-            (0.0, 0.0, 0.0).into(),
-            vesta::PerspectiveProjection::new(
-                engine.get_window_size().width,
-                engine.get_window_size().height,
-                vesta::cgmath::Rad(70.0 / 180.0 * f32::PI()),
-                0.01,
-                1000.0,
-            ),
-            &engine.renderer.device,
-        );
+        let camera = vesta::CameraBuilder::new()
+            .with_position((0.0, 0.0, 0.0).into())
+            .with_uniform_buffer_visibility(
+                vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
+            )
+            .build(
+                vesta::PerspectiveProjection::new(
+                    engine.get_window_size().width,
+                    engine.get_window_size().height,
+                    vesta::cgmath::Rad(70.0 / 180.0 * f32::PI()),
+                    0.01,
+                    1000.0,
+                ),
+                &engine.renderer.device,
+            );
 
         let camera_controller = vesta::CameraControllerTitan::new();
 

@@ -115,39 +115,6 @@ impl Frustum {
         i * (9 - i) / 2 + j - 1
     }
 
-    // https://www.cse.chalmers.se/~uffe/vfc_bbox.pdf
-    pub fn test_aabb(&self, min: Vector3<f32>, max: Vector3<f32>) -> bool {
-        let points = [
-            Vector3::new(min.x, min.y, min.z),
-            Vector3::new(max.x, min.y, min.z),
-            Vector3::new(max.x, max.y, min.z),
-            Vector3::new(min.x, max.y, min.z),
-            // ---
-            Vector3::new(min.x, min.y, max.z),
-            Vector3::new(max.x, min.y, max.z),
-            Vector3::new(max.x, max.y, max.z),
-            Vector3::new(min.x, max.y, max.z),
-        ];
-
-        // For each plane
-        for i in 0..6 {
-            let mut inside = false;
-
-            for j in 0..8 {
-                if cgmath::dot(points[j], self.planes[i].xyz()) > 0.0 {
-                    inside = true;
-                    break;
-                }
-            }
-
-            if !inside {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     /// Sourced from here aparently: https://gist.github.com/podgorskiy/e698d18879588ada9014768e3e82a644
     /// https://iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
     pub fn is_box_visible(&self, min: Vector3<f32>, max: Vector3<f32>) -> bool {
