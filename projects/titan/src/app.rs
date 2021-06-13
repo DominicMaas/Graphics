@@ -22,6 +22,7 @@ pub struct App {
     camera_controller: vesta::CameraControllerTitan,
     chunks: Vec<Chunk>,
     block_map_texture: vesta::Texture,
+    rendered_chunks: usize,
 }
 
 impl vesta::VestaApp for App {
@@ -82,8 +83,8 @@ impl vesta::VestaApp for App {
         let mut rng = rand::thread_rng();
         let seed = rng.gen();
 
-        for x in -4..4 {
-            for z in -4..4 {
+        for x in 0..8 {
+            for z in 0..8 {
                 let chunk = Chunk::new(
                     Vector3::new(
                         (x as i32 * CHUNK_WIDTH as i32) as f32,
@@ -121,6 +122,7 @@ impl vesta::VestaApp for App {
             camera_controller,
             chunks,
             block_map_texture,
+            rendered_chunks: 0,
         }
     }
 
@@ -136,13 +138,16 @@ impl vesta::VestaApp for App {
         let frustum =
             vesta::Frustum::new(self.camera.projection.calc_matrix() * self.camera.calc_matrix());
 
+        self.rendered_chunks = 0;
+
         for chunk in self.chunks.iter_mut() {
-            if frustum.test_aabb(
+            if frustum.is_box_visible(
                 chunk.get_position(),
                 chunk.get_position()
                     + Vector3::new(CHUNK_WIDTH as f32, CHUNK_HEIGHT as f32, CHUNK_WIDTH as f32),
             ) {
                 chunk.render(render_pass, engine);
+                self.rendered_chunks += 1;
             }
         }
 
@@ -203,6 +208,7 @@ impl vesta::VestaApp for App {
     fn render_ui(&mut self, ui: &imgui::Ui, _engine: &vesta::Engine) {
         let cam = &self.camera;
         let sky_shader = &mut self.sky_shader;
+        let rendered_chunks = &self.rendered_chunks;
 
         let window = vesta::imgui::Window::new(im_str!("Toolbox"));
         window
@@ -218,6 +224,13 @@ impl vesta::VestaApp for App {
                 ));
                 ui.text(vesta::imgui::im_str!("Pitch: {:.2} rad", cam.pitch.0));
                 ui.text(vesta::imgui::im_str!("Yaw: {:.2} rad", cam.yaw.0));
+
+                ui.separator();
+
+                ui.text(vesta::imgui::im_str!(
+                    "Rendered Chunks: {}",
+                    rendered_chunks
+                ));
 
                 ui.separator();
 
