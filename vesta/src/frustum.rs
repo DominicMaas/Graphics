@@ -148,6 +148,8 @@ impl Frustum {
         return true;
     }
 
+    /// Sourced from here aparently: https://gist.github.com/podgorskiy/e698d18879588ada9014768e3e82a644
+    /// https://iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
     pub fn is_box_visible(&self, min: Vector3<f32>, max: Vector3<f32>) -> bool {
         for i in 0..6 {
             if (cgmath::dot(self.planes[i], Vector4::new(min.x, min.y, min.z, 1.0)) < 0.0)
