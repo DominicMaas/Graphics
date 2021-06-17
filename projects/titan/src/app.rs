@@ -1,28 +1,22 @@
 use vesta::{
-    cgmath::{num_traits::FloatConst, SquareMatrix, Vector3, Vector4},
+    cgmath::{num_traits::FloatConst, SquareMatrix, Vector4},
     imgui::{self, im_str},
     winit::{
         dpi::PhysicalSize,
         event::{MouseButton, VirtualKeyCode},
     },
-    TextureConfig,
 };
 
 use rand::Rng;
 
-use crate::{
-    sky_shader::SkyShader,
-    world::{Chunk, CHUNK_HEIGHT, CHUNK_WIDTH},
-};
+use crate::{sky_shader::SkyShader, world::World};
 
 pub struct App {
     chunk_render_pipeline: vesta::wgpu::RenderPipeline,
     sky_shader: SkyShader,
     camera: vesta::Camera,
     camera_controller: vesta::CameraControllerTitan,
-    chunks: Vec<Chunk>,
-    block_map_texture: vesta::Texture,
-    rendered_chunks: usize,
+    world: World,
 }
 
 impl vesta::VestaApp for App {
@@ -82,39 +76,10 @@ impl vesta::VestaApp for App {
 
         let camera_controller = vesta::CameraControllerTitan::new();
 
-        let mut chunks = Vec::new();
-
         let mut rng = rand::thread_rng();
         let seed = rng.gen();
 
-        for x in 0..8 {
-            for z in 0..8 {
-                let chunk = Chunk::new(
-                    Vector3::new(
-                        (x as i32 * CHUNK_WIDTH as i32) as f32,
-                        0.0,
-                        (z as i32 * CHUNK_WIDTH as i32) as f32,
-                    ),
-                    seed,
-                    &engine.renderer,
-                ); // Temp
-                chunks.push(chunk);
-            }
-        }
-
-        let block_map_texture = engine
-            .renderer
-            .create_texture_from_bytes(
-                include_bytes!("res/img/block_map.png"),
-                Some("res/img/block_map.png"),
-                TextureConfig {
-                    sampler_mag_filter: vesta::wgpu::FilterMode::Nearest,
-                    sampler_min_filter: vesta::wgpu::FilterMode::Nearest,
-                    sampler_mipmap_filter: vesta::wgpu::FilterMode::Nearest,
-                    ..Default::default()
-                },
-            )
-            .unwrap();
+        let world = World::new(&engine.renderer, seed);
 
         let sky_shader = SkyShader::new(&engine);
 
@@ -124,9 +89,7 @@ impl vesta::VestaApp for App {
             sky_shader,
             camera,
             camera_controller,
-            chunks,
-            block_map_texture,
-            rendered_chunks: 0,
+            world,
         }
     }
 
@@ -137,36 +100,14 @@ impl vesta::VestaApp for App {
     ) {
         render_pass.set_pipeline(&self.chunk_render_pipeline);
         render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
-        render_pass.set_bind_group(2, &self.block_map_texture.bind_group.as_ref().unwrap(), &[]);
 
-        let frustum =
-            vesta::Frustum::new(self.camera.projection.calc_matrix() * self.camera.calc_matrix());
-
-        self.rendered_chunks = 0;
-
-        for chunk in self.chunks.iter_mut() {
-            if frustum.is_box_visible(
-                chunk.get_position(),
-                chunk.get_position()
-                    + Vector3::new(CHUNK_WIDTH as f32, CHUNK_HEIGHT as f32, CHUNK_WIDTH as f32),
-            ) {
-                chunk.render(render_pass, engine);
-                self.rendered_chunks += 1;
-            }
-        }
-
+        self.world.render(render_pass, engine, &self.camera);
         self.sky_shader.render(render_pass, engine);
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {
-        // Process Chunks
-        for chunk in self.chunks.iter_mut() {
-            match chunk.get_state() {
-                crate::world::ChunkState::Created => chunk.load(),
-                crate::world::ChunkState::Dirty => chunk.rebuild(&engine.renderer),
-                _ => {}
-            }
-        }
+        // Update the world
+        self.world.update(&engine.renderer);
 
         self.camera_controller.process_input(
             &mut self.camera,
@@ -212,7 +153,7 @@ impl vesta::VestaApp for App {
     fn render_ui(&mut self, ui: &imgui::Ui, _engine: &vesta::Engine) {
         let cam = &self.camera;
         let sky_shader = &mut self.sky_shader;
-        let rendered_chunks = &self.rendered_chunks;
+        let rendered_chunks = &self.world.rendered_chunks;
 
         let window = vesta::imgui::Window::new(im_str!("Toolbox"));
         window
