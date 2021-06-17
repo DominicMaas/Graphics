@@ -107,7 +107,7 @@ impl vesta::VestaApp for App {
 
     fn update(&mut self, engine: &mut vesta::Engine) {
         // Update the world
-        self.world.update(&engine.renderer);
+        self.world.update(&engine.renderer, &self.camera);
 
         self.camera_controller.process_input(
             &mut self.camera,
