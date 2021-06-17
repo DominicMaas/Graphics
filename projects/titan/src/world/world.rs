@@ -1,18 +1,43 @@
+use std::time::Instant;
+
 use vesta::cgmath::Vector3;
+
+use crate::world::Generator;
 
 use super::{Chunk, CHUNK_HEIGHT, CHUNK_WIDTH};
 
-const CREATE_PER_FRAME: u32 = 5;
-const LOAD_PER_FRAME: u32 = 2;
-const REBUILD_PER_FRAME: u32 = 2;
+#[cfg(debug_assertions)]
+const CREATE_PER_FRAME: u32 = 15;
 
-const RENDER_DISTANCE: u32 = 4; // 4 chunks
+#[cfg(not(debug_assertions))]
+const CREATE_PER_FRAME: u32 = 25;
+
+#[cfg(debug_assertions)]
+const LOAD_PER_FRAME: u32 = 2;
+
+#[cfg(not(debug_assertions))]
+const LOAD_PER_FRAME: u32 = 20;
+
+#[cfg(debug_assertions)]
+const REBUILD_PER_FRAME: u32 = 6;
+
+#[cfg(not(debug_assertions))]
+const REBUILD_PER_FRAME: u32 = 15;
+
+#[cfg(debug_assertions)]
+const RENDER_DISTANCE: u32 = 6;
+
+#[cfg(not(debug_assertions))]
+const RENDER_DISTANCE: u32 = 8;
+
+const CREATE_DISTANCE: u32 = RENDER_DISTANCE * 2;
+const DELETE_DISTANCE: u32 = CREATE_DISTANCE + 4;
 
 pub struct World {
     chunks: Vec<Chunk>,
     block_map_texture: vesta::Texture,
     pub rendered_chunks: usize,
-    seed: u32,
+    generator: Generator,
 
     created_this_frame: u32,
     loaded_this_frame: u32,
@@ -36,11 +61,13 @@ impl World {
             )
             .unwrap();
 
+        let generator = Generator::new(seed, 0.0, 0, 0.0, 0.0);
+
         Self {
             chunks,
             block_map_texture,
             rendered_chunks: 0,
-            seed,
+            generator,
             created_this_frame: 0,
             loaded_this_frame: 0,
             rebuilt_this_frame: 0,
@@ -56,23 +83,37 @@ impl World {
         for chunk in self.chunks.iter_mut() {
             match chunk.get_state() {
                 crate::world::ChunkState::Created => {
-                    if self.loaded_this_frame <= LOAD_PER_FRAME {
-                        chunk.load();
+                    if self.loaded_this_frame < LOAD_PER_FRAME {
+                        let load_now = Instant::now();
+                        chunk.load(&self.generator);
                         self.loaded_this_frame += 1;
+                        println!(
+                            "[{}] Chunk Load: {}ms",
+                            self.loaded_this_frame,
+                            load_now.elapsed().as_millis()
+                        );
                     }
                 }
                 crate::world::ChunkState::Dirty => {
-                    if self.rebuilt_this_frame <= REBUILD_PER_FRAME {
-                        chunk.rebuild(&renderer);
+                    if self.rebuilt_this_frame < REBUILD_PER_FRAME {
+                        let rebuild_now = Instant::now();
+                        chunk.rebuild(&renderer, &self.generator);
                         self.rebuilt_this_frame += 1;
+                        println!(
+                            "[{}] Chunk Rebuild: {}ms",
+                            self.rebuilt_this_frame,
+                            rebuild_now.elapsed().as_millis()
+                        );
                     }
                 }
                 _ => {}
             }
         }
 
+        let create_now = Instant::now();
+
         // Generate new chunks (memory alocation)
-        let render_distance = (RENDER_DISTANCE * CHUNK_WIDTH) as i32;
+        let create_distance = (CREATE_DISTANCE * CHUNK_WIDTH) as i32;
 
         // Calculation about the camera position and render distance
         let center_x = ((f32::floor(camera.position.x / CHUNK_WIDTH as f32) * CHUNK_WIDTH as f32)
@@ -82,22 +123,15 @@ impl World {
 
         let step = CHUNK_WIDTH as usize;
 
-        for x in (center_x - render_distance..center_x + render_distance).step_by(step) {
-            for z in (center_z - render_distance..center_z + render_distance).step_by(step) {
+        for x in (center_x - create_distance..center_x + create_distance).step_by(step) {
+            for z in (center_z - create_distance..center_z + create_distance).step_by(step) {
                 if !self.chunk_at(Vector3::new(x as f32, 0.0, z as f32)) {
-                    self.chunks.push(Chunk::new(
-                        Vector3::new(x as f32, 0.0, z as f32),
-                        self.seed,
-                        &renderer,
-                    ));
+                    self.chunks
+                        .push(Chunk::new(Vector3::new(x as f32, 0.0, z as f32), &renderer));
                     self.created_this_frame += 1;
-                    println!(
-                        "[{}] Building chunk at {}, 0, {}",
-                        self.created_this_frame, x, z
-                    );
                 }
 
-                if self.created_this_frame > CREATE_PER_FRAME {
+                if self.created_this_frame >= CREATE_PER_FRAME {
                     break;
                 }
             }
@@ -107,13 +141,23 @@ impl World {
             }
         }
 
-        // Generate new chunks
-        //for (float x = cWorldX - renderDistance; x <= cWorldX + renderDistance; x += CHUNK_WIDTH)
-        //for (float z = cWorldZ - renderDistance; z <= cWorldZ + renderDistance; z += CHUNK_WIDTH) {
-        //    if (findChunk(glm::vec3(x, 0, z)) == NULL) {
-        //        _chunks.push_back(new Chunk(glm::vec3(x, 0, z), this));
-        //    }
-        //}
+        if self.created_this_frame > 0 {
+            println!(
+                "Created {} chunks in {}ms",
+                self.created_this_frame,
+                create_now.elapsed().as_millis()
+            );
+        }
+
+        // Delete old chunks (TODO: Save to disk or something in the future)
+        self.chunks.retain(|chunk| {
+            let in_bounds = f32::abs(chunk.center_position().x - camera.position.x)
+                < (CHUNK_WIDTH * DELETE_DISTANCE) as f32
+                && f32::abs(chunk.center_position().z - camera.position.z)
+                    < (CHUNK_WIDTH * DELETE_DISTANCE) as f32;
+
+            in_bounds
+        });
     }
 
     fn chunk_at(&self, position: Vector3<f32>) -> bool {
@@ -145,13 +189,21 @@ impl World {
         self.rendered_chunks = 0;
 
         for chunk in self.chunks.iter_mut() {
-            if frustum.is_box_visible(
-                chunk.get_position(),
-                chunk.get_position()
-                    + Vector3::new(CHUNK_WIDTH as f32, CHUNK_HEIGHT as f32, CHUNK_WIDTH as f32),
-            ) {
-                chunk.render(render_pass, engine);
-                self.rendered_chunks += 1;
+            // If the chunk is in the players view distance, continue
+            if f32::abs(chunk.center_position().x - camera.position.x)
+                < (CHUNK_WIDTH * RENDER_DISTANCE) as f32
+                && f32::abs(chunk.center_position().z - camera.position.z)
+                    < (CHUNK_WIDTH * RENDER_DISTANCE) as f32
+            {
+                // If the chunk is in the frustum, continue
+                if frustum.is_box_visible(
+                    chunk.get_position(),
+                    chunk.get_position()
+                        + Vector3::new(CHUNK_WIDTH as f32, CHUNK_HEIGHT as f32, CHUNK_WIDTH as f32),
+                ) {
+                    chunk.render(render_pass, engine);
+                    self.rendered_chunks += 1;
+                }
             }
         }
     }

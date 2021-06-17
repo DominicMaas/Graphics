@@ -40,15 +40,12 @@ pub struct Chunk {
 
     /// Tells the GPU how to render the object
     uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
-
-    /// Tells the chunk how to construct itself
-    generator: Generator,
 }
 
 impl Chunk {
     /// Create a new chunk, this only performs the bare minimum in order to maximise
     /// parallel processing later on
-    pub fn new(position: Vector3<f32>, seed: u32, renderer: &vesta::Renderer) -> Self {
+    pub fn new(position: Vector3<f32>, renderer: &vesta::Renderer) -> Self {
         let rotation: Quaternion<f32> = Quaternion::new(0.0, 0.0, 0.0, 0.0);
         let model = Matrix4::from_translation(position) * Matrix4::from(rotation);
         //let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
@@ -68,20 +65,17 @@ impl Chunk {
             &renderer.device,
         );
 
-        let generator = Generator::new(seed, 0.0, 0, 0.0, 0.0);
-
         Self {
             position,
             mesh: None,
             state: ChunkState::Created,
             blocks: vec![0; (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT) as usize],
             uniform_buffer,
-            generator,
         }
     }
 
     /// Loads the chunk and generates the expected terrian at this position
-    pub fn load(&mut self) {
+    pub fn load(&mut self, generator: &Generator) {
         self.state = ChunkState::Loading;
 
         // Populate the chunk
@@ -89,7 +83,7 @@ impl Chunk {
             for y in 0..CHUNK_HEIGHT {
                 for z in 0..CHUNK_WIDTH {
                     let global_pos = Vector3::new(x as f32, y as f32, z as f32) + self.position;
-                    let block_type = self.generator.get_theoretical_block_type(global_pos);
+                    let block_type = generator.get_theoretical_block_type(global_pos);
                     self.set_block(x, y, z, block_type);
                 }
             }
@@ -101,7 +95,7 @@ impl Chunk {
     }
 
     /// Rebuilds dirty chunks, this generates a mesh based on the current block data
-    pub fn rebuild(&mut self, renderer: &vesta::Renderer) {
+    pub fn rebuild(&mut self, renderer: &vesta::Renderer, generator: &Generator) {
         // Determine if the chunk can be rebuilt
         let can_rebuild = match self.state {
             ChunkState::Created => {
@@ -152,7 +146,7 @@ impl Chunk {
                     let bottom_tex = Vector2::new(TEX_X_STEP * 0.0, 0.0);
 
                     // Front Face
-                    if self.is_transparent(ix, iy, iz + 1) {
+                    if self.is_transparent(ix, iy, iz + 1, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_FRONT][i],
@@ -169,7 +163,7 @@ impl Chunk {
                     }
 
                     // Back Face
-                    if self.is_transparent(ix, iy, iz - 1) {
+                    if self.is_transparent(ix, iy, iz - 1, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_BACK][i],
@@ -186,7 +180,7 @@ impl Chunk {
                     }
 
                     // Left Face
-                    if self.is_transparent(ix - 1, iy, iz) {
+                    if self.is_transparent(ix - 1, iy, iz, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_LEFT][i],
@@ -203,7 +197,7 @@ impl Chunk {
                     }
 
                     // Right Face
-                    if self.is_transparent(ix + 1, iy, iz) {
+                    if self.is_transparent(ix + 1, iy, iz, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_RIGHT][i],
@@ -220,7 +214,7 @@ impl Chunk {
                     }
 
                     // Top Face
-                    if self.is_transparent(ix, iy + 1, iz) {
+                    if self.is_transparent(ix, iy + 1, iz, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_TOP][i],
@@ -237,7 +231,7 @@ impl Chunk {
                     }
 
                     // Bottom Face
-                    if self.is_transparent(ix, iy - 1, iz) {
+                    if self.is_transparent(ix, iy - 1, iz, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_BOTTOM][i],
@@ -286,6 +280,14 @@ impl Chunk {
         self.position
     }
 
+    pub fn center_position(&self) -> Vector3<f32> {
+        Vector3::new(
+            self.position.x - (CHUNK_WIDTH / 2) as f32,
+            self.position.y - (CHUNK_HEIGHT / 2) as f32,
+            self.position.z - (CHUNK_WIDTH / 2) as f32,
+        )
+    }
+
     // ----- Block Array Helpers ----- //
 
     /// Set the block type at the provided position and mark the chunk as dirty
@@ -321,7 +323,7 @@ impl Chunk {
         }
     }
 
-    fn get_block_type(&self, x: i32, y: i32, z: i32) -> BlockType {
+    fn get_block_type(&self, x: i32, y: i32, z: i32, generator: &Generator) -> BlockType {
         // Above the max possible chunk
         if y >= CHUNK_HEIGHT as i32 {
             return 0;
@@ -335,7 +337,7 @@ impl Chunk {
             let mut world_pos = Vector3::new(x as f32, y as f32, z as f32);
             world_pos += self.position;
 
-            return self.generator.get_theoretical_block_type(world_pos);
+            return generator.get_theoretical_block_type(world_pos);
         }
 
         // Get the block type within the chunk
@@ -346,12 +348,12 @@ impl Chunk {
         self.state
     }
 
-    fn is_transparent(&self, x: i32, y: i32, z: i32) -> bool {
+    fn is_transparent(&self, x: i32, y: i32, z: i32, generator: &Generator) -> bool {
         // Never render the bottom face of the world
         if y < 0 {
             return false;
         }
 
-        return self.get_block_type(x, y, z) == 0;
+        return self.get_block_type(x, y, z, generator) == 0;
     }
 }
