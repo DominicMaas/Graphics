@@ -1,5 +1,5 @@
 use vesta::{
-    cgmath::{Matrix3, Matrix4, Quaternion, Vector2, Vector3},
+    cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector2, Vector3},
     DrawMesh, Mesh,
 };
 
@@ -51,7 +51,14 @@ impl Chunk {
     pub fn new(position: Vector3<f32>, seed: u32, renderer: &vesta::Renderer) -> Self {
         let rotation: Quaternion<f32> = Quaternion::new(0.0, 0.0, 0.0, 0.0);
         let model = Matrix4::from_translation(position) * Matrix4::from(rotation);
-        let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
+        //let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
+
+        let inverted_model = model.invert().unwrap();
+        let normal = Matrix3::from_cols(
+            inverted_model.x.truncate(),
+            inverted_model.y.truncate(),
+            inverted_model.z.truncate(),
+        );
 
         let uniform_data = vesta::ModelUniform { model, normal };
         let uniform_buffer = vesta::UniformBuffer::new(

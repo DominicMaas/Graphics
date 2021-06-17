@@ -107,45 +107,45 @@ pub const VERTEX_MAP: [[Vector3<f32>; 4]; 6] = [
 pub const NORMAL_MAP: [[Vector3<f32>; 4]; 6] = [
     [
         // Front
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
+        Vector3::new(0.0, 0.0, 1.0),
+        Vector3::new(0.0, 0.0, 1.0),
+        Vector3::new(0.0, 0.0, 1.0),
+        Vector3::new(0.0, 0.0, 1.0),
     ],
     [
         // Back
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
+        Vector3::new(0.0, 0.0, -1.0),
+        Vector3::new(0.0, 0.0, -1.0),
+        Vector3::new(0.0, 0.0, -1.0),
+        Vector3::new(0.0, 0.0, -1.0),
     ],
     [
         // Left
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
+        Vector3::new(1.0, 0.0, 0.0),
+        Vector3::new(1.0, 0.0, 0.0),
+        Vector3::new(1.0, 0.0, 0.0),
+        Vector3::new(1.0, 0.0, 0.0),
     ],
     [
         // Right
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
+        Vector3::new(-1.0, 0.0, 0.0),
+        Vector3::new(-1.0, 0.0, 0.0),
+        Vector3::new(-1.0, 0.0, 0.0),
+        Vector3::new(-1.0, 0.0, 0.0),
     ],
     [
         // Top
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
+        Vector3::new(0.0, 1.0, 0.0),
+        Vector3::new(0.0, 1.0, 0.0),
+        Vector3::new(0.0, 1.0, 0.0),
+        Vector3::new(0.0, 1.0, 0.0),
     ],
     [
         // Bottom
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
+        Vector3::new(0.0, -1.0, 0.0),
+        Vector3::new(0.0, -1.0, 0.0),
+        Vector3::new(0.0, -1.0, 0.0),
+        Vector3::new(0.0, -1.0, 0.0),
     ],
 ];
 

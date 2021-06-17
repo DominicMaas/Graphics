@@ -9,4 +9,4 @@ pub use generator::*;
 pub type BlockType = u16;
 
 pub const CHUNK_HEIGHT: u32 = 128;
-pub const CHUNK_WIDTH: u32 = 16;
+pub const CHUNK_WIDTH: u32 = 32;
