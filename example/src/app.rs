@@ -51,8 +51,7 @@ impl vesta::VestaApp for App {
         let cube = Cube::new(&engine.renderer);
 
         // Setup the main camera
-        let camera = vesta::Camera::new(
-            (0.0, 0.0, 0.0).into(),
+        let camera = vesta::CameraBuilder::new().build(
             vesta::PerspectiveProjection::new(
                 engine.get_window_size().width,
                 engine.get_window_size().height,
