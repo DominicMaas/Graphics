@@ -157,3 +157,60 @@ pub const INDEX_MAP: [[u32; 6]; 6] = [
     [0, 1, 3, 1, 2, 3],
     [0, 1, 3, 1, 2, 3],
 ];
+
+pub struct TextureOffset {
+    pub front: Vector2<f32>,
+    pub back: Vector2<f32>,
+    pub left: Vector2<f32>,
+    pub right: Vector2<f32>,
+    pub top: Vector2<f32>,
+    pub bottom: Vector2<f32>,
+}
+
+pub fn texture_offset_from_block(block_type: super::BlockType) -> TextureOffset {
+    let side_offset: f32;
+    let top_offset: f32;
+    let bottom_offset: f32;
+
+    match block_type {
+        super::BlockType::Dirt => {
+            side_offset = 0.0;
+            top_offset = 0.0;
+            bottom_offset = 0.0
+        }
+        super::BlockType::Grass => {
+            side_offset = 1.0;
+            top_offset = 2.0;
+            bottom_offset = 0.0
+        }
+        super::BlockType::Sand => {
+            side_offset = 6.0;
+            top_offset = 6.0;
+            bottom_offset = 6.0
+        }
+        super::BlockType::Stone => {
+            side_offset = 5.0;
+            top_offset = 5.0;
+            bottom_offset = 5.0
+        }
+        super::BlockType::Water => {
+            side_offset = 7.0;
+            top_offset = 7.0;
+            bottom_offset = 7.0
+        }
+        _ => {
+            side_offset = 0.0;
+            top_offset = 0.0;
+            bottom_offset = 0.0
+        }
+    }
+
+    TextureOffset {
+        front: Vector2::new(TEX_X_STEP * side_offset, 0.0),
+        back: Vector2::new(TEX_X_STEP * side_offset, 0.0),
+        left: Vector2::new(TEX_X_STEP * side_offset, 0.0),
+        right: Vector2::new(TEX_X_STEP * side_offset, 0.0),
+        top: Vector2::new(TEX_X_STEP * top_offset, 0.0),
+        bottom: Vector2::new(TEX_X_STEP * bottom_offset, 0.0),
+    }
+}

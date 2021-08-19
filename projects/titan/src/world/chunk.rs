@@ -1,5 +1,5 @@
 use vesta::{
-    cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector2, Vector3},
+    cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector3},
     DrawMesh, Mesh,
 };
 
@@ -7,7 +7,7 @@ use crate::world::Generator;
 
 use super::{
     BlockType, CHUNK_HEIGHT, CHUNK_WIDTH, FACE_BACK, FACE_BOTTOM, FACE_FRONT, FACE_LEFT,
-    FACE_RIGHT, FACE_TOP, INDEX_MAP, NORMAL_MAP, TEXTURE_MAP, TEX_X_STEP, VERTEX_MAP,
+    FACE_RIGHT, FACE_TOP, INDEX_MAP, NORMAL_MAP, TEXTURE_MAP, VERTEX_MAP,
 };
 
 #[derive(Copy, Clone, Debug)]
@@ -69,7 +69,7 @@ impl Chunk {
             position,
             mesh: None,
             state: ChunkState::Created,
-            blocks: vec![0; (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT) as usize],
+            blocks: vec![BlockType::Air; (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT) as usize],
             uniform_buffer,
         }
     }
@@ -133,17 +133,12 @@ impl Chunk {
                     let iz = z as i32;
 
                     let block_type = self.get_block(x, y, z);
-                    if block_type == 0 {
+                    if block_type == BlockType::Air {
                         continue;
                     }
 
-                    // TODO: Fancy Texture map thing (maybe from file?)
-                    let front_tex = Vector2::new(TEX_X_STEP * 1.0, 0.0);
-                    let back_tex = Vector2::new(TEX_X_STEP * 1.0, 0.0);
-                    let left_tex = Vector2::new(TEX_X_STEP * 1.0, 0.0);
-                    let right_tex = Vector2::new(TEX_X_STEP * 1.0, 0.0);
-                    let top_tex = Vector2::new(TEX_X_STEP * 2.0, 0.0);
-                    let bottom_tex = Vector2::new(TEX_X_STEP * 0.0, 0.0);
+                    // Grab the texture offset
+                    let texture_offset = super::texture_offset_from_block(block_type);
 
                     // Front Face
                     if self.is_transparent(ix, iy, iz + 1, generator) {
@@ -151,7 +146,7 @@ impl Chunk {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_FRONT][i],
                                 NORMAL_MAP[FACE_FRONT][i],
-                                front_tex + TEXTURE_MAP[FACE_FRONT][i],
+                                texture_offset.front + TEXTURE_MAP[FACE_FRONT][i],
                             ));
                         }
 
@@ -168,7 +163,7 @@ impl Chunk {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_BACK][i],
                                 NORMAL_MAP[FACE_BACK][i],
-                                back_tex + TEXTURE_MAP[FACE_BACK][i],
+                                texture_offset.back + TEXTURE_MAP[FACE_BACK][i],
                             ));
                         }
 
@@ -185,7 +180,7 @@ impl Chunk {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_LEFT][i],
                                 NORMAL_MAP[FACE_LEFT][i],
-                                left_tex + TEXTURE_MAP[FACE_LEFT][i],
+                                texture_offset.left + TEXTURE_MAP[FACE_LEFT][i],
                             ));
                         }
 
@@ -202,7 +197,7 @@ impl Chunk {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_RIGHT][i],
                                 NORMAL_MAP[FACE_RIGHT][i],
-                                right_tex + TEXTURE_MAP[FACE_RIGHT][i],
+                                texture_offset.right + TEXTURE_MAP[FACE_RIGHT][i],
                             ));
                         }
 
@@ -219,7 +214,7 @@ impl Chunk {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_TOP][i],
                                 NORMAL_MAP[FACE_TOP][i],
-                                top_tex + TEXTURE_MAP[FACE_TOP][i],
+                                texture_offset.top + TEXTURE_MAP[FACE_TOP][i],
                             ));
                         }
 
@@ -236,7 +231,7 @@ impl Chunk {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_BOTTOM][i],
                                 NORMAL_MAP[FACE_BOTTOM][i],
-                                bottom_tex + TEXTURE_MAP[FACE_BOTTOM][i],
+                                texture_offset.bottom + TEXTURE_MAP[FACE_BOTTOM][i],
                             ));
                         }
 
@@ -318,7 +313,7 @@ impl Chunk {
                     "Cannot get block at position ({},{},{}), the chunk is not in a loaded state!",
                     x, y, z
                 );
-                0
+                BlockType::Air
             }
         }
     }
@@ -326,7 +321,7 @@ impl Chunk {
     fn get_block_type(&self, x: i32, y: i32, z: i32, generator: &Generator) -> BlockType {
         // Above the max possible chunk
         if y >= CHUNK_HEIGHT as i32 {
-            return 0;
+            return BlockType::Air;
         }
 
         // Outside of this chunk
@@ -354,6 +349,6 @@ impl Chunk {
             return false;
         }
 
-        return self.get_block_type(x, y, z, generator) == 0;
+        return self.get_block_type(x, y, z, generator) == BlockType::Air;
     }
 }

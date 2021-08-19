@@ -77,9 +77,7 @@ impl vesta::VestaApp for App {
         let camera_controller = vesta::CameraControllerTitan::new();
 
         let mut rng = rand::thread_rng();
-        let seed = rng.gen();
-
-        let world = World::new(&engine.renderer, seed);
+        let world = World::new(&engine.renderer, rng.gen());
 
         let sky_shader = SkyShader::new(&engine);
 

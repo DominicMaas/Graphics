@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{collections::VecDeque, time::Instant};
 
 use vesta::cgmath::Vector3;
 
@@ -45,7 +45,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(renderer: &vesta::Renderer, seed: u32) -> Self {
+    pub fn new(renderer: &vesta::Renderer, seed: u64) -> Self {
         // Build the chunks
         let chunks = Vec::new();
         let block_map_texture = renderer
@@ -61,7 +61,7 @@ impl World {
             )
             .unwrap();
 
-        let generator = Generator::new(seed, 0.0, 0, 0.0, 0.0);
+        let generator = Generator::new(seed);
 
         Self {
             chunks,
@@ -84,26 +84,14 @@ impl World {
             match chunk.get_state() {
                 crate::world::ChunkState::Created => {
                     if self.loaded_this_frame < LOAD_PER_FRAME {
-                        let load_now = Instant::now();
                         chunk.load(&self.generator);
                         self.loaded_this_frame += 1;
-                        println!(
-                            "[{}] Chunk Load: {}ms",
-                            self.loaded_this_frame,
-                            load_now.elapsed().as_millis()
-                        );
                     }
                 }
                 crate::world::ChunkState::Dirty => {
                     if self.rebuilt_this_frame < REBUILD_PER_FRAME {
-                        let rebuild_now = Instant::now();
                         chunk.rebuild(&renderer, &self.generator);
                         self.rebuilt_this_frame += 1;
-                        println!(
-                            "[{}] Chunk Rebuild: {}ms",
-                            self.rebuilt_this_frame,
-                            rebuild_now.elapsed().as_millis()
-                        );
                     }
                 }
                 _ => {}
@@ -112,7 +100,7 @@ impl World {
 
         let create_now = Instant::now();
 
-        // Generate new chunks (memory alocation)
+        // Generate new chunks (memory location)
         let create_distance = (CREATE_DISTANCE * CHUNK_WIDTH) as i32;
 
         // Calculation about the camera position and render distance
@@ -139,14 +127,6 @@ impl World {
             if self.created_this_frame > CREATE_PER_FRAME {
                 break;
             }
-        }
-
-        if self.created_this_frame > 0 {
-            println!(
-                "Created {} chunks in {}ms",
-                self.created_this_frame,
-                create_now.elapsed().as_millis()
-            );
         }
 
         // Delete old chunks (TODO: Save to disk or something in the future)

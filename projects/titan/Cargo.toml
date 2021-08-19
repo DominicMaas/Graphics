@@ -9,5 +9,5 @@ vesta = { path = "../../vesta" }
 futures = "0.3"
 env_logger = "0.9"
 log = "0.4"
-noise = "0.7"
+bracket-noise = "0.8.2"
 rand = "0.8"
