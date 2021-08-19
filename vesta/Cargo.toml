@@ -1,6 +1,6 @@
 [package]
 name = "vesta"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2018"
 
@@ -10,7 +10,7 @@ wgpu = "0.9"
 image = "0.23"
 cgmath = { version = "0.18", features = [ "swizzle" ] }
 bytemuck = { version = "1.7.2", features = [ "derive" ] }
-anyhow = "1.0.42"
+anyhow = "1.0.43"
 
 # GUI
 imgui = "0.7"

@@ -9,5 +9,5 @@ edition = "2018"
 [dependencies]
 vesta = { path = "../../vesta" }
 futures = "0.3"
-env_logger = "0.8"
+env_logger = "0.9"
 log = "0.4"
