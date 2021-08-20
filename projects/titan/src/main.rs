@@ -1,4 +1,5 @@
 mod app;
+mod cube;
 mod entities;
 mod sky_shader;
 mod world;

@@ -25,18 +25,22 @@ impl Generator {
         let mut v = self
             .noise_func
             .get_noise3d(position.x, position.y, position.z);
-        v *= 32.0;
+        v *= 36.0;
 
-        if position.y == 0.0 {
-            return BlockType::Water;
-        } else if v >= position.y {
-            if position.y <= 2.0 {
+        if v >= position.y {
+            if position.y <= 3.0 {
                 return BlockType::Sand;
             } else {
                 return BlockType::Grass;
             }
         } else {
-            return BlockType::Air;
+            if position.y == 0.0 {
+                return BlockType::Sand;
+            } else if position.y == 1.0 {
+                return BlockType::Water;
+            } else {
+                return BlockType::Air;
+            }
         }
     }
 }

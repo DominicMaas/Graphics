@@ -16,7 +16,7 @@ const CREATE_PER_FRAME: u32 = 25;
 const LOAD_PER_FRAME: u32 = 2;
 
 #[cfg(not(debug_assertions))]
-const LOAD_PER_FRAME: u32 = 20;
+const LOAD_PER_FRAME: u32 = 10;
 
 #[cfg(debug_assertions)]
 const REBUILD_PER_FRAME: u32 = 6;

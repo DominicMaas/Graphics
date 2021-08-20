@@ -82,10 +82,12 @@ fn apply_fog(rgb: vec3<f32>, d: f32, b: f32) -> vec3<f32> {
 [[stage(fragment)]]
 fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
     // Sample the texture color
-    let color = textureSample(u_diffuse_texture, u_sampler, in.tex_coord).xyz;    
-      
+    let tex = textureSample(u_diffuse_texture, u_sampler, in.tex_coord);   
+    let color = pow(tex.xyz, vec3<f32>(2.2));
+    let alpha = tex.w;
+
     // Ambient Lighting
-    let ambient_strength = 0.08;
+    let ambient_strength = 0.02;
     let ambient_color = vec3<f32>(1.0) * ambient_strength; 
     
     // Sun Lighting
@@ -96,10 +98,10 @@ fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
     let color = (ambient_color + diffuse_color) * color;
     
     // Fog
-    let d = abs(distance(u_camera.view_pos.xyz, in.vertex_position));
-    let fog_mix = apply_fog(color, d, 0.00007);
+    //let d = abs(distance(u_camera.view_pos.xyz, in.vertex_position));
+    //let fog_mix = apply_fog(color, d, 0.00007);
     
     // Gamma Correction
     let gamma_correction = pow(color, vec3<f32>(1.0/2.2));
-    return vec4<f32>(gamma_correction, 1.0);    
+    return vec4<f32>(gamma_correction, alpha);    
 }

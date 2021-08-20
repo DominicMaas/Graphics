@@ -141,7 +141,7 @@ impl Chunk {
                     let texture_offset = super::texture_offset_from_block(block_type);
 
                     // Front Face
-                    if self.is_transparent(ix, iy, iz + 1, generator) {
+                    if self.is_transparent(ix, iy, iz + 1, block_type, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_FRONT][i],
@@ -158,7 +158,7 @@ impl Chunk {
                     }
 
                     // Back Face
-                    if self.is_transparent(ix, iy, iz - 1, generator) {
+                    if self.is_transparent(ix, iy, iz - 1, block_type, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_BACK][i],
@@ -175,7 +175,7 @@ impl Chunk {
                     }
 
                     // Left Face
-                    if self.is_transparent(ix - 1, iy, iz, generator) {
+                    if self.is_transparent(ix - 1, iy, iz, block_type, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_LEFT][i],
@@ -192,7 +192,7 @@ impl Chunk {
                     }
 
                     // Right Face
-                    if self.is_transparent(ix + 1, iy, iz, generator) {
+                    if self.is_transparent(ix + 1, iy, iz, block_type, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_RIGHT][i],
@@ -209,7 +209,7 @@ impl Chunk {
                     }
 
                     // Top Face
-                    if self.is_transparent(ix, iy + 1, iz, generator) {
+                    if self.is_transparent(ix, iy + 1, iz, block_type, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_TOP][i],
@@ -226,7 +226,7 @@ impl Chunk {
                     }
 
                     // Bottom Face
-                    if self.is_transparent(ix, iy - 1, iz, generator) {
+                    if self.is_transparent(ix, iy - 1, iz, block_type, generator) {
                         for i in 0..4 {
                             vertices.push(vesta::Vertex::with_tex_coords(
                                 pos + VERTEX_MAP[FACE_BOTTOM][i],
@@ -343,12 +343,26 @@ impl Chunk {
         self.state
     }
 
-    fn is_transparent(&self, x: i32, y: i32, z: i32, generator: &Generator) -> bool {
+    // Gets if the block at the specified position is transparent. Takes into account
+    // water and air (air blocks are always transparent, water blocks are transparent to each other)
+    fn is_transparent(
+        &self,
+        x: i32,
+        y: i32,
+        z: i32,
+        current_block_type: BlockType,
+        generator: &Generator,
+    ) -> bool {
         // Never render the bottom face of the world
         if y < 0 {
             return false;
         }
 
-        return self.get_block_type(x, y, z, generator) == BlockType::Air;
+        if current_block_type == BlockType::Water {
+            return self.get_block_type(x, y, z, generator) == BlockType::Air;
+        } else {
+            return self.get_block_type(x, y, z, generator) == BlockType::Air
+                || self.get_block_type(x, y, z, generator) == BlockType::Water;
+        }
     }
 }

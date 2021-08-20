@@ -20,5 +20,5 @@ pub enum BlockType {
     Water,
 }
 
-pub const CHUNK_HEIGHT: u32 = 64;
+pub const CHUNK_HEIGHT: u32 = 32;
 pub const CHUNK_WIDTH: u32 = 16;
