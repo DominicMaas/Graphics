@@ -168,7 +168,9 @@ impl World {
 
         self.rendered_chunks = 0;
 
-        for chunk in self.chunks.iter_mut() {
+        // Render solid blocks
+
+        for chunk in self.chunks.iter() {
             // If the chunk is in the players view distance, continue
             if f32::abs(chunk.center_position().x - camera.position.x)
                 < (CHUNK_WIDTH * RENDER_DISTANCE) as f32
@@ -183,6 +185,27 @@ impl World {
                 ) {
                     chunk.render(render_pass, engine);
                     self.rendered_chunks += 1;
+                }
+            }
+        }
+
+        // TODO: Render transparent blocks
+
+        // Render water
+        for chunk in self.chunks.iter() {
+            // If the chunk is in the players view distance, continue
+            if f32::abs(chunk.center_position().x - camera.position.x)
+                < (CHUNK_WIDTH * RENDER_DISTANCE) as f32
+                && f32::abs(chunk.center_position().z - camera.position.z)
+                    < (CHUNK_WIDTH * RENDER_DISTANCE) as f32
+            {
+                // If the chunk is in the frustum, continue
+                if frustum.is_box_visible(
+                    chunk.get_position(),
+                    chunk.get_position()
+                        + Vector3::new(CHUNK_WIDTH as f32, CHUNK_HEIGHT as f32, CHUNK_WIDTH as f32),
+                ) {
+                    chunk.render_water(render_pass, engine);
                 }
             }
         }

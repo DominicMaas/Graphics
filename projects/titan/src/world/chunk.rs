@@ -1,13 +1,14 @@
 use vesta::{
     cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector3},
+    wgpu::BlendFactor,
     DrawMesh, Mesh,
 };
 
 use crate::world::Generator;
 
 use super::{
-    BlockType, CHUNK_HEIGHT, CHUNK_WIDTH, FACE_BACK, FACE_BOTTOM, FACE_FRONT, FACE_LEFT,
-    FACE_RIGHT, FACE_TOP, INDEX_MAP, NORMAL_MAP, TEXTURE_MAP, VERTEX_MAP,
+    BlockType, TextureOffset, CHUNK_HEIGHT, CHUNK_WIDTH, FACE_BACK, FACE_BOTTOM, FACE_FRONT,
+    FACE_LEFT, FACE_RIGHT, FACE_TOP, INDEX_MAP, NORMAL_MAP, TEXTURE_MAP, VERTEX_MAP,
 };
 
 #[derive(Copy, Clone, Debug)]
@@ -31,6 +32,9 @@ pub struct Chunk {
 
     /// The mesh for the chunk
     mesh: Option<Mesh>,
+
+    /// The mesh for water on the chunk (separate as it's rendered with a different shader)
+    water_mesh: Option<Mesh>,
 
     /// What state the chunks is in, this determines how this chunk is treated in the world
     state: ChunkState,
@@ -68,6 +72,7 @@ impl Chunk {
         Self {
             position,
             mesh: None,
+            water_mesh: None,
             state: ChunkState::Created,
             blocks: vec![BlockType::Air; (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT) as usize],
             uniform_buffer,
@@ -120,13 +125,16 @@ impl Chunk {
         let mut vertices: Vec<vesta::Vertex> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
 
-        let mut curr_index: u32 = 0;
+        let mut current_index: u32 = 0;
+
+        let mut water_vertices: Vec<vesta::Vertex> = Vec::new();
+        let mut water_indices: Vec<u32> = Vec::new();
+
+        let mut water_index: u32 = 0;
 
         for x in 0..CHUNK_WIDTH {
             for y in 0..CHUNK_HEIGHT {
                 for z in 0..CHUNK_WIDTH {
-                    let pos = Vector3::new(x as f32, y as f32, z as f32);
-
                     // We need signed integers for transparency checks
                     let ix = x as i32;
                     let iy = y as i32;
@@ -140,117 +148,170 @@ impl Chunk {
                     // Grab the texture offset
                     let texture_offset = super::texture_offset_from_block(block_type);
 
-                    // Front Face
-                    if self.is_transparent(ix, iy, iz + 1, block_type, generator) {
-                        for i in 0..4 {
-                            vertices.push(vesta::Vertex::with_tex_coords(
-                                pos + VERTEX_MAP[FACE_FRONT][i],
-                                NORMAL_MAP[FACE_FRONT][i],
-                                texture_offset.front + TEXTURE_MAP[FACE_FRONT][i],
-                            ));
+                    // Only generate the top texture for water
+                    if block_type == BlockType::Water {
+                        if self.get_block_type(ix, iy + 1, iz, generator) == BlockType::Air {
+                            let pos = Vector3::new(ix as f32, iy as f32, iz as f32);
+
+                            for i in 0..4 {
+                                water_vertices.push(vesta::Vertex::with_tex_coords(
+                                    pos + VERTEX_MAP[FACE_TOP][i] - Vector3::new(0.0, 0.3, 0.0),
+                                    NORMAL_MAP[FACE_TOP][i],
+                                    texture_offset.top + TEXTURE_MAP[FACE_TOP][i],
+                                ));
+                            }
+
+                            for i in 0..6 {
+                                water_indices.push(water_index + INDEX_MAP[FACE_TOP][i])
+                            }
+
+                            water_index += 4;
                         }
 
-                        for i in 0..6 {
-                            indices.push(curr_index + INDEX_MAP[FACE_FRONT][i])
-                        }
-
-                        curr_index += 4;
+                        continue;
                     }
 
-                    // Back Face
-                    if self.is_transparent(ix, iy, iz - 1, block_type, generator) {
-                        for i in 0..4 {
-                            vertices.push(vesta::Vertex::with_tex_coords(
-                                pos + VERTEX_MAP[FACE_BACK][i],
-                                NORMAL_MAP[FACE_BACK][i],
-                                texture_offset.back + TEXTURE_MAP[FACE_BACK][i],
-                            ));
-                        }
-
-                        for i in 0..6 {
-                            indices.push(curr_index + INDEX_MAP[FACE_BACK][i])
-                        }
-
-                        curr_index += 4;
-                    }
-
-                    // Left Face
-                    if self.is_transparent(ix - 1, iy, iz, block_type, generator) {
-                        for i in 0..4 {
-                            vertices.push(vesta::Vertex::with_tex_coords(
-                                pos + VERTEX_MAP[FACE_LEFT][i],
-                                NORMAL_MAP[FACE_LEFT][i],
-                                texture_offset.left + TEXTURE_MAP[FACE_LEFT][i],
-                            ));
-                        }
-
-                        for i in 0..6 {
-                            indices.push(curr_index + INDEX_MAP[FACE_LEFT][i])
-                        }
-
-                        curr_index += 4;
-                    }
-
-                    // Right Face
-                    if self.is_transparent(ix + 1, iy, iz, block_type, generator) {
-                        for i in 0..4 {
-                            vertices.push(vesta::Vertex::with_tex_coords(
-                                pos + VERTEX_MAP[FACE_RIGHT][i],
-                                NORMAL_MAP[FACE_RIGHT][i],
-                                texture_offset.right + TEXTURE_MAP[FACE_RIGHT][i],
-                            ));
-                        }
-
-                        for i in 0..6 {
-                            indices.push(curr_index + INDEX_MAP[FACE_RIGHT][i])
-                        }
-
-                        curr_index += 4;
-                    }
-
-                    // Top Face
-                    if self.is_transparent(ix, iy + 1, iz, block_type, generator) {
-                        for i in 0..4 {
-                            vertices.push(vesta::Vertex::with_tex_coords(
-                                pos + VERTEX_MAP[FACE_TOP][i],
-                                NORMAL_MAP[FACE_TOP][i],
-                                texture_offset.top + TEXTURE_MAP[FACE_TOP][i],
-                            ));
-                        }
-
-                        for i in 0..6 {
-                            indices.push(curr_index + INDEX_MAP[FACE_TOP][i])
-                        }
-
-                        curr_index += 4;
-                    }
-
-                    // Bottom Face
-                    if self.is_transparent(ix, iy - 1, iz, block_type, generator) {
-                        for i in 0..4 {
-                            vertices.push(vesta::Vertex::with_tex_coords(
-                                pos + VERTEX_MAP[FACE_BOTTOM][i],
-                                NORMAL_MAP[FACE_BOTTOM][i],
-                                texture_offset.bottom + TEXTURE_MAP[FACE_BOTTOM][i],
-                            ));
-                        }
-
-                        for i in 0..6 {
-                            indices.push(curr_index + INDEX_MAP[FACE_BOTTOM][i])
-                        }
-
-                        curr_index += 4;
-                    }
+                    // Build faces for normal solid block
+                    current_index = self.build_solid_faces(
+                        ix,
+                        iy,
+                        iz,
+                        &mut vertices,
+                        &mut indices,
+                        current_index,
+                        texture_offset,
+                        generator,
+                    );
                 }
             }
         }
 
         self.mesh = Some(renderer.create_mesh(vertices, indices));
+        self.water_mesh = Some(renderer.create_mesh(water_vertices, water_indices));
         self.state = ChunkState::Loaded;
     }
 
+    fn build_solid_faces(
+        &mut self,
+        ix: i32,
+        iy: i32,
+        iz: i32,
+        vertices: &mut Vec<vesta::Vertex>,
+        indices: &mut Vec<u32>,
+        current_index: u32,
+        texture_offset: TextureOffset,
+        generator: &Generator,
+    ) -> u32 {
+        let pos = Vector3::new(ix as f32, iy as f32, iz as f32);
+        let mut index = current_index;
+
+        // Front Face
+        if self.is_transparent(ix, iy, iz + 1, generator) {
+            for i in 0..4 {
+                vertices.push(vesta::Vertex::with_tex_coords(
+                    pos + VERTEX_MAP[FACE_FRONT][i],
+                    NORMAL_MAP[FACE_FRONT][i],
+                    texture_offset.front + TEXTURE_MAP[FACE_FRONT][i],
+                ));
+            }
+
+            for i in 0..6 {
+                indices.push(index + INDEX_MAP[FACE_FRONT][i])
+            }
+
+            index += 4;
+        }
+
+        // Back Face
+        if self.is_transparent(ix, iy, iz - 1, generator) {
+            for i in 0..4 {
+                vertices.push(vesta::Vertex::with_tex_coords(
+                    pos + VERTEX_MAP[FACE_BACK][i],
+                    NORMAL_MAP[FACE_BACK][i],
+                    texture_offset.back + TEXTURE_MAP[FACE_BACK][i],
+                ));
+            }
+
+            for i in 0..6 {
+                indices.push(index + INDEX_MAP[FACE_BACK][i])
+            }
+
+            index += 4;
+        }
+
+        // Left Face
+        if self.is_transparent(ix - 1, iy, iz, generator) {
+            for i in 0..4 {
+                vertices.push(vesta::Vertex::with_tex_coords(
+                    pos + VERTEX_MAP[FACE_LEFT][i],
+                    NORMAL_MAP[FACE_LEFT][i],
+                    texture_offset.left + TEXTURE_MAP[FACE_LEFT][i],
+                ));
+            }
+
+            for i in 0..6 {
+                indices.push(index + INDEX_MAP[FACE_LEFT][i])
+            }
+
+            index += 4;
+        }
+
+        // Right Face
+        if self.is_transparent(ix + 1, iy, iz, generator) {
+            for i in 0..4 {
+                vertices.push(vesta::Vertex::with_tex_coords(
+                    pos + VERTEX_MAP[FACE_RIGHT][i],
+                    NORMAL_MAP[FACE_RIGHT][i],
+                    texture_offset.right + TEXTURE_MAP[FACE_RIGHT][i],
+                ));
+            }
+
+            for i in 0..6 {
+                indices.push(index + INDEX_MAP[FACE_RIGHT][i])
+            }
+
+            index += 4;
+        }
+
+        // Top Face
+        if self.is_transparent(ix, iy + 1, iz, generator) {
+            for i in 0..4 {
+                vertices.push(vesta::Vertex::with_tex_coords(
+                    pos + VERTEX_MAP[FACE_TOP][i],
+                    NORMAL_MAP[FACE_TOP][i],
+                    texture_offset.top + TEXTURE_MAP[FACE_TOP][i],
+                ));
+            }
+
+            for i in 0..6 {
+                indices.push(index + INDEX_MAP[FACE_TOP][i])
+            }
+
+            index += 4;
+        }
+
+        // Bottom Face
+        if self.is_transparent(ix, iy - 1, iz, generator) {
+            for i in 0..4 {
+                vertices.push(vesta::Vertex::with_tex_coords(
+                    pos + VERTEX_MAP[FACE_BOTTOM][i],
+                    NORMAL_MAP[FACE_BOTTOM][i],
+                    texture_offset.bottom + TEXTURE_MAP[FACE_BOTTOM][i],
+                ));
+            }
+
+            for i in 0..6 {
+                indices.push(index + INDEX_MAP[FACE_BOTTOM][i])
+            }
+
+            index += 4;
+        }
+
+        index
+    }
+
     pub fn render<'a>(
-        &'a mut self,
+        &'a self,
         render_pass: &mut vesta::wgpu::RenderPass<'a>,
         _engine: &vesta::Engine,
     ) {
@@ -269,6 +330,28 @@ impl Chunk {
 
         render_pass.set_bind_group(1, &self.uniform_buffer.bind_group, &[]);
         render_pass.draw_mesh(self.mesh.as_ref().unwrap());
+    }
+
+    pub fn render_water<'a>(
+        &'a self,
+        render_pass: &mut vesta::wgpu::RenderPass<'a>,
+        _engine: &vesta::Engine,
+    ) {
+        // Only render if there is a mesh and the chunk is in the correct state
+        let render = match self.mesh {
+            Some(_) => match self.state {
+                ChunkState::Dirty | ChunkState::Loaded => true,
+                _ => false,
+            },
+            None => false,
+        };
+
+        if !render {
+            return;
+        }
+
+        render_pass.set_bind_group(1, &self.uniform_buffer.bind_group, &[]);
+        render_pass.draw_mesh(self.water_mesh.as_ref().unwrap());
     }
 
     pub fn get_position(&self) -> Vector3<f32> {
@@ -345,24 +428,13 @@ impl Chunk {
 
     // Gets if the block at the specified position is transparent. Takes into account
     // water and air (air blocks are always transparent, water blocks are transparent to each other)
-    fn is_transparent(
-        &self,
-        x: i32,
-        y: i32,
-        z: i32,
-        current_block_type: BlockType,
-        generator: &Generator,
-    ) -> bool {
+    fn is_transparent(&self, x: i32, y: i32, z: i32, generator: &Generator) -> bool {
         // Never render the bottom face of the world
         if y < 0 {
             return false;
         }
 
-        if current_block_type == BlockType::Water {
-            return self.get_block_type(x, y, z, generator) == BlockType::Air;
-        } else {
-            return self.get_block_type(x, y, z, generator) == BlockType::Air
-                || self.get_block_type(x, y, z, generator) == BlockType::Water;
-        }
+        return self.get_block_type(x, y, z, generator) == BlockType::Air
+            || self.get_block_type(x, y, z, generator) == BlockType::Water;
     }
 }
