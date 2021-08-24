@@ -1,13 +1,13 @@
 use cgmath::{InnerSpace, Matrix, Matrix3, Matrix4, Vector3, Vector4};
 
-type PLANE = usize;
+type Plane = usize;
 
-const PLANE_LEFT: PLANE = 0;
-const PLANE_RIGHT: PLANE = 1;
-const PLANE_BOTTOM: PLANE = 2;
-const PLANE_TOP: PLANE = 3;
-const PLANE_NEAR: PLANE = 4;
-const PLANE_FAR: PLANE = 5;
+const PLANE_LEFT: Plane = 0;
+const PLANE_RIGHT: Plane = 1;
+const PLANE_BOTTOM: Plane = 2;
+const PLANE_TOP: Plane = 3;
+const PLANE_NEAR: Plane = 4;
+const PLANE_FAR: Plane = 5;
 
 pub enum IntersectType {
     Outside,
@@ -95,9 +95,9 @@ impl Frustum {
     }
 
     fn intersection(
-        a: PLANE,
-        b: PLANE,
-        c: PLANE,
+        a: Plane,
+        b: Plane,
+        c: Plane,
         crosses: [Vector3<f32>; 15],
         planes: [Vector4<f32>; 6],
     ) -> Vector3<f32> {
@@ -111,7 +111,7 @@ impl Frustum {
         res * (-1.0 / d)
     }
 
-    fn ij2k(i: PLANE, j: PLANE) -> PLANE {
+    fn ij2k(i: Plane, j: Plane) -> Plane {
         i * (9 - i) / 2 + j - 1
     }
 
@@ -193,6 +193,6 @@ impl Frustum {
             return false;
         }
 
-        return true;
+        true
     }
 }

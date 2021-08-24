@@ -1,5 +1,3 @@
-use std::{collections::VecDeque, time::Instant};
-
 use vesta::cgmath::Vector3;
 
 use crate::world::Generator;
@@ -10,25 +8,25 @@ use super::{Chunk, CHUNK_HEIGHT, CHUNK_WIDTH};
 const CREATE_PER_FRAME: u32 = 15;
 
 #[cfg(not(debug_assertions))]
-const CREATE_PER_FRAME: u32 = 25;
+const CREATE_PER_FRAME: u32 = 28;
 
 #[cfg(debug_assertions)]
 const LOAD_PER_FRAME: u32 = 2;
 
 #[cfg(not(debug_assertions))]
-const LOAD_PER_FRAME: u32 = 10;
+const LOAD_PER_FRAME: u32 = 8;
 
 #[cfg(debug_assertions)]
 const REBUILD_PER_FRAME: u32 = 6;
 
 #[cfg(not(debug_assertions))]
-const REBUILD_PER_FRAME: u32 = 15;
+const REBUILD_PER_FRAME: u32 = 16;
 
 #[cfg(debug_assertions)]
 const RENDER_DISTANCE: u32 = 6;
 
 #[cfg(not(debug_assertions))]
-const RENDER_DISTANCE: u32 = 8;
+const RENDER_DISTANCE: u32 = 10;
 
 const CREATE_DISTANCE: u32 = RENDER_DISTANCE * 2;
 const DELETE_DISTANCE: u32 = CREATE_DISTANCE + 4;
@@ -42,6 +40,8 @@ pub struct World {
     created_this_frame: u32,
     loaded_this_frame: u32,
     rebuilt_this_frame: u32,
+
+    pool: lagoon::ThreadPool,
 }
 
 impl World {
@@ -63,6 +63,8 @@ impl World {
 
         let generator = Generator::new(seed);
 
+        let pool = lagoon::ThreadPool::default();
+
         Self {
             chunks,
             block_map_texture,
@@ -71,6 +73,7 @@ impl World {
             created_this_frame: 0,
             loaded_this_frame: 0,
             rebuilt_this_frame: 0,
+            pool,
         }
     }
 
@@ -84,6 +87,8 @@ impl World {
             match chunk.get_state() {
                 crate::world::ChunkState::Created => {
                     if self.loaded_this_frame < LOAD_PER_FRAME {
+                        //self.pool.run(move || chunk.load(&self.generator));
+
                         chunk.load(&self.generator);
                         self.loaded_this_frame += 1;
                     }
@@ -97,8 +102,6 @@ impl World {
                 _ => {}
             }
         }
-
-        let create_now = Instant::now();
 
         // Generate new chunks (memory location)
         let create_distance = (CREATE_DISTANCE * CHUNK_WIDTH) as i32;

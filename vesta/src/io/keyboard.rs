@@ -21,29 +21,26 @@ impl Keyboard {
     }
 
     pub(crate) fn handle_event(&mut self, event: &WindowEvent) {
-        match event {
-            WindowEvent::KeyboardInput { input, .. } => {
-                if let Some(keycode) = input.virtual_keycode {
-                    match input.state {
-                        ElementState::Pressed => {
-                            self.held[keycode as usize] = true;
-                            self.actions.push(KeyAction::Pressed(keycode));
-                        }
-                        ElementState::Released => {
-                            self.held[keycode as usize] = false;
-                            self.actions.push(KeyAction::Released(keycode));
-                        }
+        if let WindowEvent::KeyboardInput { input, .. } = event {
+            if let Some(keycode) = input.virtual_keycode {
+                match input.state {
+                    ElementState::Pressed => {
+                        self.held[keycode as usize] = true;
+                        self.actions.push(KeyAction::Pressed(keycode));
+                    }
+                    ElementState::Released => {
+                        self.held[keycode as usize] = false;
+                        self.actions.push(KeyAction::Released(keycode));
                     }
                 }
             }
-            _ => {}
         }
     }
 
     /// Returns true during the frame the user starts pressing down the key identified by name.
     pub fn get_key_down(&self, key_code: VirtualKeyCode) -> bool {
         for action in &self.actions {
-            if let &KeyAction::Pressed(value) = action {
+            if let KeyAction::Pressed(value) = *action {
                 if value == key_code {
                     return true;
                 }
@@ -56,7 +53,7 @@ impl Keyboard {
     /// Returns true during the frame the user releases the key identified by name.
     pub fn get_key_up(&self, key_code: VirtualKeyCode) -> bool {
         for action in &self.actions {
-            if let &KeyAction::Released(value) = action {
+            if let KeyAction::Released(value) = *action {
                 if value == key_code {
                     return true;
                 }

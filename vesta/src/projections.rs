@@ -12,6 +12,12 @@ pub trait Projection {
 
     /// Calculate the projection matrix for the window
     fn calc_matrix(&self) -> Matrix4<f32>;
+
+    /// Get the near plane for this camera
+    fn get_near_plane(&self) -> f32;
+
+    /// Get the far plane for this camera
+    fn get_far_plane(&self) -> f32;
 }
 
 pub struct PerspectiveProjection {
@@ -52,6 +58,14 @@ impl Projection for PerspectiveProjection {
         self.window_height = height;
 
         self.aspect = width as f32 / height as f32;
+    }
+
+    fn get_near_plane(&self) -> f32 {
+        self.z_near
+    }
+
+    fn get_far_plane(&self) -> f32 {
+        self.z_far
     }
 }
 
@@ -99,5 +113,13 @@ impl Projection for OrthographicProjection {
         self.window_height = height;
 
         self.aspect = width as f32 / height as f32;
+    }
+
+    fn get_near_plane(&self) -> f32 {
+        self.z_near
+    }
+
+    fn get_far_plane(&self) -> f32 {
+        self.z_far
     }
 }

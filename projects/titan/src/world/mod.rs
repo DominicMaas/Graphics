@@ -8,8 +8,6 @@ pub use chunk::*;
 pub use generator::*;
 pub use world::*;
 
-//pub type BlockType = u16;
-
 #[derive(Clone, Copy, PartialEq)]
 pub enum BlockType {
     Air,
@@ -17,7 +15,7 @@ pub enum BlockType {
     Sand,
     Grass,
     Stone,
-    Water,
+    Water { flowing: bool },
 }
 
 pub const CHUNK_HEIGHT: u32 = 32;

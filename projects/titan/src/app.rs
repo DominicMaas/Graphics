@@ -197,7 +197,7 @@ impl vesta::VestaApp for App {
             engine.set_cursor_captured(true);
         }
 
-        self.marker.update(1.0, &engine.renderer);
+        self.marker.update(&self.camera, &engine.renderer);
     }
 
     fn resize(&mut self, size: PhysicalSize<u32>, engine: &vesta::Engine) {

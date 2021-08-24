@@ -1,6 +1,5 @@
 use vesta::{
     cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector3},
-    wgpu::BlendFactor,
     DrawMesh, Mesh,
 };
 
@@ -16,7 +15,7 @@ pub enum ChunkState {
     /// The chunk has been created but there is no information associated with it
     Created,
 
-    /// The chunk is currently loading (building terrian)
+    /// The chunk is currently loading (building terrain)
     Loading,
 
     /// The chunk is loaded and rendering as usual
@@ -149,8 +148,11 @@ impl Chunk {
                     let texture_offset = super::texture_offset_from_block(block_type);
 
                     // Only generate the top texture for water
-                    if block_type == BlockType::Water {
-                        if self.get_block_type(ix, iy + 1, iz, generator) == BlockType::Air {
+                    if block_type == (BlockType::Water { flowing: false }) {
+                        // Don't generate water faces underwater
+                        if self.get_block_type(ix, iy + 1, iz, generator)
+                            != (BlockType::Water { flowing: false })
+                        {
                             let pos = Vector3::new(ix as f32, iy as f32, iz as f32);
 
                             for i in 0..4 {
@@ -435,6 +437,7 @@ impl Chunk {
         }
 
         return self.get_block_type(x, y, z, generator) == BlockType::Air
-            || self.get_block_type(x, y, z, generator) == BlockType::Water;
+            || self.get_block_type(x, y, z, generator) == BlockType::Water { flowing: true }
+            || self.get_block_type(x, y, z, generator) == BlockType::Water { flowing: false };
     }
 }

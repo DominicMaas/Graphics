@@ -130,7 +130,7 @@ impl<'a> RenderPipelineBuilder<'a> {
         // Create the actual pipeline
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some(self.pipeline_name),
-            layout: Some(&layout),
+            layout: Some(layout),
             vertex: wgpu::VertexState {
                 module: &shader_module,
                 entry_point: self.vertex_shader_entry,

@@ -42,7 +42,7 @@ impl Renderer {
         label: Option<&str>,
         config: TextureConfig,
     ) -> Result<Texture> {
-        Texture::from_bytes(&self.device, &self.queue, &bytes, label, config)
+        Texture::from_bytes(&self.device, &self.queue, bytes, label, config)
     }
 
     pub fn create_texture_from_image(
@@ -51,7 +51,7 @@ impl Renderer {
         label: Option<&str>,
         config: TextureConfig,
     ) -> Result<Texture> {
-        Texture::from_image(&self.device, &self.queue, &image, label, config)
+        Texture::from_image(&self.device, &self.queue, image, label, config)
     }
 
     /// Create a depth texture. This is a special type of texture that can be used for the
@@ -207,32 +207,29 @@ impl Texture {
     }
 
     pub fn create_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
-        let texture_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStage::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                        },
-                        count: None,
+        device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStage::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        multisampled: false,
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
                     },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStage::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler {
-                            filtering: true,
-                            comparison: false,
-                        },
-                        count: None,
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStage::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler {
+                        filtering: true,
+                        comparison: false,
                     },
-                ],
-                label: Some("texture_bind_group_layout"),
-            });
-
-        texture_bind_group_layout
+                    count: None,
+                },
+            ],
+            label: Some("texture_bind_group_layout"),
+        })
     }
 }

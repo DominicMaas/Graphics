@@ -51,7 +51,7 @@ impl<T: Copy + bytemuck::Pod + bytemuck::Zeroable> UniformBuffer<T> {
         });
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &UniformBufferUtils::create_bind_group_layout(visibility, &device),
+            layout: &UniformBufferUtils::create_bind_group_layout(visibility, device),
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
                 resource: buffer.as_entire_binding(),
@@ -73,7 +73,7 @@ impl UniformBufferUtils {
         visibility: wgpu::ShaderStage,
         device: &wgpu::Device,
     ) -> wgpu::BindGroupLayout {
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[wgpu::BindGroupLayoutEntry {
                 binding: 0,
                 visibility,
@@ -85,8 +85,6 @@ impl UniformBufferUtils {
                 count: None,
             }],
             label: Some("uniform_bind_group_layout"),
-        });
-
-        bind_group_layout
+        })
     }
 }

@@ -1,8 +1,7 @@
 use std::f32::consts::PI;
 use std::num::NonZeroU32;
 
-//use noise::NoiseFn;
-//use noise::OpenSimplex;
+use bracket_noise::prelude::{FastNoise, FractalType, NoiseType};
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use vesta::cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector2, Vector3};
@@ -15,7 +14,7 @@ pub const CHUNK_SIZE: isize = 256;
 
 pub const CHUNK_RENDER_SIZE: f32 = 2.0;
 
-pub const GRAVITY: f32 = -10.0;
+pub const GRAVITY: f32 = -9.8;
 
 pub struct Chunk {
     pub position: Vector2<f32>,
@@ -27,12 +26,12 @@ pub struct Chunk {
     color_buffer: Vec<u8>,
     loaded: bool,
     rng: ThreadRng,
-    //noise: OpenSimplex,
+    noise: FastNoise,
     dirty: bool,
 }
 
 impl Chunk {
-    pub fn new(renderer: &vesta::Renderer, position: Vector2<f32>) -> Self {
+    pub fn new(renderer: &vesta::Renderer, position: Vector2<f32>, seed: u64) -> Self {
         // Simple square which the texture will be rendered onto
         let mut vertices = Vec::new();
         vertices.push(Self::create_vertex(1.0, 1.0, 1.0, 0.0)); // Top Right      1,1   0,1   0,0   1,0   1,1
@@ -115,7 +114,13 @@ impl Chunk {
         let data = vec![Pixel::default(); (CHUNK_SIZE * CHUNK_SIZE) as usize];
         let rng = rand::thread_rng();
 
-        //let noise = OpenSimplex::new();
+        let mut noise = FastNoise::seeded(seed);
+        noise.set_noise_type(NoiseType::SimplexFractal);
+        noise.set_fractal_type(FractalType::FBM);
+        noise.set_fractal_octaves(6);
+        noise.set_fractal_gain(1.4);
+        noise.set_fractal_lacunarity(2.0);
+        noise.set_frequency(0.001);
 
         Self {
             position,
@@ -127,7 +132,7 @@ impl Chunk {
             color_buffer: vec![0u8; (4 * CHUNK_SIZE * CHUNK_SIZE) as usize],
             loaded: false,
             rng,
-            //noise,
+            noise,
             dirty: false,
         }
     }
@@ -151,21 +156,10 @@ impl Chunk {
     pub fn rand_noise(&mut self) {
         for x in 0..CHUNK_SIZE {
             for y in 0..CHUNK_SIZE {
-                //let n = self
-                //    .noise
-                //    .get([(self.position.x as f64 + x as f64) / 0.0001, 0.0])
-                //    * 64.0;
-                //let yn = y as f64;
-
-                let x_scale = 0.05;
-                let y_scale = 5.5;
-                let y_offset = 60.0;
-
                 let gx = x as f32 + self.position.x;
                 let gy = y as f32 + self.position.y;
 
-                let r =
-                    (((2.0 * gx * x_scale).sin() + (PI * gy * x_scale).sin()) * y_scale) + y_offset;
+                let r = self.noise.get_noise(gx, gy) * 40.0;
 
                 if r >= y as f32 {
                     self.set_pixel_raw(x, y, Pixel::new(PixelType::Ground));
@@ -304,8 +298,7 @@ impl Chunk {
 
         // Just check if can move directly below, if not, then reset velocity
         if !self.pixel_is(b_pos, PixelType::Air) {
-            let pixel = self.get_pixel_raw(pos.x, pos.y).unwrap();
-            pixel.velocity.y /= 2.0;
+            self.get_pixel_raw(pos.x, pos.y).unwrap().velocity.y /= 2.0;
         }
 
         let pixel = self.get_pixel(pos.x, pos.y).unwrap();

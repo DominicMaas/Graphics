@@ -12,7 +12,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-struct GUI {
+struct Gui {
     gui_context: imgui::Context,
     gui_platform: imgui_winit_support::WinitPlatform,
     gui_renderer: imgui_wgpu::Renderer,
@@ -140,7 +140,7 @@ impl Engine {
             swap_chain,
             depth_texture,
         };
-        let mut gui = GUI {
+        let mut gui = Gui {
             gui_context,
             gui_platform,
             gui_renderer,
@@ -162,7 +162,7 @@ impl Engine {
             },
         };
 
-        // First initllize all the apps resources (shaders, pipelines etc.)
+        // First initialize all the apps resources (shaders, pipelines etc.)
         let mut app = V::init(&mut engine);
 
         // Trigger a resize straight away to ensure any sizing code is run
@@ -184,7 +184,7 @@ impl Engine {
         event: Event<()>,
         control_flow: &mut ControlFlow,
         app: &mut V,
-        gui: &mut GUI,
+        gui: &mut Gui,
     ) {
         match event {
             Event::RedrawRequested(_) => {
@@ -302,7 +302,7 @@ impl Engine {
         app.resize(new_size, self);
     }
 
-    fn render<V: VestaApp>(&self, gui: &mut GUI, app: &mut V) -> Result<(), wgpu::SwapChainError> {
+    fn render<V: VestaApp>(&self, gui: &mut Gui, app: &mut V) -> Result<(), wgpu::SwapChainError> {
         // Prepare the UI
         gui.gui_platform
             .prepare_frame(gui.gui_context.io_mut(), &self.window)
@@ -317,7 +317,7 @@ impl Engine {
 
         let ui = gui.gui_context.frame();
         {
-            app.render_ui(&ui, &self);
+            app.render_ui(&ui, self);
         }
 
         // ---- MAIN ---- //
@@ -347,7 +347,7 @@ impl Engine {
                 }),
             });
 
-            app.render(&mut render_pass, &self)
+            app.render(&mut render_pass, self)
         }
 
         // ---- UI ---- //

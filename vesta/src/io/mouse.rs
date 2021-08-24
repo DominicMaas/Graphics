@@ -29,7 +29,7 @@ impl Mouse {
     /// Returns true during the frame the user pressed the given mouse button.
     pub fn get_button_down(&self, button: MouseButton) -> bool {
         for action in &self.actions {
-            if let &MouseAction::Pressed(value) = action {
+            if let MouseAction::Pressed(value) = *action {
                 if value == button {
                     return true;
                 }
@@ -42,7 +42,7 @@ impl Mouse {
     /// Returns true during the frame the user releases the given mouse button.
     pub fn get_button_up(&self, button: MouseButton) -> bool {
         for action in &self.actions {
-            if let &MouseAction::Released(value) = action {
+            if let MouseAction::Released(value) = *action {
                 if value == button {
                     return true;
                 }
@@ -101,11 +101,8 @@ impl Mouse {
     }
 
     pub(crate) fn handle_device_event(&mut self, event: &DeviceEvent) {
-        match event {
-            DeviceEvent::MouseMotion { delta } => {
-                self.delta = (delta.0, delta.1).into();
-            }
-            _ => {}
+        if let DeviceEvent::MouseMotion { delta } = event {
+            self.delta = (delta.0, delta.1).into();
         }
     }
 

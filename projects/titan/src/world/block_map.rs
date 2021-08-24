@@ -193,7 +193,7 @@ pub fn texture_offset_from_block(block_type: super::BlockType) -> TextureOffset 
             top_offset = 5.0;
             bottom_offset = 5.0
         }
-        super::BlockType::Water => {
+        super::BlockType::Water { flowing: _ } => {
             side_offset = 7.0;
             top_offset = 7.0;
             bottom_offset = 7.0

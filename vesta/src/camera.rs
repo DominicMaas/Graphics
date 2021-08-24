@@ -67,6 +67,12 @@ impl<'a> CameraBuilder<'a> {
     }
 }
 
+impl<'a> Default for CameraBuilder<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // Holds the camera position, yaw and pitch
 pub struct Camera {
     pub position: Vector3<f32>,
@@ -99,7 +105,7 @@ impl Camera {
                 view_proj: Matrix4::identity(),
                 view_pos: Vector4::new(0.0, 0.0, 0.0, 0.0),
             },
-            &device,
+            device,
         );
 
         Self {
@@ -113,17 +119,6 @@ impl Camera {
             projection: Box::new(projection),
             uniform_buffer,
         }
-    }
-
-    #[deprecated(note = "Use CameraBuilder instead")]
-    pub fn new(
-        position: Vector3<f32>,
-        projection: impl Projection + 'static,
-        device: &wgpu::Device,
-    ) -> Self {
-        CameraBuilder::new()
-            .with_position(position)
-            .build(projection, device)
     }
 
     /// Calculate the view matrix for the camera
@@ -153,11 +148,13 @@ impl Camera {
         let proj_view_inverse = (proj * view).invert().unwrap();
 
         let vec = cgmath::Vector4::new(
-            (2.0 * ((screen.x - 0.0) / ((size.width as f32) - 0.0))) - 1.0,
-            (2.0 * ((screen.y - 0.0) / ((size.height as f32) - 0.0))) - 1.0,
+            2.0 * (screen.x / size.width as f32) - 1.0,
+            2.0 * (screen.y / size.height as f32) - 1.0,
             screen.z,
             1.0,
         );
+
+        println!("RAW POS: {}, {}", vec.x, vec.y);
 
         let mut pos = proj_view_inverse * vec;
         pos.w = 1.0 / pos.w;
@@ -363,5 +360,11 @@ impl CameraControllerTitan {
         if engine.io.keyboard.get_key(VirtualKeyCode::D) {
             camera.position += camera.right * velocity;
         }
+    }
+}
+
+impl Default for CameraControllerTitan {
+    fn default() -> Self {
+        Self::new()
     }
 }

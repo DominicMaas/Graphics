@@ -15,14 +15,16 @@ pub struct World {
 impl World {
     pub fn new(renderer: &vesta::Renderer) -> Self {
         let mut chunks = Vec::new();
-        chunks.push(Chunk::new(&renderer, Vector2::new(0.0, 0.0)));
+        chunks.push(Chunk::new(&renderer, Vector2::new(0.0, 0.0), 34563246345));
         chunks.push(Chunk::new(
             &renderer,
             Vector2::new(CHUNK_RENDER_SIZE * 1.0, 0.0),
+            34563246345,
         ));
         chunks.push(Chunk::new(
             &renderer,
             Vector2::new(CHUNK_RENDER_SIZE * -1.0, 0.0),
+            34563246345,
         ));
 
         for c in chunks.iter_mut() {
@@ -35,33 +37,21 @@ impl World {
     }
 
     pub fn draw<'a>(&'a self, render_pass: &mut vesta::wgpu::RenderPass<'a>) {
-        //let now = Instant::now();
-
         for c in self.chunks.iter() {
             c.render(render_pass);
         }
-
-        //println!("[World] [Draw] {}ms", now.elapsed().as_millis());
     }
 
     pub fn update(&mut self, engine: &vesta::Engine) {
-        //let now = Instant::now();
-
         for c in self.chunks.iter_mut() {
             c.update(&engine);
         }
-
-        //println!("[World] [Update] {}ms", now.elapsed().as_millis());
     }
 
     pub fn rebuild(&mut self, renderer: &vesta::Renderer) {
-        //let now = Instant::now();
-
         for c in self.chunks.iter_mut() {
             c.rebuild(renderer);
         }
-
-        //println!("[World] [Rebuild] {}ms", now.elapsed().as_millis());
     }
 
     pub fn add_snow(&mut self) {

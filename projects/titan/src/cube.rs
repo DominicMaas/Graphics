@@ -227,11 +227,27 @@ impl Cube {
         }
     }
 
-    pub fn update(&mut self, dt: f32, renderer: &vesta::Renderer) {
+    pub fn update(&mut self, camera: &vesta::Camera, renderer: &vesta::Renderer) {
+        let window_size = camera.projection.get_window_size();
+        let world_pos = camera.screen_to_world_point(Vector3::new(
+            (window_size.width as f32) / 2.0,
+            (window_size.height as f32) / 2.0,
+            camera.projection.get_near_plane(),
+        ));
+
         let rotation = Matrix4::from_angle_z(Deg(0.0));
-        let model =
-            Matrix4::from_translation(Vector3::new(0.0, 0.0, 0.0)) * Matrix4::from(rotation);
+        let model = Matrix4::from_translation(world_pos) * Matrix4::from(rotation);
         let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
+
+        println!(
+            "World Pos: {}, {}, {}",
+            world_pos.x, world_pos.y, world_pos.z
+        );
+
+        println!(
+            "Looking towards: {}, {}, {}",
+            camera.front.x, camera.front.y, camera.front.z
+        );
 
         self.uniform_buffer.data.model = model;
         self.uniform_buffer.data.normal = normal;
