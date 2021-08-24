@@ -40,7 +40,7 @@ impl Cube {
             Vector2::new(0.0, 1.0),
         ));
 
-        indices.push(curr_index + 0);
+        indices.push(curr_index);
         indices.push(curr_index + 1);
         indices.push(curr_index + 3);
 
@@ -48,7 +48,7 @@ impl Cube {
         indices.push(curr_index + 2);
         indices.push(curr_index + 3);
 
-        curr_index = curr_index + 4;
+        curr_index += 4;
 
         // FRONT
         vertices.push(vesta::Vertex::with_tex_coords(
@@ -72,7 +72,7 @@ impl Cube {
             Vector2::new(0.0, 1.0),
         ));
 
-        indices.push(curr_index + 0);
+        indices.push(curr_index);
         indices.push(curr_index + 1);
         indices.push(curr_index + 3);
 
@@ -80,7 +80,7 @@ impl Cube {
         indices.push(curr_index + 2);
         indices.push(curr_index + 3);
 
-        curr_index = curr_index + 4;
+        curr_index += 4;
 
         // Right
         vertices.push(vesta::Vertex::with_tex_coords(
@@ -104,7 +104,7 @@ impl Cube {
             Vector2::new(0.0, 1.0),
         ));
 
-        indices.push(curr_index + 0);
+        indices.push(curr_index);
         indices.push(curr_index + 1);
         indices.push(curr_index + 3);
 
@@ -112,7 +112,7 @@ impl Cube {
         indices.push(curr_index + 2);
         indices.push(curr_index + 3);
 
-        curr_index = curr_index + 4;
+        curr_index += 4;
 
         // Left
         vertices.push(vesta::Vertex::with_tex_coords(
@@ -136,7 +136,7 @@ impl Cube {
             Vector2::new(0.0, 1.0),
         ));
 
-        indices.push(curr_index + 0);
+        indices.push(curr_index);
         indices.push(curr_index + 1);
         indices.push(curr_index + 3);
 
@@ -144,7 +144,7 @@ impl Cube {
         indices.push(curr_index + 2);
         indices.push(curr_index + 3);
 
-        curr_index = curr_index + 4;
+        curr_index += 4;
 
         // Down
         vertices.push(vesta::Vertex::with_tex_coords(
@@ -168,7 +168,7 @@ impl Cube {
             Vector2::new(0.0, 1.0),
         ));
 
-        indices.push(curr_index + 0);
+        indices.push(curr_index);
         indices.push(curr_index + 1);
         indices.push(curr_index + 3);
 
@@ -176,7 +176,7 @@ impl Cube {
         indices.push(curr_index + 2);
         indices.push(curr_index + 3);
 
-        curr_index = curr_index + 4;
+        curr_index += 4;
 
         // Up
         vertices.push(vesta::Vertex::with_tex_coords(
@@ -200,7 +200,7 @@ impl Cube {
             Vector2::new(0.0, 1.0),
         ));
 
-        indices.push(curr_index + 0);
+        indices.push(curr_index);
         indices.push(curr_index + 1);
         indices.push(curr_index + 3);
 
@@ -246,8 +246,7 @@ impl Cube {
         }
 
         let rotation = Matrix4::from_angle_z(Deg(self.angle));
-        let model =
-            Matrix4::from_translation(Vector3::new(0.0, 0.0, 0.0)) * Matrix4::from(rotation);
+        let model = Matrix4::from_translation(Vector3::new(0.0, 0.0, 0.0)) * rotation;
         let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
 
         self.uniform_buffer.data.model = model;
