@@ -67,17 +67,18 @@ impl vesta::VestaApp for App {
         .unwrap();
 
         // Setup the main camera
-        let camera = vesta::Camera::new(
-            (0.0, 0.0, 0.0).into(),
-            vesta::PerspectiveProjection::new(
-                engine.get_window_size().width,
-                engine.get_window_size().height,
-                vesta::cgmath::Rad(70.0 / 180.0 * f32::PI()),
-                0.01,
-                1000.0,
-            ),
-            &engine.renderer.device,
-        );
+        let camera = vesta::CameraBuilder::new()
+            .with_position((0.0, 0.0, 0.0).into())
+            .build(
+                vesta::PerspectiveProjection::new(
+                    engine.get_window_size().width,
+                    engine.get_window_size().height,
+                    vesta::cgmath::Rad(70.0 / 180.0 * f32::PI()),
+                    0.01,
+                    1000.0,
+                ),
+                &engine.renderer.device,
+            );
 
         let camera_controller = vesta::CameraController::new(32.0, 0.2);
 

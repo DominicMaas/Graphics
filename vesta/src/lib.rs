@@ -1,4 +1,3 @@
-pub mod camera;
 pub mod config;
 pub mod engine;
 pub mod mesh;
@@ -9,6 +8,7 @@ pub mod texture;
 pub mod uniform_buffer;
 pub mod vertex;
 
+pub mod camera;
 pub mod frustum;
 pub mod io;
 

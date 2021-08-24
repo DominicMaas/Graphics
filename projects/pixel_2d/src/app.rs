@@ -57,16 +57,17 @@ impl vesta::VestaApp for App {
         .unwrap();
 
         // Camera which will let us see around the world
-        let camera = vesta::Camera::new(
-            (0.0, 0.0, 100.0).into(),
-            vesta::OrthographicProjection::new(
-                engine.get_window_size().width,
-                engine.get_window_size().height,
-                0.0001,
-                1000.0,
-            ),
-            &engine.renderer.device,
-        );
+        let camera = vesta::CameraBuilder::new()
+            .with_position((0.0, 0.0, 100.0).into())
+            .build(
+                vesta::OrthographicProjection::new(
+                    engine.get_window_size().width,
+                    engine.get_window_size().height,
+                    0.0001,
+                    1000.0,
+                ),
+                &engine.renderer.device,
+            );
 
         let camera_controller = vesta::CameraController::new(5.0, 0.2);
 
