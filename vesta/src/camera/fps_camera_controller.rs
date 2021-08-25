@@ -6,6 +6,9 @@ use crate::{Camera, Engine};
 pub struct FpsCameraController {
     speed: f32,
     mouse_sensitivity: f32,
+    front: Vector3<f32>,
+    world_up: Vector3<f32>,
+    right: Vector3<f32>,
 }
 
 impl FpsCameraController {
@@ -13,12 +16,15 @@ impl FpsCameraController {
         Self {
             speed,
             mouse_sensitivity,
+            front: (0.0, 0.0, 1.0).into(), // Where the camera is looking (takes into account rotation)
+            world_up: (0.0, 1.0, 0.0).into(),
+            right: (0.0, 0.0, 0.0).into(),
         }
     }
 
     pub fn update_camera(&mut self, camera: &mut Camera) {
         // Calculate the new Front vector
-        camera.front = Vector3::new(
+        self.front = Vector3::new(
             camera.yaw.cos() * camera.pitch.cos(),
             camera.pitch.sin(),
             camera.yaw.sin() * camera.pitch.cos(),
@@ -28,8 +34,11 @@ impl FpsCameraController {
         // Also re-calculate the Right and Up vector
         // Normalize the vectors, because their length gets closer to 0 the more you
         // look up or down which results in slower movement.
-        camera.right = camera.front.cross(camera.world_up).normalize();
-        camera.up = camera.right.cross(camera.front).normalize();
+        self.right = self.front.cross(self.world_up).normalize();
+        camera.up = self.right.cross(self.front).normalize();
+
+        // Set the centre point
+        camera.center = camera.position + self.front;
     }
 
     pub fn process_input(&mut self, camera: &mut Camera, engine: &Engine, is_captured: bool) {
@@ -67,19 +76,19 @@ impl FpsCameraController {
         let velocity = loc_speed * engine.time.get_delta_time();
 
         if engine.io.keyboard.get_key(VirtualKeyCode::W) {
-            camera.position += camera.front * velocity;
+            camera.position += self.front * velocity;
         }
 
         if engine.io.keyboard.get_key(VirtualKeyCode::A) {
-            camera.position -= camera.right * velocity;
+            camera.position -= self.right * velocity;
         }
 
         if engine.io.keyboard.get_key(VirtualKeyCode::D) {
-            camera.position += camera.right * velocity;
+            camera.position += self.right * velocity;
         }
 
         if engine.io.keyboard.get_key(VirtualKeyCode::S) {
-            camera.position -= camera.front * velocity;
+            camera.position -= self.front * velocity;
         }
 
         if engine.io.keyboard.get_key(VirtualKeyCode::Space) {

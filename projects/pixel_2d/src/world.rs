@@ -14,17 +14,20 @@ pub struct World {
 
 impl World {
     pub fn new(renderer: &vesta::Renderer) -> Self {
+        let mut rng = rand::thread_rng();
+        let seed = rng.gen();
+
         let mut chunks = Vec::new();
-        chunks.push(Chunk::new(&renderer, Vector2::new(0.0, 0.0), 34563246345));
+        chunks.push(Chunk::new(&renderer, Vector2::new(0.0, 0.0), seed));
         chunks.push(Chunk::new(
             &renderer,
             Vector2::new(CHUNK_RENDER_SIZE * 1.0, 0.0),
-            34563246345,
+            seed,
         ));
         chunks.push(Chunk::new(
             &renderer,
             Vector2::new(CHUNK_RENDER_SIZE * -1.0, 0.0),
-            34563246345,
+            seed,
         ));
 
         for c in chunks.iter_mut() {

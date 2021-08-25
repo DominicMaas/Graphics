@@ -239,16 +239,6 @@ impl Cube {
         let model = Matrix4::from_translation(world_pos) * Matrix4::from(rotation);
         let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
 
-        println!(
-            "World Pos: {}, {}, {}",
-            world_pos.x, world_pos.y, world_pos.z
-        );
-
-        println!(
-            "Looking towards: {}, {}, {}",
-            camera.front.x, camera.front.y, camera.front.z
-        );
-
         self.uniform_buffer.data.model = model;
         self.uniform_buffer.data.normal = normal;
         renderer.write_uniform_buffer(&self.uniform_buffer);

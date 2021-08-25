@@ -1,6 +1,8 @@
+mod arcball_camera_controller;
 mod camera_builder;
 mod fps_camera_controller;
 
+pub use arcball_camera_controller::*;
 pub use camera_builder::*;
 pub use fps_camera_controller::*;
 
@@ -22,11 +24,9 @@ unsafe impl bytemuck::Pod for CameraUniform {}
 // Holds the camera position, yaw and pitch
 pub struct Camera {
     pub position: Vector3<f32>,
-    pub front: Vector3<f32>,
-    pub up: Vector3<f32>,
+    pub center: Vector3<f32>,
 
-    pub world_up: Vector3<f32>,
-    pub right: Vector3<f32>,
+    pub up: Vector3<f32>,
 
     pub yaw: Rad<f32>,
     pub pitch: Rad<f32>,
@@ -56,10 +56,8 @@ impl Camera {
 
         Self {
             position,
-            front: (0.0, 0.0, 1.0).into(), // Where the camera is looking (takes into account rotation)
+            center: (0.0, 0.0, 0.0).into(), // This will get recalculated anyway
             up: (0.0, 0.0, 0.0).into(),
-            world_up: (0.0, 1.0, 0.0).into(),
-            right: (0.0, 0.0, 0.0).into(),
             yaw: cgmath::Rad(-90.0 / 180.0 * f32::PI()), // Look left or right
             pitch: cgmath::Rad(0.0),                     // Look Up / Down
             projection: Box::new(projection),
@@ -71,7 +69,7 @@ impl Camera {
     pub fn calc_matrix(&self) -> cgmath::Matrix4<f32> {
         Matrix4::look_at_rh(
             Point3::from_vec(self.position),
-            Point3::from_vec(self.position + self.front),
+            Point3::from_vec(self.center),
             self.up,
         )
     }

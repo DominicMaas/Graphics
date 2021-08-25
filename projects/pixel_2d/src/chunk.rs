@@ -117,10 +117,10 @@ impl Chunk {
         let mut noise = FastNoise::seeded(seed);
         noise.set_noise_type(NoiseType::SimplexFractal);
         noise.set_fractal_type(FractalType::FBM);
-        noise.set_fractal_octaves(6);
-        noise.set_fractal_gain(1.4);
+        noise.set_fractal_octaves(5);
+        noise.set_fractal_gain(1.0);
         noise.set_fractal_lacunarity(2.0);
-        noise.set_frequency(0.001);
+        noise.set_frequency(0.005);
 
         Self {
             position,
@@ -156,10 +156,10 @@ impl Chunk {
     pub fn rand_noise(&mut self) {
         for x in 0..CHUNK_SIZE {
             for y in 0..CHUNK_SIZE {
-                let gx = x as f32 + self.position.x;
-                let gy = y as f32 + self.position.y;
+                let gx = self.position.x + x as f32;
+                let gy = self.position.y + y as f32;
 
-                let r = self.noise.get_noise(gx, gy) * 40.0;
+                let r = self.noise.get_noise(gx, gy) * 250.0;
 
                 if r >= y as f32 {
                     self.set_pixel_raw(x, y, Pixel::new(PixelType::Ground));
