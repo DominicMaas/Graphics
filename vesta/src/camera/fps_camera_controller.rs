@@ -3,17 +3,16 @@ use winit::event::VirtualKeyCode;
 
 use crate::{Camera, Engine};
 
-/// Ported Camera controller from Project Titan
-pub struct CameraControllerTitan {
+pub struct FpsCameraController {
     speed: f32,
     mouse_sensitivity: f32,
 }
 
-impl CameraControllerTitan {
-    pub fn new() -> Self {
+impl FpsCameraController {
+    pub fn new(speed: f32, mouse_sensitivity: f32) -> Self {
         Self {
-            speed: 20.0,
-            mouse_sensitivity: 10.0,
+            speed,
+            mouse_sensitivity,
         }
     }
 
@@ -38,8 +37,8 @@ impl CameraControllerTitan {
         if is_captured {
             let mouse_delta = engine.io.mouse.get_delta_f32();
 
-            let mut x_offset = mouse_delta.x; //mouse_pos.x - self.last_mouse.x;
-            let mut y_offset = -mouse_delta.y; //self.last_mouse.y - mouse_pos.y; // reversed since y-coordinates go from bottom to top
+            let mut x_offset = mouse_delta.x;
+            let mut y_offset = -mouse_delta.y; // reversed since y-coordinates go from bottom to top
 
             x_offset *= self.mouse_sensitivity * engine.time.get_delta_time();
             y_offset *= self.mouse_sensitivity * engine.time.get_delta_time();
@@ -61,8 +60,8 @@ impl CameraControllerTitan {
 
         let mut loc_speed = self.speed;
 
-        if engine.io.keyboard.get_key(VirtualKeyCode::LShift) {
-            loc_speed *= 5.0;
+        if engine.io.keyboard.get_key(VirtualKeyCode::LControl) {
+            loc_speed *= 7.0;
         }
 
         let velocity = loc_speed * engine.time.get_delta_time();
@@ -75,18 +74,26 @@ impl CameraControllerTitan {
             camera.position -= camera.right * velocity;
         }
 
+        if engine.io.keyboard.get_key(VirtualKeyCode::D) {
+            camera.position += camera.right * velocity;
+        }
+
         if engine.io.keyboard.get_key(VirtualKeyCode::S) {
             camera.position -= camera.front * velocity;
         }
 
-        if engine.io.keyboard.get_key(VirtualKeyCode::D) {
-            camera.position += camera.right * velocity;
+        if engine.io.keyboard.get_key(VirtualKeyCode::Space) {
+            camera.position += camera.up * velocity;
+        }
+
+        if engine.io.keyboard.get_key(VirtualKeyCode::LShift) {
+            camera.position -= camera.up * velocity;
         }
     }
 }
 
-impl Default for CameraControllerTitan {
+impl Default for FpsCameraController {
     fn default() -> Self {
-        Self::new()
+        Self::new(20.0, 10.0)
     }
 }

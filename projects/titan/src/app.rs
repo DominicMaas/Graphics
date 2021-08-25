@@ -17,7 +17,7 @@ pub struct App {
     general_render_pipeline: vesta::wgpu::RenderPipeline,
     sky_shader: SkyShader,
     camera: vesta::Camera,
-    camera_controller: vesta::CameraControllerTitan,
+    camera_controller: vesta::FpsCameraController,
     world: World,
     marker: Cube,
     is_wire_frame: bool,
@@ -122,7 +122,7 @@ impl vesta::VestaApp for App {
                 &engine.renderer.device,
             );
 
-        let camera_controller = vesta::CameraControllerTitan::new();
+        let camera_controller = vesta::FpsCameraController::default();
 
         let mut rng = rand::thread_rng();
         let world = World::new(&engine.renderer, rng.gen());
@@ -173,8 +173,8 @@ impl vesta::VestaApp for App {
             &engine,
             engine.is_cursor_captured(),
         );
-        self.camera_controller.update_camera(&mut self.camera);
 
+        self.camera_controller.update_camera(&mut self.camera);
         self.camera.update_uniforms(&engine.renderer);
 
         self.sky_shader.uniform_buffer.data.view = self.camera.calc_matrix();

@@ -13,7 +13,7 @@ use vesta::Engine;
 pub struct App {
     pixel_pipeline: vesta::wgpu::RenderPipeline,
     camera: vesta::Camera,
-    camera_controller: vesta::CameraController,
+    camera_controller: vesta::FpsCameraController,
     world: World,
     brush_size: i32,
     brush_type: PixelType,
@@ -69,7 +69,7 @@ impl vesta::VestaApp for App {
                 &engine.renderer.device,
             );
 
-        let camera_controller = vesta::CameraController::new(5.0, 0.2);
+        let camera_controller = vesta::FpsCameraController::default();
 
         let world = World::new(&engine.renderer);
 
@@ -85,10 +85,13 @@ impl vesta::VestaApp for App {
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {
-        self.camera_controller.process_input(&engine.io);
-        self.camera_controller
-            .update_camera(&mut self.camera, &engine, false);
+        self.camera_controller.process_input(
+            &mut self.camera,
+            &engine,
+            engine.is_cursor_captured(),
+        );
 
+        self.camera_controller.update_camera(&mut self.camera);
         self.camera.update_uniforms(&engine.renderer);
 
         if engine.io.mouse.get_button(MouseButton::Left) {

@@ -1,10 +1,8 @@
 mod camera_builder;
-mod camera_controller;
-mod camera_controller_titan;
+mod fps_camera_controller;
 
 pub use camera_builder::*;
-pub use camera_controller::*;
-pub use camera_controller_titan::*;
+pub use fps_camera_controller::*;
 
 use cgmath::num_traits::FloatConst;
 use cgmath::{EuclideanSpace, Matrix4, Point3, Rad, SquareMatrix, Vector3, Vector4};

@@ -12,7 +12,7 @@ pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
     cube: Cube,
     camera: vesta::Camera,
-    camera_controller: vesta::CameraControllerTitan,
+    camera_controller: vesta::FpsCameraController,
 }
 
 impl vesta::VestaApp for App {
@@ -62,7 +62,7 @@ impl vesta::VestaApp for App {
             &engine.renderer.device,
         );
 
-        let camera_controller = vesta::CameraControllerTitan::new();
+        let camera_controller = vesta::FpsCameraController::default();
 
         engine.set_cursor_captured(true);
 
@@ -79,10 +79,13 @@ impl vesta::VestaApp for App {
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {
-        self.camera_controller
-            .process_input(&mut self.camera, engine, engine.is_cursor_captured());
-        self.camera_controller.update_camera(&mut self.camera);
+        self.camera_controller.process_input(
+            &mut self.camera,
+            &engine,
+            engine.is_cursor_captured(),
+        );
 
+        self.camera_controller.update_camera(&mut self.camera);
         self.camera.update_uniforms(&engine.renderer);
 
         // Add ability to escape out of camera

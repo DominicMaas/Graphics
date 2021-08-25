@@ -11,7 +11,7 @@ pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
     c_body_pipeline: vesta::wgpu::RenderPipeline,
     camera: vesta::Camera,
-    camera_controller: vesta::CameraController,
+    camera_controller: vesta::FpsCameraController,
     bodies: Vec<CBody>,
     lights_uniform: vesta::UniformBuffer<LightUniform>,
 }
@@ -80,7 +80,7 @@ impl vesta::VestaApp for App {
                 &engine.renderer.device,
             );
 
-        let camera_controller = vesta::CameraController::new(32.0, 0.2);
+        let camera_controller = vesta::FpsCameraController::default();
 
         let lights_uniform = vesta::UniformBuffer::new(
             "Light Uniform Buffer",
@@ -196,13 +196,13 @@ impl vesta::VestaApp for App {
 
     fn update(&mut self, engine: &mut vesta::Engine) {
         // Update the camera
-        self.camera_controller.process_input(&engine.io);
-        self.camera_controller.update_camera(
+        self.camera_controller.process_input(
             &mut self.camera,
             &engine,
             engine.is_cursor_captured(),
         );
 
+        self.camera_controller.update_camera(&mut self.camera);
         self.camera.update_uniforms(&engine.renderer);
 
         // Add ability to escape out of camera
