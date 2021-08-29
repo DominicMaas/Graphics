@@ -7,7 +7,7 @@ pub use camera_builder::*;
 pub use fps_camera_controller::*;
 
 use cgmath::num_traits::FloatConst;
-use cgmath::{EuclideanSpace, Matrix4, Point3, Rad, SquareMatrix, Vector3, Vector4};
+use cgmath::{EuclideanSpace, Matrix, Matrix4, Point3, Rad, SquareMatrix, Vector3, Vector4};
 
 use crate::{Projection, UniformBuffer};
 
@@ -23,8 +23,8 @@ unsafe impl bytemuck::Pod for CameraUniform {}
 
 // Holds the camera position, yaw and pitch
 pub struct Camera {
-    pub position: Vector3<f32>,
-    pub center: Vector3<f32>,
+    pub position: Vector3<f32>, // eye
+    pub center: Vector3<f32>,  // look at
 
     pub up: Vector3<f32>,
 
@@ -57,7 +57,7 @@ impl Camera {
         Self {
             position,
             center: (0.0, 0.0, 0.0).into(), // This will get recalculated anyway
-            up: (0.0, 0.0, 0.0).into(),
+            up: (0.0, 1.0, 0.0).into(),
             yaw: cgmath::Rad(-90.0 / 180.0 * f32::PI()), // Look left or right
             pitch: cgmath::Rad(0.0),                     // Look Up / Down
             projection: Box::new(projection),
@@ -66,7 +66,7 @@ impl Camera {
     }
 
     /// Calculate the view matrix for the camera
-    pub fn calc_matrix(&self) -> cgmath::Matrix4<f32> {
+    pub fn calc_matrix(&self) -> Matrix4<f32> {
         Matrix4::look_at_rh(
             Point3::from_vec(self.position),
             Point3::from_vec(self.center),
@@ -82,8 +82,16 @@ impl Camera {
         renderer.write_uniform_buffer(&self.uniform_buffer);
     }
 
+    pub fn get_view_direction(&self) -> Vector3<f32> {
+        -self.calc_matrix().transpose()[2].xyz()
+    }
+
+    pub fn get_right_vector(&self) -> Vector3<f32> {
+        self.calc_matrix().transpose()[0].xyz()
+    }
+
     /// Transforms a point from screen space into world space
-    pub fn screen_to_world_point(&self, screen: cgmath::Vector3<f32>) -> cgmath::Vector3<f32> {
+    pub fn screen_to_world_point(&self, screen: Vector3<f32>) -> Vector3<f32> {
         let size = self.projection.get_window_size();
 
         let proj = self.projection.calc_matrix();
@@ -91,7 +99,7 @@ impl Camera {
 
         let proj_view_inverse = (proj * view).invert().unwrap();
 
-        let vec = cgmath::Vector4::new(
+        let vec = Vector4::new(
             2.0 * (screen.x / size.width as f32) - 1.0,
             2.0 * (screen.y / size.height as f32) - 1.0,
             screen.z,
@@ -107,6 +115,6 @@ impl Camera {
         pos.y *= pos.w;
         pos.z *= pos.w;
 
-        cgmath::Vector3::new(pos.x, pos.y, pos.z)
+        Vector3::new(pos.x, pos.y, pos.z)
     }
 }

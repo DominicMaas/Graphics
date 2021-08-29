@@ -1,10 +1,4 @@
-use vesta::{
-    cgmath::num_traits::FloatConst,
-    winit::{
-        dpi::PhysicalSize,
-        event::{MouseButton, VirtualKeyCode},
-    },
-};
+use vesta::{cgmath::num_traits::FloatConst, winit::dpi::PhysicalSize};
 
 use crate::cube::Cube;
 
@@ -12,7 +6,7 @@ pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
     cube: Cube,
     camera: vesta::Camera,
-    camera_controller: vesta::FpsCameraController,
+    camera_controller: vesta::ArcBallCameraController,
 }
 
 impl vesta::VestaApp for App {
@@ -51,20 +45,20 @@ impl vesta::VestaApp for App {
         let cube = Cube::new(&engine.renderer);
 
         // Setup the main camera
-        let camera = vesta::CameraBuilder::new().build(
-            vesta::PerspectiveProjection::new(
-                engine.get_window_size().width,
-                engine.get_window_size().height,
-                vesta::cgmath::Rad(70.0 / 180.0 * f32::PI()),
-                0.01,
-                1000.0,
-            ),
-            &engine.renderer.device,
-        );
+        let camera = vesta::CameraBuilder::new()
+            .with_position((0.0, 0.0, 3.0).into())
+            .build(
+                vesta::PerspectiveProjection::new(
+                    engine.get_window_size().width,
+                    engine.get_window_size().height,
+                    vesta::cgmath::Rad(70.0 / 180.0 * f32::PI()),
+                    0.01,
+                    1000.0,
+                ),
+                &engine.renderer.device,
+            );
 
-        let camera_controller = vesta::FpsCameraController::default();
-
-        engine.set_cursor_captured(true);
+        let camera_controller = vesta::ArcBallCameraController::default();
 
         Self {
             render_pipeline,
@@ -87,16 +81,6 @@ impl vesta::VestaApp for App {
 
         self.camera_controller.update_camera(&mut self.camera);
         self.camera.update_uniforms(&engine.renderer);
-
-        // Add ability to escape out of camera
-        if engine.io.keyboard.get_key_down(VirtualKeyCode::Escape) && engine.is_cursor_captured() {
-            engine.set_cursor_captured(false);
-        }
-
-        // Add ability to capture camera again
-        if engine.io.mouse.get_button_down(MouseButton::Left) && !engine.is_cursor_captured() {
-            engine.set_cursor_captured(true);
-        }
     }
 
     fn render<'a>(

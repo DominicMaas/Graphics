@@ -13,9 +13,9 @@ impl Cube {
         let mut vertices: Vec<vesta::Vertex> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
 
-        let x = -1.0;
-        let y = -1.0;
-        let z = -5.0;
+        let x = 0.0;
+        let y = 0.0;
+        let z = 0.0;
         let mut curr_index = 0;
 
         // BACK
@@ -245,8 +245,8 @@ impl Cube {
             self.angle = 0.0;
         }
 
-        let rotation = Matrix4::from_angle_z(Deg(self.angle));
-        let model = Matrix4::from_translation(Vector3::new(0.0, 0.0, 0.0)) * rotation;
+        //let rotation = Matrix4::from_angle_z(Deg(self.angle));
+        let model = Matrix4::from_translation(Vector3::new(0.0, 0.0, 0.0)); // * rotation;
         let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
 
         self.uniform_buffer.data.model = model;
