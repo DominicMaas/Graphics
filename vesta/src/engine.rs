@@ -21,6 +21,7 @@ pub struct Time {
     frame_delta_time: f32,
     delta_time: f32,
     current_time: Instant,
+    start_time: Instant,
     accumulator: f32,
 }
 
@@ -134,6 +135,7 @@ impl Engine {
                 delta_time: 0.01,
                 frame_delta_time: 0.0,
                 current_time: Instant::now(),
+                start_time: Instant::now(),
                 accumulator: 0.0,
             },
         };
@@ -152,19 +154,24 @@ impl Engine {
             gui.platform.handle_event(&event);
 
             // Handle engine events
-            engine.handle_events(event, control_flow, &mut app, &mut gui);
+            engine.handle_events(&event, control_flow, &mut app, &mut gui);
         });
     }
 
     fn handle_events<V: VestaApp>(
         &mut self,
-        event: Event<()>,
+        event: &Event<()>,
         control_flow: &mut ControlFlow,
         app: &mut V,
         gui: &mut Gui,
     ) {
+        let gui_capture = gui.platform.captures_event(event);
+
         match event {
             Event::RedrawRequested(_) => {
+                // Update the GUI
+                gui.platform.update_time(self.time.start_time.elapsed().as_secs_f64());
+
                 // Timing logic
                 let new_time = Instant::now();
                 let frame_time = new_time - self.time.current_time;
@@ -175,10 +182,7 @@ impl Engine {
                 self.time.accumulator += frame_time.as_secs_f32();
 
                 while self.time.accumulator >= self.time.delta_time {
-                    gui.platform.update_time(self.time.delta_time as f64); // TODO: THIS MAY NEED TO MOVE
-
                     app.physics_update(self.time.delta_time, self);
-
                     self.time.accumulator -= self.time.delta_time;
                 }
 
@@ -210,11 +214,10 @@ impl Engine {
             }
             Event::WindowEvent { ref event, .. } => {
                 // Handle mouse and keyboard events if the UI is not handling them
-                let _ctx = &gui.platform.context();
-
-                // TODO: Prevent game interaction when interacting with UI
-                self.io.mouse.handle_event(event);
-                self.io.keyboard.handle_event(event);
+                if !gui_capture {
+                    self.io.mouse.handle_event(event);
+                    self.io.keyboard.handle_event(event);
+                }
 
                 match event {
                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
