@@ -41,11 +41,11 @@ impl SkyShader {
                     label: Some("Sky Render Pipeline Layout"),
                     bind_group_layouts: &[
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX,
+                            vesta::wgpu::ShaderStages::VERTEX,
                             &engine.renderer.device,
                         ),
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::FRAGMENT,
+                            vesta::wgpu::ShaderStages::FRAGMENT,
                             &engine.renderer.device,
                         ),
                     ],
@@ -54,7 +54,7 @@ impl SkyShader {
 
         // Render pipeline for shaders
         let render_pipeline = vesta::RenderPipelineBuilder::new(
-            engine.renderer.swap_chain_desc.format,
+            engine.renderer.surface_config.format,
             "Sky Render Pipeline",
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
@@ -72,7 +72,7 @@ impl SkyShader {
         // The uniform buffer
         let uniform_buffer = vesta::UniformBuffer::new(
             "Sky Uniform Buffer (Vertex)",
-            vesta::wgpu::ShaderStage::VERTEX,
+            vesta::wgpu::ShaderStages::VERTEX,
             SkyUniform {
                 proj: Matrix4::identity(),
                 proj_inv: Matrix4::identity(),
@@ -85,7 +85,7 @@ impl SkyShader {
         // The uniform buffer
         let frag_uniform_buffer = vesta::UniformBuffer::new(
             "Sky Uniform Buffer (Fragment)",
-            vesta::wgpu::ShaderStage::FRAGMENT,
+            vesta::wgpu::ShaderStages::FRAGMENT,
             SkyFragUniform {
                 scatter_amount: 0.0,
             },

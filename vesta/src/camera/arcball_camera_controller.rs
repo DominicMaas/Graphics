@@ -1,22 +1,19 @@
 use cgmath::num_traits::FloatConst;
-use cgmath::{Angle, Deg, InnerSpace, Matrix4, Rad, Vector2, Vector4};
-use winit::event::VirtualKeyCode;
+use cgmath::{Deg, InnerSpace, Matrix4, Vector2, Vector4};
 
 use crate::winit::event::MouseButton;
 use crate::{Camera, Engine};
 
-// Based on https://asliceofrendering.com/camera/2019/11/30/ArcballCamera/
+// Roughly Based on https://asliceofrendering.com/camera/2019/11/30/ArcballCamera/
 
 pub struct ArcBallCameraController {
-    speed: f32,
     mouse_sensitivity: f32,
     last_mouse_pos: Vector2<f32>,
 }
 
 impl ArcBallCameraController {
-    pub fn new(speed: f32, mouse_sensitivity: f32) -> Self {
+    pub fn new(mouse_sensitivity: f32) -> Self {
         Self {
-            speed,
             mouse_sensitivity,
             last_mouse_pos: (0.0, 0.0).into(),
         }
@@ -50,9 +47,9 @@ impl ArcBallCameraController {
 
         // step 1 : Calculate the amount of rotation given the mouse movement.
         let delta_angle_x =
-            self.speed * 2.0 * f32::PI() / camera.projection.get_window_size().width as f32; // a movement from left to right = 2*PI = 360 deg
-        let mut delta_angle_y =
-            self.speed * f32::PI() / camera.projection.get_window_size().height as f32; // a movement from top to bottom = PI = 180 deg
+            self.mouse_sensitivity * 2.0 * f32::PI() / camera.projection.get_window_size().width as f32; // a movement from left to right = 2*PI = 360 deg
+        let delta_angle_y =
+            self.mouse_sensitivity * f32::PI() / camera.projection.get_window_size().height as f32; // a movement from top to bottom = PI = 180 deg
 
         let x_angle = (self.last_mouse_pos.x - mouse_pos.x) * delta_angle_x;
         let mut y_angle = (self.last_mouse_pos.y - mouse_pos.y) * delta_angle_y;
@@ -81,6 +78,6 @@ impl ArcBallCameraController {
 
 impl Default for ArcBallCameraController {
     fn default() -> Self {
-        Self::new(35.0, 10.0)
+        Self::new(35.0)
     }
 }

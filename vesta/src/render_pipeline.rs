@@ -45,7 +45,6 @@ impl<'a> RenderPipelineBuilder<'a> {
         self.shader_source = Some(wgpu::ShaderModuleDescriptor {
             label: None,
             source,
-            flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION,
         });
         self
     }
@@ -177,7 +176,7 @@ impl<'a> RenderPipelineBuilder<'a> {
                             operation: wgpu::BlendOperation::Add,
                         },
                     }),
-                    write_mask: wgpu::ColorWrite::ALL,
+                    write_mask: wgpu::ColorWrites::ALL,
                 }],
             }),
         });

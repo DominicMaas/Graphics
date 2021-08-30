@@ -29,8 +29,8 @@ pub use vertex::*;
 // These are exposed in the vesta API, so allow dependents to access them
 pub extern crate bytemuck;
 pub extern crate cgmath;
+pub extern crate egui;
 pub extern crate image;
-pub extern crate imgui;
 pub extern crate wgpu;
 pub extern crate winit;
 
@@ -55,8 +55,8 @@ pub trait VestaApp {
     /// Engine is mutable here on purpose
     fn update(&mut self, engine: &mut Engine) {}
 
-    /// Optional: Render your UI in this method using imgui
-    fn render_ui(&mut self, ui: &imgui::Ui, engine: &Engine) {}
+    /// Optional: Render your UI in this method using egui
+    fn render_ui(&mut self, ctx: &egui::CtxRef, engine: &Engine) {}
 
     /// Required: Render your UI to the main render pass, multiple
     /// render passes are not yet supported

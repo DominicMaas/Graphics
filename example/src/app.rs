@@ -1,6 +1,7 @@
-use vesta::{cgmath::num_traits::FloatConst, winit::dpi::PhysicalSize};
+use vesta::{cgmath::num_traits::FloatConst, winit::dpi::PhysicalSize, Engine};
 
 use crate::cube::Cube;
+use vesta::egui::CtxRef;
 
 pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
@@ -19,11 +20,11 @@ impl vesta::VestaApp for App {
                     label: Some("Render Pipeline Layout"),
                     bind_group_layouts: &[
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX,
+                            vesta::wgpu::ShaderStages::VERTEX,
                             &engine.renderer.device,
                         ),
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX,
+                            vesta::wgpu::ShaderStages::VERTEX,
                             &engine.renderer.device,
                         ),
                         &vesta::Texture::create_bind_group_layout(&engine.renderer.device),
@@ -32,7 +33,7 @@ impl vesta::VestaApp for App {
                 });
 
         let render_pipeline = vesta::RenderPipelineBuilder::new(
-            engine.renderer.swap_chain_desc.format,
+            engine.renderer.surface_config.format,
             "Render Pipeline",
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
@@ -83,6 +84,20 @@ impl vesta::VestaApp for App {
         self.camera.update_uniforms(&engine.renderer);
     }
 
+    fn render_ui(&mut self, ctx: &CtxRef, _engine: &Engine) {
+        vesta::egui::SidePanel::left("settings_panel")
+            .frame(vesta::egui::Frame {
+                margin: vesta::egui::vec2(20.0, 20.0),
+                ..Default::default()
+            })
+            .min_width(200.0)
+            .show(&ctx, |ui| {
+                ui.heading("Vesta Engine Example");
+                ui.separator();
+                ui.label("Click and drag to move the camera around the cube.");
+            });
+    }
+    
     fn render<'a>(
         &'a mut self,
         render_pass: &mut vesta::wgpu::RenderPass<'a>,

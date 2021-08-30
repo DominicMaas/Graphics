@@ -1,4 +1,3 @@
-use std::f32::consts::PI;
 use std::num::NonZeroU32;
 
 use bracket_noise::prelude::{FastNoise, FractalType, NoiseType};
@@ -55,7 +54,7 @@ impl Chunk {
         };
         let uniform_buffer = vesta::UniformBuffer::new(
             "Chunk Uniform Buffer",
-            vesta::wgpu::ShaderStage::VERTEX,
+            vesta::wgpu::ShaderStages::VERTEX,
             uniform_data,
             &renderer.device,
         );
@@ -76,7 +75,7 @@ impl Chunk {
                 sample_count: 1,
                 dimension: vesta::wgpu::TextureDimension::D2,
                 format: vesta::wgpu::TextureFormat::Rgba8UnormSrgb,
-                usage: vesta::wgpu::TextureUsage::SAMPLED | vesta::wgpu::TextureUsage::COPY_DST,
+                usage: vesta::wgpu::TextureUsages::TEXTURE_BINDING | vesta::wgpu::TextureUsages::COPY_DST,
             });
 
         let view = texture.create_view(&vesta::wgpu::TextureViewDescriptor::default());
@@ -194,6 +193,7 @@ impl Chunk {
                 texture: &self.texture,
                 mip_level: 0,
                 origin: vesta::wgpu::Origin3d::ZERO,
+                aspect: vesta::wgpu::TextureAspect::All
             },
             self.color_buffer.as_slice(),
             vesta::wgpu::ImageDataLayout {
@@ -384,8 +384,8 @@ impl Chunk {
         let b_pos = Vector2::new(pos.x, pos.y - fall_rate);
         let br_pos = Vector2::new(pos.x + spread_rate_right, pos.y - fall_rate);
         let bl_pos = Vector2::new(pos.x + spread_rate_left, pos.y - fall_rate);
-        let r_pos = Vector2::new(pos.x + spread_rate_right, pos.y);
-        let l_pos = Vector2::new(pos.x - spread_rate_left, pos.y);
+        let _r_pos = Vector2::new(pos.x + spread_rate_right, pos.y);
+        let _l_pos = Vector2::new(pos.x - spread_rate_left, pos.y);
 
         // Update the velocity
         let pixel = self.get_pixel_raw(pos.x, pos.y).unwrap();

@@ -192,7 +192,7 @@ impl Cube {
         let uniform_data = vesta::ModelUniform { model, normal };
         let uniform_buffer = vesta::UniformBuffer::new(
             "Cube Uniform Buffer",
-            vesta::wgpu::ShaderStage::VERTEX,
+            vesta::wgpu::ShaderStages::VERTEX,
             uniform_data,
             &renderer.device,
         );

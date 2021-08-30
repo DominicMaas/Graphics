@@ -4,7 +4,7 @@ use cgmath::Vector3;
 pub struct CameraBuilder<'a> {
     position: Vector3<f32>,
     uniform_buffer_name: &'a str,
-    uniform_buffer_visibility: wgpu::ShaderStage,
+    uniform_buffer_visibility: wgpu::ShaderStages,
 }
 
 impl<'a> CameraBuilder<'a> {
@@ -12,7 +12,7 @@ impl<'a> CameraBuilder<'a> {
         Self {
             position: Vector3::new(0.0, 0.0, 0.0),
             uniform_buffer_name: "None",
-            uniform_buffer_visibility: wgpu::ShaderStage::VERTEX,
+            uniform_buffer_visibility: wgpu::ShaderStages::VERTEX,
         }
     }
 
@@ -29,7 +29,7 @@ impl<'a> CameraBuilder<'a> {
     }
 
     /// Set a custom visibility for the uniform buffer
-    pub fn with_uniform_buffer_visibility(&mut self, visibility: wgpu::ShaderStage) -> &mut Self {
+    pub fn with_uniform_buffer_visibility(&mut self, visibility: wgpu::ShaderStages) -> &mut Self {
         self.uniform_buffer_visibility = visibility;
         self
     }

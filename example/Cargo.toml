@@ -3,6 +3,7 @@ name = "vesta_example"
 version = "0.1.0"
 authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2018"
+resolver="2"
 
 [dependencies]
 vesta = { path = "../vesta" }

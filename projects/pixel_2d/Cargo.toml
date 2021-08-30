@@ -3,6 +3,7 @@ name = "pixel_2d"
 version = "0.1.0"
 authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2018"
+resolver = "2"
 
 [dependencies]
 vesta = { path = "../../vesta" }
@@ -11,7 +12,3 @@ env_logger = "0.9"
 log = "0.4"
 bracket-noise = "0.8.2"
 rand = "0.8.0"
-
-
-[profile.release]
-debug = 1

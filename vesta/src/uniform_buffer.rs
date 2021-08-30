@@ -43,11 +43,11 @@ impl<T: Copy + bytemuck::Pod + bytemuck::Zeroable> UniformBuffer<T> {
 
     //noinspection RsBorrowChecker
     /// Crate a new uniform buffer to store data of type
-    pub fn new(name: &str, visibility: wgpu::ShaderStage, data: T, device: &wgpu::Device) -> Self {
+    pub fn new(name: &str, visibility: wgpu::ShaderStages, data: T, device: &wgpu::Device) -> Self {
         let buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some(name),
             contents: bytemuck::cast_slice(&[data]),
-            usage: wgpu::BufferUsage::COPY_DST | wgpu::BufferUsage::UNIFORM,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -70,7 +70,7 @@ impl<T: Copy + bytemuck::Pod + bytemuck::Zeroable> UniformBuffer<T> {
 pub struct UniformBufferUtils {}
 impl UniformBufferUtils {
     pub fn create_bind_group_layout(
-        visibility: wgpu::ShaderStage,
+        visibility: wgpu::ShaderStages,
         device: &wgpu::Device,
     ) -> wgpu::BindGroupLayout {
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {

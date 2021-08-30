@@ -3,8 +3,6 @@ use crate::pixel::PixelType;
 use crate::world::World;
 use vesta::cgmath::Vector2;
 use vesta::cgmath::Vector3;
-use vesta::imgui;
-use vesta::imgui::im_str;
 use vesta::wgpu::RenderPass;
 use vesta::winit::dpi::PhysicalSize;
 use vesta::winit::event::{MouseButton, VirtualKeyCode};
@@ -31,11 +29,11 @@ impl vesta::VestaApp for App {
                     label: Some("Render Pipeline Layout"),
                     bind_group_layouts: &[
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX,
+                            vesta::wgpu::ShaderStages::VERTEX,
                             &engine.renderer.device,
                         ),
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX,
+                            vesta::wgpu::ShaderStages::VERTEX,
                             &engine.renderer.device,
                         ),
                         &vesta::Texture::create_bind_group_layout(&engine.renderer.device),
@@ -45,7 +43,7 @@ impl vesta::VestaApp for App {
 
         // Pipeline / shader for pixels
         let pixel_pipeline = vesta::RenderPipelineBuilder::new(
-            engine.renderer.swap_chain_desc.format,
+            engine.renderer.surface_config.format,
             "Main Pipeline",
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
@@ -125,58 +123,33 @@ impl vesta::VestaApp for App {
         self.world.rebuild(&engine.renderer);
     }
 
-    fn render_ui(&mut self, ui: &imgui::Ui, _engine: &Engine) {
-        let window = vesta::imgui::Window::new(im_str!("Toolbox"));
-        window
-            .size([400.0, 700.0], vesta::imgui::Condition::FirstUseEver)
-            .build(&ui, || {
-                let cg = ui.begin_group();
-                ui.input_int(im_str!("Brush Size"), &mut self.brush_size)
-                    .build();
+    fn render_ui(&mut self, ctx: &vesta::egui::CtxRef, _engine: &Engine) {
+        vesta::egui::Window::new("Toolbox")
+            .show(&ctx, |ui| {
+                ui.add(vesta::egui::Slider::new(&mut self.brush_size, 1..=100));
 
-                ui.radio_button(im_str!("Brush: Air"), &mut self.brush_type, PixelType::Air);
-                ui.radio_button(
-                    im_str!("Brush: Ground"),
-                    &mut self.brush_type,
-                    PixelType::Ground,
-                );
-                ui.radio_button(
-                    im_str!("Brush: Snow"),
-                    &mut self.brush_type,
-                    PixelType::Snow,
-                );
-                ui.radio_button(
-                    im_str!("Brush: Water"),
-                    &mut self.brush_type,
-                    PixelType::Water,
-                );
-                ui.radio_button(
-                    im_str!("Brush: Sand"),
-                    &mut self.brush_type,
-                    PixelType::Sand,
-                );
-
-                cg.end(&ui);
+                ui.radio_value(&mut self.brush_type, PixelType::Air, "Air");
+                ui.radio_value(&mut self.brush_type, PixelType::Snow, "Snow");
+                ui.radio_value(&mut self.brush_type, PixelType::Water, "Water");
+                ui.radio_value(&mut self.brush_type, PixelType::Sand, "Sand");
+                ui.radio_value(&mut self.brush_type, PixelType::Ground, "Ground");
 
                 match self.selected_pixel {
                     Some(pixel) => {
-                        let pixel_ground = ui.begin_group();
-
-                        ui.text(im_str!("Selected Pixel:"));
-                        ui.text(im_str!("Type: {:?}", pixel.get_type()));
-                        ui.text(im_str!(
+                        ui.separator();
+                        ui.heading("Selected Pixel");
+                        ui.label(format!("Type: {:?}", pixel.get_type()));
+                        ui.label(format!(
                             "Color: {},{},{}",
                             pixel.get_color().r,
                             pixel.get_color().g,
                             pixel.get_color().b
                         ));
-                        ui.text(im_str!(
+                        ui.label(format!(
                             "Velocity: {},{}:",
                             pixel.velocity.x,
                             pixel.velocity.y
                         ));
-
-                        pixel_ground.end(&ui);
                     }
                     None => {}
                 }

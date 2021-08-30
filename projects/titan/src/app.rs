@@ -1,6 +1,5 @@
 use vesta::{
     cgmath::{num_traits::FloatConst, SquareMatrix, Vector4},
-    imgui::{self, im_str},
     winit::{
         dpi::PhysicalSize,
         event::{MouseButton, VirtualKeyCode},
@@ -34,12 +33,12 @@ impl vesta::VestaApp for App {
                     bind_group_layouts: &[
                         // Camera Uniform Buffer
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
+                            vesta::wgpu::ShaderStages::VERTEX | vesta::wgpu::ShaderStages::FRAGMENT,
                             &engine.renderer.device,
                         ),
                         // Chunk Uniform buffer
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX,
+                            vesta::wgpu::ShaderStages::VERTEX,
                             &engine.renderer.device,
                         ),
                     ],
@@ -56,12 +55,12 @@ impl vesta::VestaApp for App {
                     bind_group_layouts: &[
                         // Camera Uniform Buffer
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
+                            vesta::wgpu::ShaderStages::VERTEX | vesta::wgpu::ShaderStages::FRAGMENT,
                             &engine.renderer.device,
                         ),
                         // Chunk Uniform buffer
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX,
+                            vesta::wgpu::ShaderStages::VERTEX,
                             &engine.renderer.device,
                         ),
                         // Chunk Texture
@@ -72,7 +71,7 @@ impl vesta::VestaApp for App {
 
         // Render pipeline for shaders
         let chunk_render_pipeline = vesta::RenderPipelineBuilder::new(
-            engine.renderer.swap_chain_desc.format,
+            engine.renderer.surface_config.format,
             "Chunk Render Pipeline",
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
@@ -83,7 +82,7 @@ impl vesta::VestaApp for App {
         .unwrap();
 
         let chunk_render_pipeline_wire_frame = vesta::RenderPipelineBuilder::new(
-            engine.renderer.swap_chain_desc.format,
+            engine.renderer.surface_config.format,
             "Chunk Render Pipeline (Debug)",
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
@@ -95,7 +94,7 @@ impl vesta::VestaApp for App {
         .unwrap();
 
         let general_render_pipeline = vesta::RenderPipelineBuilder::new(
-            engine.renderer.swap_chain_desc.format,
+            engine.renderer.surface_config.format,
             "General Render Pipeline",
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
@@ -109,7 +108,7 @@ impl vesta::VestaApp for App {
         let camera = vesta::CameraBuilder::new()
             .with_position((0.0, 0.0, 0.0).into())
             .with_uniform_buffer_visibility(
-                vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
+                vesta::wgpu::ShaderStages::VERTEX | vesta::wgpu::ShaderStages::FRAGMENT,
             )
             .build(
                 vesta::PerspectiveProjection::new(
@@ -141,27 +140,6 @@ impl vesta::VestaApp for App {
             is_wire_frame: false,
             marker: Cube::new(&engine.renderer),
         }
-    }
-
-    fn render<'a>(
-        &'a mut self,
-        render_pass: &mut vesta::wgpu::RenderPass<'a>,
-        engine: &vesta::Engine,
-    ) {
-        if self.is_wire_frame {
-            render_pass.set_pipeline(&self.chunk_render_pipeline_wire_frame);
-        } else {
-            render_pass.set_pipeline(&self.chunk_render_pipeline);
-        }
-
-        render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
-        self.world.render(render_pass, engine, &self.camera);
-
-        self.sky_shader.render(render_pass, engine);
-
-        render_pass.set_pipeline(&self.general_render_pipeline);
-        render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
-        self.marker.render(render_pass);
     }
 
     fn update(&mut self, engine: &mut vesta::Engine) {
@@ -200,6 +178,55 @@ impl vesta::VestaApp for App {
         self.marker.update(&self.camera, &engine.renderer);
     }
 
+    fn render_ui(&mut self, ctx: &vesta::egui::CtxRef, _engine: &vesta::Engine) {
+        let cam = &self.camera;
+        let sky_shader = &mut self.sky_shader;
+        let rendered_chunks = &self.world.rendered_chunks;
+        let is_debug = &mut self.is_wire_frame;
+
+        vesta::egui::Window::new("Toolbox")
+            .show(&ctx, |ui| {
+                ui.heading("Camera");
+                ui.label(format!("Position: {:.2}, {:.2}, {:.2}", cam.position.x, cam.position.y, cam.position.z));
+                ui.label(format!("Pitch: {:.2}", cam.pitch.0));
+                ui.label(format!("Yaw: {:.2},", cam.yaw.0));
+
+                ui.separator();
+
+                ui.label(format!("Rendered Chunks: {}", rendered_chunks));
+
+                ui.separator();
+
+                ui.label("Sky Scatter Amount");
+                ui.add(vesta::egui::Slider::new(&mut sky_shader.frag_uniform_buffer.data.scatter_amount, 0.0..=1.0));
+
+                ui.separator();
+
+                ui.add(vesta::egui::Checkbox::new(is_debug, "Show Wireframe"));
+            });
+    }
+
+    fn render<'a>(
+        &'a mut self,
+        render_pass: &mut vesta::wgpu::RenderPass<'a>,
+        engine: &vesta::Engine,
+    ) {
+        if self.is_wire_frame {
+            render_pass.set_pipeline(&self.chunk_render_pipeline_wire_frame);
+        } else {
+            render_pass.set_pipeline(&self.chunk_render_pipeline);
+        }
+
+        render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
+        self.world.render(render_pass, engine, &self.camera);
+
+        self.sky_shader.render(render_pass, engine);
+
+        render_pass.set_pipeline(&self.general_render_pipeline);
+        render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
+        self.marker.render(render_pass);
+    }
+
     fn resize(&mut self, size: PhysicalSize<u32>, engine: &vesta::Engine) {
         // The screen projection needs to be updated
         self.camera.projection.resize(size.width, size.height);
@@ -209,45 +236,5 @@ impl vesta::VestaApp for App {
             self.camera.projection.calc_matrix().invert().unwrap();
 
         self.sky_shader.update(&engine.renderer);
-    }
-
-    fn render_ui(&mut self, ui: &imgui::Ui, _engine: &vesta::Engine) {
-        let cam = &self.camera;
-        let sky_shader = &mut self.sky_shader;
-        let rendered_chunks = &self.world.rendered_chunks;
-        let is_debug = &mut self.is_wire_frame;
-
-        let window = vesta::imgui::Window::new(im_str!("Toolbox"));
-        window
-            .size([300.0, 300.0], vesta::imgui::Condition::FirstUseEver)
-            .build(&ui, || {
-                let cg = ui.begin_group();
-                ui.text(vesta::imgui::im_str!("Camera:"));
-                ui.text(vesta::imgui::im_str!(
-                    "Position: {:.2}, {:.2}, {:.2}",
-                    cam.position.x,
-                    cam.position.y,
-                    cam.position.z
-                ));
-                ui.text(vesta::imgui::im_str!("Pitch: {:.2} rad", cam.pitch.0));
-                ui.text(vesta::imgui::im_str!("Yaw: {:.2} rad", cam.yaw.0));
-
-                ui.separator();
-
-                ui.text(vesta::imgui::im_str!(
-                    "Rendered Chunks: {}",
-                    rendered_chunks
-                ));
-
-                ui.separator();
-
-                imgui::Slider::new(im_str!("Sky Scatter Amount"))
-                    .range(0.0..=1.0)
-                    .build(&ui, &mut sky_shader.frag_uniform_buffer.data.scatter_amount);
-
-                ui.checkbox(im_str!("Show Wireframe"), is_debug);
-
-                cg.end(&ui);
-            });
     }
 }

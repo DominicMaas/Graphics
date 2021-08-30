@@ -31,15 +31,15 @@ impl vesta::VestaApp for App {
                     bind_group_layouts: &[
                         &vesta::Texture::create_bind_group_layout(&engine.renderer.device),
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX,
+                            vesta::wgpu::ShaderStages::VERTEX,
                             &engine.renderer.device,
                         ),
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX,
+                            vesta::wgpu::ShaderStages::VERTEX,
                             &engine.renderer.device,
                         ),
                         &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
+                            vesta::wgpu::ShaderStages::VERTEX | vesta::wgpu::ShaderStages::FRAGMENT,
                             &engine.renderer.device,
                         ),
                     ],
@@ -47,7 +47,7 @@ impl vesta::VestaApp for App {
                 });
 
         let render_pipeline = vesta::RenderPipelineBuilder::new(
-            engine.renderer.swap_chain_desc.format,
+            engine.renderer.surface_config.format,
             "Main Pipeline",
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
@@ -58,7 +58,7 @@ impl vesta::VestaApp for App {
         .unwrap();
 
         let c_body_pipeline = vesta::RenderPipelineBuilder::new(
-            engine.renderer.swap_chain_desc.format,
+            engine.renderer.surface_config.format,
             "C Body Pipeline",
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
@@ -87,7 +87,7 @@ impl vesta::VestaApp for App {
 
         let lights_uniform = vesta::UniformBuffer::new(
             "Light Uniform Buffer",
-            vesta::wgpu::ShaderStage::VERTEX | vesta::wgpu::ShaderStage::FRAGMENT,
+            vesta::wgpu::ShaderStages::VERTEX | vesta::wgpu::ShaderStages::FRAGMENT,
             LightUniform::new((2.0, 2.0, 2.0).into(), (1.0, 1.0, 1.0).into()),
             &engine.renderer.device,
         );
@@ -253,54 +253,40 @@ impl vesta::VestaApp for App {
         );
     }
 
-    fn render_ui(&mut self, ui: &vesta::imgui::Ui, _engine: &vesta::Engine) {
+    fn render_ui(&mut self, ctx: &vesta::egui::CtxRef, _engine: &vesta::Engine) {
         let ui_bodies = self.bodies.iter();
         let cam = &self.camera;
 
-        let window = vesta::imgui::Window::new(vesta::imgui::im_str!("Debug"));
-        window
-            .size([400.0, 700.0], vesta::imgui::Condition::FirstUseEver)
-            .build(&ui, || {
-                // All bodies
+        vesta::egui::Window::new("Debug")
+            .show(&ctx, |ui| {
+                ui.heading("Camera");
+                ui.label(format!("Position: {:.2}, {:.2}, {:.2}", cam.position.x, cam.position.y, cam.position.z));
+                ui.label(format!("Pitch: {:.2}", cam.pitch.0));
+                ui.label(format!("Yaw: {:.2},", cam.yaw.0));
+
+                ui.separator();
+
+                ui.heading("Bodies");
                 for b in ui_bodies {
-                    let g = ui.begin_group();
-                    ui.text(vesta::imgui::im_str!("Body '{}':", b.name));
-                    ui.text(vesta::imgui::im_str!("Mass: {:.2} kg", b.mass));
-                    ui.text(vesta::imgui::im_str!("Radius: {:.2} m", b.settings.radius));
-                    ui.text(vesta::imgui::im_str!(
-                        "Velocity: {:.6} m/s",
-                        b.velocity.magnitude()
-                    ));
-                    ui.text(vesta::imgui::im_str!(
-                        "Escape Velocity: {:.6} m/s",
-                        b.escape_velocity()
-                    ));
-                    ui.text(vesta::imgui::im_str!(
-                        "Position: {:.2}, {:.2}, {:.2}",
-                        b.position.x,
-                        b.position.y,
-                        b.position.z
-                    ));
-
-                    ui.spacing();
-                    ui.separator();
-                    ui.spacing();
-
-                    g.end(&ui);
+                    ui.collapsing(format!("{}", b.name),|ui| {
+                        ui.label(format!("Mass: {:.2} kg", b.mass));
+                        ui.label(format!("Radius: {:.2} m", b.settings.radius));
+                        ui.label(format!(
+                            "Velocity: {:.6} m/s",
+                            b.velocity.magnitude()
+                        ));
+                        ui.label(format!(
+                            "Escape Velocity: {:.6} m/s",
+                            b.escape_velocity()
+                        ));
+                        ui.label(format!(
+                            "Position: {:.2}, {:.2}, {:.2}",
+                            b.position.x,
+                            b.position.y,
+                            b.position.z
+                        ));
+                    });
                 }
-
-                let cg = ui.begin_group();
-                ui.text(vesta::imgui::im_str!("Camera:"));
-                ui.text(vesta::imgui::im_str!(
-                    "Position: {:.2}, {:.2}, {:.2}",
-                    cam.position.x,
-                    cam.position.y,
-                    cam.position.z
-                ));
-                ui.text(vesta::imgui::im_str!("Pitch: {:.2} rad", cam.pitch.0));
-                ui.text(vesta::imgui::im_str!("Yaw: {:.2} rad", cam.yaw.0));
-
-                cg.end(&ui);
             });
     }
 

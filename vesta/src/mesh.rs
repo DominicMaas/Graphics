@@ -31,16 +31,16 @@ impl Mesh {
 
             let mut i = 0;
             while i < indices.len() {
-                let A = indices[i] as usize;
-                let B = indices[i + 1] as usize;
-                let C = indices[i + 2] as usize;
+                let a = indices[i] as usize;
+                let b = indices[i + 1] as usize;
+                let c = indices[i + 2] as usize;
 
-                let p = ((vertices_mut[B].position - vertices_mut[A].position)
-                    .cross(vertices_mut[C].position - vertices_mut[A].position));
+                let p = (vertices_mut[b].position - vertices_mut[a].position)
+                    .cross(vertices_mut[c].position - vertices_mut[a].position);
 
-                vertices_mut[A].normal += p;
-                vertices_mut[B].normal += p;
-                vertices_mut[C].normal += p;
+                vertices_mut[a].normal += p;
+                vertices_mut[b].normal += p;
+                vertices_mut[c].normal += p;
 
                 i += 3;
             }
@@ -54,14 +54,14 @@ impl Mesh {
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(vertices_mut.as_slice()),
-            usage: wgpu::BufferUsage::VERTEX,
+            usage: wgpu::BufferUsages::VERTEX,
         });
 
         // Create an index buffer using the indices
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(indices.as_slice()),
-            usage: wgpu::BufferUsage::INDEX,
+            usage: wgpu::BufferUsages::INDEX,
         });
 
         Self {

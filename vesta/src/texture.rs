@@ -57,7 +57,7 @@ impl Renderer {
     /// Create a depth texture. This is a special type of texture that can be used for the
     /// depth buffer.
     pub fn create_depth_texture(&self, label: Option<&str>) -> Result<Texture> {
-        Texture::create_depth(&self.device, &self.swap_chain_desc, label)
+        Texture::create_depth(&self.device, &self.surface_config, label)
     }
 }
 
@@ -100,7 +100,7 @@ impl Texture {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: wgpu::TextureFormat::Rgba8UnormSrgb,
-            usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
         });
 
         queue.write_texture(
@@ -108,6 +108,7 @@ impl Texture {
                 texture: &texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
             },
             rgba,
             wgpu::ImageDataLayout {
@@ -157,13 +158,13 @@ impl Texture {
     /// depth buffer.
     pub fn create_depth(
         device: &wgpu::Device,
-        sc_desc: &wgpu::SwapChainDescriptor,
+        surface_config: &wgpu::SurfaceConfiguration,
         label: Option<&str>,
     ) -> Result<Self> {
         // Size of depth texture should match the swap chain descriptor
         let size = wgpu::Extent3d {
-            width: sc_desc.width,
-            height: sc_desc.height,
+            width: surface_config.width,
+            height: surface_config.height,
             depth_or_array_layers: 1,
         };
 
@@ -175,7 +176,7 @@ impl Texture {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2, // 2D texture
             format: Self::DEPTH_FORMAT,
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT | wgpu::TextureUsage::SAMPLED,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
         };
 
         // Create the texture based on the descriptor
@@ -211,7 +212,7 @@ impl Texture {
             entries: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStage::FRAGMENT,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
                         multisampled: false,
                         view_dimension: wgpu::TextureViewDimension::D2,
@@ -221,7 +222,7 @@ impl Texture {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStage::FRAGMENT,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Sampler {
                         filtering: true,
                         comparison: false,

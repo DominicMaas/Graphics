@@ -1,4 +1,4 @@
-use vesta::cgmath::{Deg, Matrix3, Matrix4, Quaternion, Vector2, Vector3};
+use vesta::cgmath::{Matrix3, Matrix4, Quaternion, Vector2, Vector3};
 use vesta::DrawMesh;
 
 pub struct Cube {
@@ -194,7 +194,7 @@ impl Cube {
         let uniform_data = vesta::ModelUniform { model, normal };
         let uniform_buffer = vesta::UniformBuffer::new(
             "Cube Uniform Buffer",
-            vesta::wgpu::ShaderStage::VERTEX,
+            vesta::wgpu::ShaderStages::VERTEX,
             uniform_data,
             &renderer.device,
         );

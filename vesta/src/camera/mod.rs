@@ -39,7 +39,7 @@ impl Camera {
     pub(crate) fn new_internal(
         position: Vector3<f32>,
         projection: impl Projection + 'static,
-        uniform_buffer_visibility: wgpu::ShaderStage,
+        uniform_buffer_visibility: wgpu::ShaderStages,
         uniform_buffer_name: &str,
         device: &wgpu::Device,
     ) -> Self {
@@ -105,8 +105,6 @@ impl Camera {
             screen.z,
             1.0,
         );
-
-        println!("RAW POS: {}, {}", vec.x, vec.y);
 
         let mut pos = proj_view_inverse * vec;
         pos.w = 1.0 / pos.w;

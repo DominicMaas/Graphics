@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use rand::Rng;
 use vesta::cgmath::Vector2;
 
