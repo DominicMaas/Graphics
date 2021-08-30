@@ -7,7 +7,7 @@ use crate::world::Generator;
 
 use super::{
     BlockType, TextureOffset, CHUNK_HEIGHT, CHUNK_WIDTH, FACE_BACK, FACE_BOTTOM, FACE_FRONT,
-    FACE_LEFT, FACE_RIGHT, FACE_TOP, INDEX_MAP, NORMAL_MAP, TEXTURE_MAP, VERTEX_MAP,
+    FACE_LEFT, FACE_RIGHT, FACE_TOP, INDEX_MAP, TEXTURE_MAP, VERTEX_MAP,
 };
 
 #[derive(Copy, Clone, Debug)]
@@ -158,7 +158,6 @@ impl Chunk {
                             for i in 0..4 {
                                 water_vertices.push(vesta::Vertex::with_tex_coords(
                                     pos + VERTEX_MAP[FACE_TOP][i] - Vector3::new(0.0, 0.3, 0.0),
-                                    NORMAL_MAP[FACE_TOP][i],
                                     texture_offset.top + TEXTURE_MAP[FACE_TOP][i],
                                 ));
                             }
@@ -212,7 +211,6 @@ impl Chunk {
             for i in 0..4 {
                 vertices.push(vesta::Vertex::with_tex_coords(
                     pos + VERTEX_MAP[FACE_FRONT][i],
-                    NORMAL_MAP[FACE_FRONT][i],
                     texture_offset.front + TEXTURE_MAP[FACE_FRONT][i],
                 ));
             }
@@ -229,7 +227,6 @@ impl Chunk {
             for i in 0..4 {
                 vertices.push(vesta::Vertex::with_tex_coords(
                     pos + VERTEX_MAP[FACE_BACK][i],
-                    NORMAL_MAP[FACE_BACK][i],
                     texture_offset.back + TEXTURE_MAP[FACE_BACK][i],
                 ));
             }
@@ -246,7 +243,6 @@ impl Chunk {
             for i in 0..4 {
                 vertices.push(vesta::Vertex::with_tex_coords(
                     pos + VERTEX_MAP[FACE_LEFT][i],
-                    NORMAL_MAP[FACE_LEFT][i],
                     texture_offset.left + TEXTURE_MAP[FACE_LEFT][i],
                 ));
             }
@@ -263,7 +259,6 @@ impl Chunk {
             for i in 0..4 {
                 vertices.push(vesta::Vertex::with_tex_coords(
                     pos + VERTEX_MAP[FACE_RIGHT][i],
-                    NORMAL_MAP[FACE_RIGHT][i],
                     texture_offset.right + TEXTURE_MAP[FACE_RIGHT][i],
                 ));
             }
@@ -280,7 +275,6 @@ impl Chunk {
             for i in 0..4 {
                 vertices.push(vesta::Vertex::with_tex_coords(
                     pos + VERTEX_MAP[FACE_TOP][i],
-                    NORMAL_MAP[FACE_TOP][i],
                     texture_offset.top + TEXTURE_MAP[FACE_TOP][i],
                 ));
             }
@@ -297,7 +291,6 @@ impl Chunk {
             for i in 0..4 {
                 vertices.push(vesta::Vertex::with_tex_coords(
                     pos + VERTEX_MAP[FACE_BOTTOM][i],
-                    NORMAL_MAP[FACE_BOTTOM][i],
                     texture_offset.bottom + TEXTURE_MAP[FACE_BOTTOM][i],
                 ));
             }

@@ -1,3 +1,4 @@
+use crate::cgmath::InnerSpace;
 use wgpu::util::DeviceExt;
 
 pub struct Mesh {
@@ -16,10 +17,43 @@ impl crate::Renderer {
 
 impl Mesh {
     pub fn new(vertices: Vec<crate::Vertex>, indices: Vec<u32>, device: &wgpu::Device) -> Self {
+        // We need this for rendering
+        let num_indices = indices.len() as u32;
+        let num_vertices = vertices.len() as u32;
+
+        let mut vertices_mut = vertices.to_vec();
+
+        // Generate smooth vertices
+        if num_vertices != 0 {
+            for vertex in vertices_mut.iter_mut() {
+                vertex.normal = cgmath::Vector3::new(0.0, 0.0, 0.0);
+            }
+
+            let mut i = 0;
+            while i < indices.len() {
+                let A = indices[i] as usize;
+                let B = indices[i + 1] as usize;
+                let C = indices[i + 2] as usize;
+
+                let p = ((vertices_mut[B].position - vertices_mut[A].position)
+                    .cross(vertices_mut[C].position - vertices_mut[A].position));
+
+                vertices_mut[A].normal += p;
+                vertices_mut[B].normal += p;
+                vertices_mut[C].normal += p;
+
+                i += 3;
+            }
+
+            for vertex in vertices_mut.iter_mut() {
+                vertex.normal = vertex.normal.normalize();
+            }
+        }
+
         // Create a vertex buffer using the vertices
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(vertices.as_slice()),
+            contents: bytemuck::cast_slice(vertices_mut.as_slice()),
             usage: wgpu::BufferUsage::VERTEX,
         });
 
@@ -29,10 +63,6 @@ impl Mesh {
             contents: bytemuck::cast_slice(indices.as_slice()),
             usage: wgpu::BufferUsage::INDEX,
         });
-
-        // We need this for rendering
-        let num_indices = indices.len() as u32;
-        let num_vertices = vertices.len() as u32;
 
         Self {
             vertex_buffer,

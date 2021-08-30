@@ -10,6 +10,15 @@ pub struct Vertex {
 unsafe impl bytemuck::Zeroable for Vertex {}
 unsafe impl bytemuck::Pod for Vertex {}
 
+impl Default for Vertex {
+    fn default() -> Self {
+        Vertex::with_color(
+            cgmath::Vector3::new(0.0, 0.0, 0.0),
+            cgmath::Vector3::new(1.0, 1.0, 1.0),
+        )
+    }
+}
+
 impl Vertex {
     /// Create a vertex with color
     #[allow(dead_code)]
@@ -25,14 +34,13 @@ impl Vertex {
     /// Create a vertex with tex coords
     pub fn with_tex_coords(
         position: cgmath::Vector3<f32>,
-        normal: cgmath::Vector3<f32>,
         tex_coord: cgmath::Vector2<f32>,
     ) -> Self {
         Vertex {
             position,
             color: cgmath::Vector3::new(0.0, 0.0, 0.0),
             tex_coord,
-            normal,
+            normal: cgmath::Vector3::new(0.0, 0.0, 0.0),
         }
     }
 

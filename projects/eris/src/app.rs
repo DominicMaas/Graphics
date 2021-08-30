@@ -1,6 +1,9 @@
 use std::time::Duration;
 
-use crate::{c_body::CBody, utils::LightUniform};
+use crate::{
+    c_body::{CBody, CelestialBodySettings},
+    utils::LightUniform,
+};
 use vesta::{
     cgmath::{num_traits::FloatConst, InnerSpace, Vector3},
     winit::event::{MouseButton, VirtualKeyCode},
@@ -120,31 +123,31 @@ impl vesta::VestaApp for App {
         let sun = CBody::new(
             "Sun".to_string(),
             1000000.0,
-            32.0,
+            CelestialBodySettings { radius: 32.0 },
             Vector3::new(0.0, 0.0, 0.0),
             Vector3::new(0.0, 0.0, 0.0),
             sun_texture,
-            &engine.renderer.device,
+            &engine.renderer,
         );
 
         let earth = CBody::new(
             "Earth".to_string(),
             10000.0,
-            12.0,
+            CelestialBodySettings { radius: 12.0 },
             Vector3::new(200.0, 0.0, 0.0),
             Vector3::new(0.0, 0.0, -sun.calculate_velocity_at_radius(200.0)),
             earth_texture,
-            &engine.renderer.device,
+            &engine.renderer,
         );
 
         let moon = CBody::new(
             "Moon".to_string(),
             0.1,
-            2.0,
+            CelestialBodySettings { radius: 2.0 },
             Vector3::new(200.0 + 12.0, 0.0, 0.0),
             Vector3::new(0.0, 0.0, -earth.calculate_velocity_at_radius(12.0)),
             moon_texture,
-            &engine.renderer.device,
+            &engine.renderer,
         );
 
         bodies.push(sun);
@@ -241,7 +244,7 @@ impl vesta::VestaApp for App {
                     let g = ui.begin_group();
                     ui.text(vesta::imgui::im_str!("Body '{}':", b.name));
                     ui.text(vesta::imgui::im_str!("Mass: {:.2} kg", b.mass));
-                    ui.text(vesta::imgui::im_str!("Radius: {:.2} m", b.radius));
+                    ui.text(vesta::imgui::im_str!("Radius: {:.2} m", b.settings.radius));
                     ui.text(vesta::imgui::im_str!(
                         "Velocity: {:.6} m/s",
                         b.velocity.magnitude()
@@ -295,7 +298,13 @@ impl vesta::VestaApp for App {
         for body in self.bodies.iter() {
             render_pass.set_bind_group(0, &body.texture.bind_group.as_ref().unwrap(), &[]);
             render_pass.set_bind_group(2, &body.uniform_buffer.bind_group, &[]);
-            render_pass.draw_mesh(&body.mesh);
+
+            for face in body.faces.iter() {
+                match &face.mesh {
+                    Some(mesh) => render_pass.draw_mesh(&mesh),
+                    None => {}
+                }
+            }
         }
     }
 

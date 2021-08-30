@@ -19,22 +19,18 @@ impl Cube {
         // BACK
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 0.0 + z),
-            Vector3::new(0.0, 0.0, -1.0),
             Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 0.0 + z),
-            Vector3::new(0.0, 0.0, -1.0),
             Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 0.0 + z),
-            Vector3::new(0.0, 0.0, -1.0),
             Vector2::new(0.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 0.0 + z),
-            Vector3::new(0.0, 0.0, -1.0),
             Vector2::new(0.0, 1.0),
         ));
 
@@ -51,22 +47,18 @@ impl Cube {
         // FRONT
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 1.0 + z),
-            Vector3::new(0.0, 0.0, 1.0),
             Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 1.0 + z),
-            Vector3::new(0.0, 0.0, 1.0),
             Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 1.0 + z),
-            Vector3::new(0.0, 0.0, 1.0),
             Vector2::new(0.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 1.0 + z),
-            Vector3::new(0.0, 0.0, 1.0),
             Vector2::new(0.0, 1.0),
         ));
 
@@ -83,22 +75,18 @@ impl Cube {
         // Right
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 1.0 + z),
-            Vector3::new(-1.0, 0.0, 0.0),
             Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 0.0 + z),
-            Vector3::new(-1.0, 0.0, 0.0),
             Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 0.0 + z),
-            Vector3::new(-1.0, 0.0, 0.0),
             Vector2::new(0.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 1.0 + z),
-            Vector3::new(-1.0, 0.0, 0.0),
             Vector2::new(0.0, 1.0),
         ));
 
@@ -115,22 +103,18 @@ impl Cube {
         // Left
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 0.0 + z),
-            Vector3::new(1.0, 0.0, 0.0),
             Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 0.0 + z),
-            Vector3::new(1.0, 0.0, 0.0),
             Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 1.0 + z),
-            Vector3::new(1.0, 0.0, 0.0),
             Vector2::new(0.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 1.0 + z),
-            Vector3::new(1.0, 0.0, 0.0),
             Vector2::new(0.0, 1.0),
         ));
 
@@ -147,22 +131,18 @@ impl Cube {
         // Down
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 0.0 + z),
-            Vector3::new(0.0, -1.0, 0.0),
             Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 0.0 + z),
-            Vector3::new(0.0, -1.0, 0.0),
             Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 0.0 + y, 1.0 + z),
-            Vector3::new(0.0, -1.0, 0.0),
             Vector2::new(0.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 0.0 + y, 1.0 + z),
-            Vector3::new(0.0, -1.0, 0.0),
             Vector2::new(0.0, 1.0),
         ));
 
@@ -179,22 +159,18 @@ impl Cube {
         // Up
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 1.0 + z),
-            Vector3::new(0.0, 1.0, 0.0),
             Vector2::new(1.0, 1.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(1.0 + x, 1.0 + y, 0.0 + z),
-            Vector3::new(0.0, 1.0, 0.0),
             Vector2::new(1.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 0.0 + z),
-            Vector3::new(0.0, 1.0, 0.0),
             Vector2::new(0.0, 0.0),
         ));
         vertices.push(vesta::Vertex::with_tex_coords(
             Vector3::new(0.0 + x, 1.0 + y, 1.0 + z),
-            Vector3::new(0.0, 1.0, 0.0),
             Vector2::new(0.0, 1.0),
         ));
 

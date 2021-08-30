@@ -1,6 +1,6 @@
 mod app;
 mod c_body;
-mod marching_cubes;
+mod terrain_face;
 mod utils;
 
 use app::App;
