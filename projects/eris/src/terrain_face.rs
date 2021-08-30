@@ -4,7 +4,7 @@ use vesta::{
     Mesh,
 };
 
-use crate::c_body::CelestialBodySettings;
+use crate::c_body::{CelestialBodySettings, CelestialBodyTerrainGenerator};
 
 pub struct TerrainFace {
     pub mesh: Option<Mesh>,
@@ -28,7 +28,12 @@ impl TerrainFace {
         }
     }
 
-    pub fn construct_mesh(&mut self, renderer: &vesta::Renderer, settings: CelestialBodySettings) {
+    pub fn construct_mesh(
+        &mut self,
+        renderer: &vesta::Renderer,
+        settings: CelestialBodySettings,
+        generator: &CelestialBodyTerrainGenerator,
+    ) {
         let mut vertices = vec![Default::default(); (self.resolution * self.resolution) as usize];
         let mut triangles = vec![0; ((self.resolution - 1) * (self.resolution - 1) * 6) as usize];
 
@@ -43,7 +48,9 @@ impl TerrainFace {
                     + (percent.x - 0.5) * 2.0 * self.axis_a
                     + (percent.y - 0.5) * 2.0 * self.axis_b;
 
-                let point_on_unit_sphere = point_on_unit_cube.normalize() * settings.radius;
+                let point_on_unit_sphere = point_on_unit_cube.normalize()
+                    * settings.radius
+                    * (1.0 + generator.evaluate(point_on_unit_cube, settings));
 
                 vertices[i as usize] =
                     vesta::Vertex::with_color(point_on_unit_sphere, Vector3::new(1.0, 1.0, 1.0));

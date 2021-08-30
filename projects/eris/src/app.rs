@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::{
-    c_body::{CBody, CelestialBodySettings},
+    c_body::{CBody, CelestialBodySettings, CelestialBodyTerrain},
     utils::LightUniform,
 };
 use vesta::{
@@ -123,7 +123,13 @@ impl vesta::VestaApp for App {
         let sun = CBody::new(
             "Sun".to_string(),
             1000000.0,
-            CelestialBodySettings { radius: 32.0 },
+            CelestialBodySettings {
+                radius: 32.0,
+                terrain: CelestialBodyTerrain {
+                    strength: 0.0,
+                    ..Default::default()
+                },
+            },
             Vector3::new(0.0, 0.0, 0.0),
             Vector3::new(0.0, 0.0, 0.0),
             sun_texture,
@@ -133,7 +139,16 @@ impl vesta::VestaApp for App {
         let earth = CBody::new(
             "Earth".to_string(),
             10000.0,
-            CelestialBodySettings { radius: 12.0 },
+            CelestialBodySettings {
+                radius: 12.0,
+                terrain: CelestialBodyTerrain {
+                    strength: 0.05,
+                    base_roughness: 0.9,
+                    roughness: 1.2,
+                    num_layers: 5,
+                    ..Default::default()
+                },
+            },
             Vector3::new(200.0, 0.0, 0.0),
             Vector3::new(0.0, 0.0, -sun.calculate_velocity_at_radius(200.0)),
             earth_texture,
@@ -143,7 +158,14 @@ impl vesta::VestaApp for App {
         let moon = CBody::new(
             "Moon".to_string(),
             0.1,
-            CelestialBodySettings { radius: 2.0 },
+            CelestialBodySettings {
+                radius: 2.0,
+                terrain: CelestialBodyTerrain {
+                    strength: 0.15,
+                    roughness: 3.5,
+                    ..Default::default()
+                },
+            },
             Vector3::new(200.0 + 12.0, 0.0, 0.0),
             Vector3::new(0.0, 0.0, -earth.calculate_velocity_at_radius(12.0)),
             moon_texture,

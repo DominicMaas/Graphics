@@ -1,5 +1,6 @@
 pub mod config;
 pub mod engine;
+pub mod math;
 pub mod mesh;
 pub mod projections;
 pub mod render_pipeline;
@@ -16,6 +17,7 @@ pub use camera::*;
 pub use config::*;
 pub use engine::*;
 pub use frustum::*;
+pub use math::*;
 pub use mesh::*;
 pub use projections::*;
 pub use render_pipeline::*;

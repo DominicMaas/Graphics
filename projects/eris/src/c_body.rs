@@ -1,8 +1,10 @@
 use crate::terrain_face::TerrainFace;
 use crate::utils::G;
+use bracket_noise::prelude::FastNoise;
 use std::time::Duration;
 use vesta::cgmath::{Matrix3, Matrix4};
 use vesta::cgmath::{Quaternion, Vector3};
+use vesta::Math;
 
 pub struct CBody {
     pub name: String,
@@ -40,7 +42,7 @@ impl CBody {
             &renderer.device,
         );
 
-        let resolution = 32;
+        let resolution = 6;
 
         // Create meshes!
         let mut faces: Vec<TerrainFace> = Vec::new();
@@ -51,8 +53,10 @@ impl CBody {
         faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 0.0, 1.0)));
         faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 0.0, -1.0)));
 
+        let generator = CelestialBodyTerrainGenerator::new();
+
         for face in faces.iter_mut() {
-            face.construct_mesh(renderer, settings);
+            face.construct_mesh(renderer, settings, &generator);
         }
 
         Self {
@@ -126,4 +130,66 @@ impl CBody {
 #[derive(Copy, Clone, Debug)]
 pub struct CelestialBodySettings {
     pub radius: f32,
+    pub terrain: CelestialBodyTerrain,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct CelestialBodyTerrain {
+    pub strength: f32,
+    pub num_layers: usize,
+    pub base_roughness: f32,
+    pub roughness: f32,
+    pub persistence: f32,
+    pub center: Vector3<f32>,
+    pub min_value: f32,
+}
+
+impl Default for CelestialBodyTerrain {
+    fn default() -> Self {
+        Self {
+            strength: 1.0,
+            num_layers: 1,
+            base_roughness: 1.0,
+            roughness: 2.0,
+            persistence: 0.5,
+            center: (0.0, 0.0, 0.0).into(),
+            min_value: 0.0,
+        }
+    }
+}
+
+pub struct CelestialBodyTerrainGenerator {
+    noise: FastNoise,
+}
+
+impl CelestialBodyTerrainGenerator {
+    pub fn new() -> Self {
+        Self {
+            noise: FastNoise::new(),
+        }
+    }
+
+    pub fn evaluate(&self, point: Vector3<f32>, settings: CelestialBodySettings) -> f32 {
+        let ts = settings.terrain;
+
+        let mut noise_val = 0.0;
+        let mut frequency = ts.base_roughness;
+        let mut amplitude = 1.0;
+
+        for _i in 0..ts.num_layers {
+            let v = self.noise.get_noise3d(
+                point.x * frequency + ts.center.x,
+                point.y * frequency + ts.center.y,
+                point.z * frequency + ts.center.z,
+            );
+
+            noise_val += (v + 1.0) * 0.5 * amplitude;
+
+            frequency *= ts.roughness;
+            amplitude *= ts.persistence;
+        }
+
+        noise_val = Math::max(0.0, noise_val - ts.min_value);
+        noise_val * ts.strength
+    }
 }
