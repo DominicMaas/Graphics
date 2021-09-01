@@ -65,7 +65,7 @@ impl vesta::VestaApp for App {
             include_str!("shaders/c_body.wgsl").into(),
         ))
         .with_layout(&render_pipeline_layout)
-        //.with_topology(wgpu::PrimitiveTopology::LineList)
+        //.with_topology(vesta::wgpu::PrimitiveTopology::LineList)
         .build(&engine.renderer.device)
         .unwrap();
 
@@ -142,10 +142,7 @@ impl vesta::VestaApp for App {
             CelestialBodySettings {
                 radius: 12.0,
                 terrain: CelestialBodyTerrain {
-                    strength: 0.05,
-                    base_roughness: 0.9,
-                    roughness: 1.2,
-                    num_layers: 5,
+                    strength: 0.0,
                     ..Default::default()
                 },
             },
@@ -161,8 +158,7 @@ impl vesta::VestaApp for App {
             CelestialBodySettings {
                 radius: 2.0,
                 terrain: CelestialBodyTerrain {
-                    strength: 0.15,
-                    roughness: 3.5,
+                    strength: 0.0,
                     ..Default::default()
                 },
             },
@@ -198,8 +194,10 @@ impl vesta::VestaApp for App {
 
             // This loop iterates over all bodies that are no the current body
             for body2 in before.iter().chain(after.iter()) {
-                let sqr_distance: f32 = (body2.position - body.position).magnitude2();
-                let force_direction: Vector3<f32> = (body2.position - body.position).normalize();
+                let sqr_distance: f32 =
+                    (body2.transform.position - body.transform.position).magnitude2();
+                let force_direction: Vector3<f32> =
+                    (body2.transform.position - body.transform.position).normalize();
                 let force: Vector3<f32> =
                     force_direction * body.standard_gravitational_parameter() * body2.mass
                         / sqr_distance;
@@ -257,37 +255,31 @@ impl vesta::VestaApp for App {
         let ui_bodies = self.bodies.iter();
         let cam = &self.camera;
 
-        vesta::egui::Window::new("Debug")
-            .show(&ctx, |ui| {
-                ui.heading("Camera");
-                ui.label(format!("Position: {:.2}, {:.2}, {:.2}", cam.position.x, cam.position.y, cam.position.z));
-                ui.label(format!("Pitch: {:.2}", cam.pitch.0));
-                ui.label(format!("Yaw: {:.2},", cam.yaw.0));
+        vesta::egui::Window::new("Debug").show(&ctx, |ui| {
+            ui.heading("Camera");
+            ui.label(format!(
+                "Position: {:.2}, {:.2}, {:.2}",
+                cam.position.x, cam.position.y, cam.position.z
+            ));
+            ui.label(format!("Pitch: {:.2}", cam.pitch.0));
+            ui.label(format!("Yaw: {:.2},", cam.yaw.0));
 
-                ui.separator();
+            ui.separator();
 
-                ui.heading("Bodies");
-                for b in ui_bodies {
-                    ui.collapsing(format!("{}", b.name),|ui| {
-                        ui.label(format!("Mass: {:.2} kg", b.mass));
-                        ui.label(format!("Radius: {:.2} m", b.settings.radius));
-                        ui.label(format!(
-                            "Velocity: {:.6} m/s",
-                            b.velocity.magnitude()
-                        ));
-                        ui.label(format!(
-                            "Escape Velocity: {:.6} m/s",
-                            b.escape_velocity()
-                        ));
-                        ui.label(format!(
-                            "Position: {:.2}, {:.2}, {:.2}",
-                            b.position.x,
-                            b.position.y,
-                            b.position.z
-                        ));
-                    });
-                }
-            });
+            ui.heading("Bodies");
+            for b in ui_bodies {
+                ui.collapsing(format!("{}", b.name), |ui| {
+                    ui.label(format!("Mass: {:.2} kg", b.mass));
+                    ui.label(format!("Radius: {:.2} m", b.settings.radius));
+                    ui.label(format!("Velocity: {:.6} m/s", b.velocity.magnitude()));
+                    ui.label(format!("Escape Velocity: {:.6} m/s", b.escape_velocity()));
+                    ui.label(format!(
+                        "Position: {:.2}, {:.2}, {:.2}",
+                        b.transform.position.x, b.transform.position.y, b.transform.position.z
+                    ));
+                });
+            }
+        });
     }
 
     fn render<'a>(

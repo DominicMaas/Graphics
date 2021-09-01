@@ -1,8 +1,10 @@
+use cgmath::{Vector2, Vector3};
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct Vertex {
-    pub position: cgmath::Vector3<f32>,
-    pub color: cgmath::Vector3<f32>,
+    pub position: Vector3<f32>,
+    pub color: Vector3<f32>,
     pub tex_coord: cgmath::Vector2<f32>,
     pub normal: cgmath::Vector3<f32>,
 }
@@ -22,7 +24,7 @@ impl Default for Vertex {
 impl Vertex {
     /// Create a vertex with color
     #[allow(dead_code)]
-    pub fn with_color(position: cgmath::Vector3<f32>, color: cgmath::Vector3<f32>) -> Self {
+    pub fn with_color(position: Vector3<f32>, color: Vector3<f32>) -> Self {
         Vertex {
             position,
             color,
@@ -32,15 +34,12 @@ impl Vertex {
     }
 
     /// Create a vertex with tex coords
-    pub fn with_tex_coords(
-        position: cgmath::Vector3<f32>,
-        tex_coord: cgmath::Vector2<f32>,
-    ) -> Self {
+    pub fn with_tex_coords(position: Vector3<f32>, tex_coord: Vector2<f32>) -> Self {
         Vertex {
             position,
-            color: cgmath::Vector3::new(0.0, 0.0, 0.0),
+            color: Vector3::new(0.0, 0.0, 0.0),
             tex_coord,
-            normal: cgmath::Vector3::new(0.0, 0.0, 0.0),
+            normal: Vector3::new(0.0, 0.0, 0.0),
         }
     }
 
@@ -55,19 +54,18 @@ impl Vertex {
                     format: wgpu::VertexFormat::Float32x3,
                 },
                 wgpu::VertexAttribute {
-                    offset: std::mem::size_of::<cgmath::Vector3<f32>>() as wgpu::BufferAddress,
+                    offset: std::mem::size_of::<Vector3<f32>>() as wgpu::BufferAddress,
                     shader_location: 1,
                     format: wgpu::VertexFormat::Float32x3,
                 },
                 wgpu::VertexAttribute {
-                    offset: (std::mem::size_of::<cgmath::Vector3<f32>>() * 2)
-                        as wgpu::BufferAddress,
+                    offset: (std::mem::size_of::<Vector3<f32>>() * 2) as wgpu::BufferAddress,
                     shader_location: 2,
                     format: wgpu::VertexFormat::Float32x2,
                 },
                 wgpu::VertexAttribute {
-                    offset: (std::mem::size_of::<cgmath::Vector3<f32>>() * 2
-                        + std::mem::size_of::<cgmath::Vector2<f32>>())
+                    offset: (std::mem::size_of::<Vector3<f32>>() * 2
+                        + std::mem::size_of::<Vector2<f32>>())
                         as wgpu::BufferAddress,
                     shader_location: 3,
                     format: wgpu::VertexFormat::Float32x3,

@@ -2,8 +2,7 @@ use crate::terrain_face::TerrainFace;
 use crate::utils::G;
 use bracket_noise::prelude::FastNoise;
 use std::time::Duration;
-use vesta::cgmath::{Matrix3, Matrix4};
-use vesta::cgmath::{Quaternion, Vector3};
+use vesta::cgmath::Vector3;
 use vesta::Math;
 
 pub struct CBody {
@@ -11,8 +10,7 @@ pub struct CBody {
     pub mass: f32,
     pub settings: CelestialBodySettings,
     pub velocity: Vector3<f32>,
-    pub position: Vector3<f32>,
-    pub rotation: Quaternion<f32>,
+    pub transform: vesta::Transform,
     pub uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
     pub texture: vesta::Texture,
     pub faces: Vec<TerrainFace>,
@@ -29,12 +27,16 @@ impl CBody {
         texture: vesta::Texture,
         renderer: &vesta::Renderer,
     ) -> Self {
-        let rotation: Quaternion<f32> = Quaternion::new(0.0, 0.0, 0.0, 0.0);
+        let transform = vesta::Transform {
+            position,
+            ..Default::default()
+        };
 
-        let model = Matrix4::from_translation(position) * Matrix4::from(rotation);
-        let normal = Self::create_normal_matrix(model);
+        let uniform_data = vesta::ModelUniform {
+            model: transform.calculate_model_matrix(),
+            normal: transform.calculate_normal_matrix(),
+        };
 
-        let uniform_data = vesta::ModelUniform { model, normal };
         let uniform_buffer = vesta::UniformBuffer::new(
             "C-Body Uniform Buffer",
             vesta::wgpu::ShaderStages::VERTEX,
@@ -42,16 +44,16 @@ impl CBody {
             &renderer.device,
         );
 
-        let resolution = 6;
+        let resolution = 32;
 
         // Create meshes!
         let mut faces: Vec<TerrainFace> = Vec::new();
-        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 1.0, 0.0)));
-        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, -1.0, 0.0)));
-        faces.push(TerrainFace::new(resolution, Vector3::new(1.0, 0.0, 0.0)));
-        faces.push(TerrainFace::new(resolution, Vector3::new(-1.0, 0.0, 0.0)));
-        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 0.0, 1.0)));
-        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 0.0, -1.0)));
+        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 1.0, 0.0))); // Top
+        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, -1.0, 0.0))); // Bottom
+        faces.push(TerrainFace::new(resolution, Vector3::new(1.0, 0.0, 0.0))); // Left
+        faces.push(TerrainFace::new(resolution, Vector3::new(-1.0, 0.0, 0.0))); // Right
+        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 0.0, 1.0))); // Front?
+        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 0.0, -1.0))); // Back?
 
         let generator = CelestialBodyTerrainGenerator::new();
 
@@ -64,23 +66,12 @@ impl CBody {
             mass,
             settings,
             velocity,
-            position,
-            rotation,
+            transform,
             uniform_buffer,
             texture,
             faces,
             resolution,
         }
-    }
-
-    fn create_normal_matrix(m: Matrix4<f32>) -> Matrix3<f32> {
-        Matrix3::from_cols(m.x.truncate(), m.y.truncate(), m.z.truncate())
-
-        //let inverted = model.invert().unwrap();
-        //let transposed: Matrix4<f32> = inverted.transpose();
-
-        // Get the upper 3x3 matrix from the 4x4 matrix (upper-left)
-        //Matrix3::from_cols(transposed.x.truncate(), transposed.y.truncate(), transposed.z.truncate())
     }
 
     pub fn standard_gravitational_parameter(&self) -> f32 {
@@ -114,15 +105,12 @@ impl CBody {
         //let new_pos:  Vector3<f32> = Vector3::new(0.0, 0.01, 0.0);
         //self.position = self.position + new_pos;
 
-        self.position += self.velocity; //* dt.as_secs_f32();
-                                        //self.position = self.position + (self.velocity * _dt.as_secs_f32() * SIM_SPEED);
+        self.transform.position += self.velocity; //* dt.as_secs_f32();
+                                                  //self.position = self.position + (self.velocity * _dt.as_secs_f32() * SIM_SPEED);
 
         // Update the uniform buffer
-        let model = Matrix4::from_translation(self.position) * Matrix4::from(self.rotation);
-        let normal = Self::create_normal_matrix(model);
-
-        self.uniform_buffer.data.model = model;
-        self.uniform_buffer.data.normal = normal;
+        self.uniform_buffer.data.model = self.transform.calculate_model_matrix();
+        self.uniform_buffer.data.normal = self.transform.calculate_normal_matrix();
     }
 }
 

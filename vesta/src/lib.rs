@@ -12,6 +12,7 @@ pub mod vertex;
 pub mod camera;
 pub mod frustum;
 pub mod io;
+mod transform;
 
 pub use camera::*;
 pub use config::*;
@@ -23,6 +24,7 @@ pub use projections::*;
 pub use render_pipeline::*;
 pub use renderer::*;
 pub use texture::*;
+pub use transform::*;
 pub use uniform_buffer::*;
 pub use vertex::*;
 

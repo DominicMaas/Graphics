@@ -1,4 +1,4 @@
-use vesta::cgmath::{Matrix3, Matrix4, Quaternion, Vector2, Vector3};
+use vesta::cgmath::{Matrix3, Matrix4, Vector2, Vector3};
 use vesta::DrawMesh;
 
 pub struct Cube {
@@ -186,12 +186,13 @@ impl Cube {
 
         let mesh = renderer.create_mesh(vertices, indices);
 
-        let rotation: Quaternion<f32> = Quaternion::new(0.0, 0.0, 0.0, 0.0);
-        let model =
-            Matrix4::from_translation(Vector3::new(0.0, 0.0, 0.0)) * Matrix4::from(rotation);
-        let normal = Matrix3::from_cols(model.x.truncate(), model.y.truncate(), model.z.truncate());
+        let transform = vesta::Transform::default();
 
-        let uniform_data = vesta::ModelUniform { model, normal };
+        let uniform_data = vesta::ModelUniform {
+            model: transform.calculate_model_matrix(),
+            normal: transform.calculate_normal_matrix(),
+        };
+
         let uniform_buffer = vesta::UniformBuffer::new(
             "Cube Uniform Buffer",
             vesta::wgpu::ShaderStages::VERTEX,
