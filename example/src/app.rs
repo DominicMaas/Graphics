@@ -1,4 +1,7 @@
-use vesta::{cgmath::num_traits::FloatConst, winit::dpi::PhysicalSize, Engine};
+use vesta::{
+    cgmath::num_traits::FloatConst, components::Light, components::Transform,
+    winit::dpi::PhysicalSize, Engine, Entity,
+};
 
 use crate::cube::Cube;
 use vesta::egui::CtxRef;
@@ -42,6 +45,15 @@ impl vesta::VestaApp for App {
         .with_layout(&render_pipeline_layout)
         .build(&engine.renderer.device)
         .unwrap();
+
+        // Test???
+        let mut light_entity = Entity::new(Transform {
+            ..Default::default()
+        });
+
+        light_entity.add_component(Light {
+            ..Default::default()
+        });
 
         let cube = Cube::new(&engine.renderer);
 
@@ -97,7 +109,7 @@ impl vesta::VestaApp for App {
                 ui.label("Click and drag to move the camera around the cube.");
             });
     }
-    
+
     fn render<'a>(
         &'a mut self,
         render_pass: &mut vesta::wgpu::RenderPass<'a>,

@@ -1,7 +1,7 @@
 use cgmath::{Matrix3, Matrix4, Quaternion, Vector3};
 
 /// Describes the position, rotation and scale of an object.
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Transform {
     /// The world space position of the Transform.
     pub position: Vector3<f32>,

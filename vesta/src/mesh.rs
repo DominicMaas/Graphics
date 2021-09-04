@@ -1,4 +1,4 @@
-use crate::cgmath::InnerSpace;
+use crate::{cgmath::InnerSpace, components::Component};
 use wgpu::util::DeviceExt;
 
 pub struct Mesh {
@@ -93,5 +93,12 @@ where
             self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
             self.draw_indexed(0..mesh.num_indices, 0, 0..1);
         }
+    }
+}
+
+/// Component metadata for the light
+impl Component for Mesh {
+    fn get_name() -> &'static str {
+        "Mesh"
     }
 }

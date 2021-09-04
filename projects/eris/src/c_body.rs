@@ -10,7 +10,7 @@ pub struct CBody {
     pub mass: f32,
     pub settings: CelestialBodySettings,
     pub velocity: Vector3<f32>,
-    pub transform: vesta::Transform,
+    pub transform: vesta::components::Transform,
     pub uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
     pub texture: vesta::Texture,
     pub faces: Vec<TerrainFace>,
@@ -27,7 +27,7 @@ impl CBody {
         texture: vesta::Texture,
         renderer: &vesta::Renderer,
     ) -> Self {
-        let transform = vesta::Transform {
+        let transform = vesta::components::Transform {
             position,
             ..Default::default()
         };

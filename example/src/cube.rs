@@ -186,7 +186,7 @@ impl Cube {
 
         let mesh = renderer.create_mesh(vertices, indices);
 
-        let transform = vesta::Transform::default();
+        let transform = vesta::components::Transform::default();
 
         let uniform_data = vesta::ModelUniform {
             model: transform.calculate_model_matrix(),

@@ -1,30 +1,32 @@
+pub mod camera;
+pub mod components;
 pub mod config;
 pub mod engine;
+pub mod entity;
+pub mod frustum;
+pub mod io;
 pub mod math;
 pub mod mesh;
 pub mod projections;
 pub mod render_pipeline;
 pub mod renderer;
+pub mod scene;
 pub mod texture;
 pub mod uniform_buffer;
 pub mod vertex;
 
-pub mod camera;
-pub mod frustum;
-pub mod io;
-mod transform;
-
 pub use camera::*;
 pub use config::*;
 pub use engine::*;
+pub use entity::*;
 pub use frustum::*;
 pub use math::*;
 pub use mesh::*;
 pub use projections::*;
 pub use render_pipeline::*;
 pub use renderer::*;
+pub use scene::*;
 pub use texture::*;
-pub use transform::*;
 pub use uniform_buffer::*;
 pub use vertex::*;
 
