@@ -1,21 +1,20 @@
 [package]
 name = "vesta"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Dominic Maas <dominic.maas@live.com>"]
-edition = "2018"
-resolver="2"
+edition = "2021"
 
 [dependencies]
 winit = "0.25"
-wgpu = "0.10"
+wgpu = "0.11"
 image = "0.23"
 cgmath = { version = "0.18", features = [ "swizzle" ] }
 bytemuck = { version = "1.7.2", features = [ "derive" ] }
-anyhow = "1.0.43"
+anyhow = "1.0.44"
 
 # GUI
 egui = "0.14"
-egui_wgpu_backend = "0.12"
+egui_wgpu_backend = "0.13"
 egui_winit_platform = "0.10"
 # Web Assembly
 #[target.'cfg(target_arch = "wasm32")'.dependencies]

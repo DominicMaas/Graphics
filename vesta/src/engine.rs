@@ -65,6 +65,7 @@ impl Engine {
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
                 compatible_surface: Some(&surface),
+                force_fallback_adapter: false,
             })
             .await
             .unwrap();
@@ -97,13 +98,14 @@ impl Engine {
         // -------------- GUI ------------------ //
 
         // Create the platform (winit)
-        let gui_platform = egui_winit_platform::Platform::new(egui_winit_platform::PlatformDescriptor {
-            physical_width: window_size.width as u32,
-            physical_height: window_size.height as u32,
-            scale_factor: window.scale_factor(),
-            font_definitions: egui::FontDefinitions::default(),
-            style: Default::default(),
-        });
+        let gui_platform =
+            egui_winit_platform::Platform::new(egui_winit_platform::PlatformDescriptor {
+                physical_width: window_size.width as u32,
+                physical_height: window_size.height as u32,
+                scale_factor: window.scale_factor(),
+                font_definitions: egui::FontDefinitions::default(),
+                style: Default::default(),
+            });
 
         // Create the renderer (wgpu)
         let gui_renderer = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
@@ -170,7 +172,8 @@ impl Engine {
         match event {
             Event::RedrawRequested(_) => {
                 // Update the GUI
-                gui.platform.update_time(self.time.start_time.elapsed().as_secs_f64());
+                gui.platform
+                    .update_time(self.time.start_time.elapsed().as_secs_f64());
 
                 // Timing logic
                 let new_time = Instant::now();
@@ -206,7 +209,7 @@ impl Engine {
                 self.io.mouse.clear_events();
                 self.io.keyboard.clear_events();
             }
-            Event::MainEventsCleared => {
+            Event::RedrawEventsCleared => {
                 self.window.request_redraw();
             }
             Event::DeviceEvent { ref event, .. } => {
@@ -239,7 +242,9 @@ impl Engine {
         // Resize the surface
         self.renderer.surface_config.width = new_size.width;
         self.renderer.surface_config.height = new_size.height;
-        self.renderer.surface.configure(&self.renderer.device, &self.renderer.surface_config);
+        self.renderer
+            .surface
+            .configure(&self.renderer.device, &self.renderer.surface_config);
 
         // Recreate the depth texture
         self.renderer.depth_texture = self
@@ -251,11 +256,16 @@ impl Engine {
         app.resize(new_size, self);
     }
 
-    fn render<V: VestaApp>(&mut self, gui: &mut Gui, app: &mut V) -> Result<(), wgpu::SurfaceError> {
-
+    fn render<V: VestaApp>(
+        &mut self,
+        gui: &mut Gui,
+        app: &mut V,
+    ) -> Result<(), wgpu::SurfaceError> {
         // Get a frame and associated view
-        let out_frame = self.renderer.surface.get_current_frame()?.output;
-        let out_view = out_frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let output = self.renderer.surface.get_current_texture()?;
+        let out_view = output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = self
             .renderer
@@ -311,24 +321,39 @@ impl Engine {
                 scale_factor: self.window.scale_factor() as f32,
             };
 
-            gui.renderer.update_texture(&self.renderer.device, &self.renderer.queue, &gui.platform.context().texture());
-            gui.renderer.update_user_textures(&self.renderer.device, &self.renderer.queue);
-            gui.renderer.update_buffers(&mut self.renderer.device, &mut self.renderer.queue, &paint_jobs, &screen_descriptor);
-
-            // Render the UI
-            gui.renderer.execute(
-                &mut encoder,
-                &out_view,
+            gui.renderer.update_texture(
+                &self.renderer.device,
+                &self.renderer.queue,
+                &gui.platform.context().texture(),
+            );
+            gui.renderer
+                .update_user_textures(&self.renderer.device, &self.renderer.queue);
+            gui.renderer.update_buffers(
+                &mut self.renderer.device,
+                &mut self.renderer.queue,
                 &paint_jobs,
                 &screen_descriptor,
-                None,
-            ).expect("Failed to render UI!");
+            );
+
+            // Render the UI
+            gui.renderer
+                .execute(
+                    &mut encoder,
+                    &out_view,
+                    &paint_jobs,
+                    &screen_descriptor,
+                    None,
+                )
+                .expect("Failed to render UI!");
         }
 
         // Finished with the frame
         self.renderer
             .queue
             .submit(std::iter::once(encoder.finish()));
+
+        output.present();
+
         Ok(())
     }
 
