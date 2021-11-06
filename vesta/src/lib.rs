@@ -35,6 +35,7 @@ pub extern crate bytemuck;
 pub extern crate cgmath;
 pub extern crate egui;
 pub extern crate image;
+pub extern crate log;
 pub extern crate wgpu;
 pub extern crate winit;
 

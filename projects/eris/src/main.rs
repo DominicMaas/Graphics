@@ -6,12 +6,6 @@ mod utils;
 use app::App;
 
 fn main() {
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        // Get log events
-        env_logger::init();
-    }
-
     // Config for the engine
     let config = vesta::Config {
         window_title: "Eris".to_string(),

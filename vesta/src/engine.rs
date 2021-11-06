@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use crate::{
     config::Config,
     io::{Keyboard, Mouse, IO},
@@ -20,8 +18,8 @@ struct Gui {
 pub struct Time {
     frame_delta_time: f32,
     delta_time: f32,
-    current_time: Instant,
-    start_time: Instant,
+    current_time: instant::Instant,
+    start_time: instant::Instant,
     accumulator: f32,
 }
 
@@ -59,6 +57,23 @@ impl Engine {
 
     /// Runs the engine with the specified App and config
     pub async fn run_async<V: VestaApp + 'static>(config: Config) {
+        // Logging
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let mut log_builder = env_logger::Builder::from_default_env();
+            log_builder.target(env_logger::Target::Stdout);
+
+            log_builder.init();
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            // Logging
+            std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+            console_log::init_with_level(log::Level::Debug)
+                .expect("could not initialize wasm logger");
+        }
+
         // Loop that will run all the events
         let event_loop = EventLoop::new();
 
@@ -69,13 +84,9 @@ impl Engine {
             .build(&event_loop)
             .unwrap();
 
-        // WASM Specific (for logging)
+        // WASM Specific Window Creation
         #[cfg(target_arch = "wasm32")]
         {
-            // Logging
-            std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-            console_log::init().expect("could not initialize wasm logger");
-
             use winit::platform::web::WindowExtWebSys;
 
             // On wasm, append the canvas to the document body
@@ -172,8 +183,8 @@ impl Engine {
             time: Time {
                 delta_time: 0.01,
                 frame_delta_time: 0.0,
-                current_time: Instant::now(),
-                start_time: Instant::now(),
+                current_time: instant::Instant::now(),
+                start_time: instant::Instant::now(),
                 accumulator: 0.0,
             },
         };
@@ -212,7 +223,7 @@ impl Engine {
                     .update_time(self.time.start_time.elapsed().as_secs_f64());
 
                 // Timing logic
-                let new_time = Instant::now();
+                let new_time = instant::Instant::now();
                 let frame_time = new_time - self.time.current_time;
 
                 self.time.frame_delta_time = frame_time.as_secs_f32();

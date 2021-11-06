@@ -7,12 +7,6 @@ mod pixel;
 mod world;
 
 fn main() {
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        // Get log events
-        env_logger::init();
-    }
-
     // Config for the engine
     let config = vesta::Config {
         window_title: "Pixel 2D".to_string(),

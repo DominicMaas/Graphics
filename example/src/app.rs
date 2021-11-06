@@ -1,5 +1,5 @@
 use vesta::{
-    cgmath::num_traits::FloatConst, components::Light, components::Transform,
+    cgmath::num_traits::FloatConst, components::Light, components::Transform, log::info,
     winit::dpi::PhysicalSize, Engine, Entity,
 };
 
@@ -15,6 +15,8 @@ pub struct App {
 
 impl vesta::VestaApp for App {
     fn init(engine: &mut vesta::Engine) -> Self {
+        info!("Init Start!");
+
         let render_pipeline_layout =
             engine
                 .renderer
@@ -42,6 +44,8 @@ impl vesta::VestaApp for App {
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
             include_str!("shader.wgsl").into(),
         ))
+        .with_vertex_shader_entry("vs_main")
+        .with_fragment_shader_entry("fs_main")
         .with_layout(&render_pipeline_layout)
         .build(&engine.renderer.device)
         .unwrap();
@@ -72,6 +76,8 @@ impl vesta::VestaApp for App {
             );
 
         let camera_controller = vesta::ArcBallCameraController::default();
+
+        info!("Init Finish!");
 
         Self {
             render_pipeline,

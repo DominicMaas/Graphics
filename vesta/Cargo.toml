@@ -11,22 +11,33 @@ image = "0.23"
 cgmath = { version = "0.18", features = [ "swizzle" ] }
 bytemuck = { version = "1.7.2", features = [ "derive" ] }
 anyhow = "1.0.45"
+
 futures = "0.3"
+
+# Custom timing that supports WASM
+instant = "0.1"
+
+# Logging
+log = "0.4"
+env_logger = "0.9"
 
 # GUI
 egui = "0.15"
 egui_wgpu_backend = "0.14"
 egui_winit_platform = "0.11"
 
-
 # Web Assembly
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.78"
 web-sys = "0.3.55"
 
-console_error_panic_hook = "0.1.7"
-console_log = "0.2.0"
-
 winit = { version = "0.25", features = [ "web-sys" ] }
 
 wasm-bindgen-futures = "0.4.28"
+
+# Custom timing that supports WASM
+instant = { version = "0.1", features = [ "stdweb" ] }
+
+# Logging
+console_error_panic_hook = "0.1.7"
+console_log = "0.2.0"
