@@ -1823,6 +1823,7 @@ dependencies = [
  "egui_wgpu_backend",
  "egui_winit_platform",
  "image",
+ "wasm-bindgen",
  "wgpu",
  "winit",
 ]
@@ -2146,7 +2147,9 @@ dependencies = [
  "raw-window-handle",
  "scopeguard",
  "smithay-client-toolkit",
+ "wasm-bindgen",
  "wayland-client",
+ "web-sys",
  "winapi",
  "x11-dl",
 ]
