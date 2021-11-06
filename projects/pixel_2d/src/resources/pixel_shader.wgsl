@@ -31,7 +31,7 @@ var<uniform> u_model: Model;
 
 // Vertex Shader
 [[stage(vertex)]]
-fn main(in: VertexInput) -> VertexOutput {
+fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.tex_coord = in.tex_coord;
     out.position = u_camera.view_proj * u_model.model * vec4<f32>(in.position, 1.0);
@@ -48,6 +48,6 @@ var u_sampler: sampler;
 
 // Fragment Shader
 [[stage(fragment)]]
-fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
+fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
     return textureSample(u_diffuse_texture, u_sampler, in.tex_coord);
 }

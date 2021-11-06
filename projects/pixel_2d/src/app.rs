@@ -51,6 +51,8 @@ impl vesta::VestaApp for App {
         ))
         .with_layout(&render_pipeline_layout)
         .with_cull_mode(None) // TODO: Fix rendering and remove this
+        .with_vertex_shader_entry("vs_main")
+        .with_fragment_shader_entry("fs_main")
         .build(&engine.renderer.device)
         .unwrap();
 
@@ -124,36 +126,34 @@ impl vesta::VestaApp for App {
     }
 
     fn render_ui(&mut self, ctx: &vesta::egui::CtxRef, _engine: &Engine) {
-        vesta::egui::Window::new("Toolbox")
-            .show(&ctx, |ui| {
-                ui.add(vesta::egui::Slider::new(&mut self.brush_size, 1..=100));
+        vesta::egui::Window::new("Toolbox").show(&ctx, |ui| {
+            ui.add(vesta::egui::Slider::new(&mut self.brush_size, 1..=100));
 
-                ui.radio_value(&mut self.brush_type, PixelType::Air, "Air");
-                ui.radio_value(&mut self.brush_type, PixelType::Snow, "Snow");
-                ui.radio_value(&mut self.brush_type, PixelType::Water, "Water");
-                ui.radio_value(&mut self.brush_type, PixelType::Sand, "Sand");
-                ui.radio_value(&mut self.brush_type, PixelType::Ground, "Ground");
+            ui.radio_value(&mut self.brush_type, PixelType::Air, "Air");
+            ui.radio_value(&mut self.brush_type, PixelType::Snow, "Snow");
+            ui.radio_value(&mut self.brush_type, PixelType::Water, "Water");
+            ui.radio_value(&mut self.brush_type, PixelType::Sand, "Sand");
+            ui.radio_value(&mut self.brush_type, PixelType::Ground, "Ground");
 
-                match self.selected_pixel {
-                    Some(pixel) => {
-                        ui.separator();
-                        ui.heading("Selected Pixel");
-                        ui.label(format!("Type: {:?}", pixel.get_type()));
-                        ui.label(format!(
-                            "Color: {},{},{}",
-                            pixel.get_color().r,
-                            pixel.get_color().g,
-                            pixel.get_color().b
-                        ));
-                        ui.label(format!(
-                            "Velocity: {},{}:",
-                            pixel.velocity.x,
-                            pixel.velocity.y
-                        ));
-                    }
-                    None => {}
+            match self.selected_pixel {
+                Some(pixel) => {
+                    ui.separator();
+                    ui.heading("Selected Pixel");
+                    ui.label(format!("Type: {:?}", pixel.get_type()));
+                    ui.label(format!(
+                        "Color: {},{},{}",
+                        pixel.get_color().r,
+                        pixel.get_color().g,
+                        pixel.get_color().b
+                    ));
+                    ui.label(format!(
+                        "Velocity: {},{}:",
+                        pixel.velocity.x, pixel.velocity.y
+                    ));
                 }
-            });
+                None => {}
+            }
+        });
     }
 
     fn render<'a>(&'a mut self, render_pass: &mut RenderPass<'a>, _engine: &Engine) {
