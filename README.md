@@ -57,6 +57,18 @@ Now for the fun stuff!
 
 # WASM (Web Assembly)
 
-Make sure wasm-bindgen-cli is installed!
+Make sure the following dependencies are installed:
 
-`cargo install -f wasm-bindgen-cli`
+- `cargo install -f wasm-bindgen-cli`
+- `cargo install simple-http-server`
+
+To build a project for web, go to the project folder and run build_wasm
+
+Example:
+
+1. `cd example`
+2. `.\build_wasm.bat`
+3. `cd web`
+4. `simple-http-server`
+
+Note: Use Edge or Chrome Cannery with the WebGPU flags enabled

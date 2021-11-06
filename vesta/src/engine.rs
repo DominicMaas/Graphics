@@ -42,7 +42,23 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub async fn run<V: VestaApp + 'static>(config: Config) {
+    /// Runs the engine with the specified App and config (Wraps the run_async call)
+    pub fn run<V: VestaApp + 'static>(config: Config) {
+        // Normal
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            futures::executor::block_on(Self::run_async::<V>(config));
+        }
+
+        // WASM
+        #[cfg(target_arch = "wasm32")]
+        {
+            wasm_bindgen_futures::spawn_local(Self::run_async::<V>(config));
+        }
+    }
+
+    /// Runs the engine with the specified App and config
+    pub async fn run_async<V: VestaApp + 'static>(config: Config) {
         // Loop that will run all the events
         let event_loop = EventLoop::new();
 
@@ -52,6 +68,26 @@ impl Engine {
             .with_inner_size(config.window_size)
             .build(&event_loop)
             .unwrap();
+
+        // WASM Specific (for logging)
+        #[cfg(target_arch = "wasm32")]
+        {
+            // Logging
+            std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+            console_log::init().expect("could not initialize wasm logger");
+
+            use winit::platform::web::WindowExtWebSys;
+
+            // On wasm, append the canvas to the document body
+            web_sys::window()
+                .and_then(|win| win.document())
+                .and_then(|doc| doc.body())
+                .and_then(|body| {
+                    body.append_child(&web_sys::Element::from(window.canvas()))
+                        .ok()
+                })
+                .expect("couldn't append canvas to document body");
+        }
 
         // Determined window size
         let window_size = window.inner_size();
