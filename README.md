@@ -54,3 +54,9 @@ Now for the fun stuff!
 - [ ] Raycasting!!! Nobody likes pressing keys to add and remove blocks, use raycasting to make this a true Minecraft clone!
 - [ ] Wait, you want to save your progress!? Implement the ability to load and save worlds (this will depend on the next task).\
 - [ ] Scene Mangement. Port the scene manager and start working on an ECS system for vesta. Scenes structs are pretty much like ap structs, but you can switch between them! (main menu, pause menu, game, etc.)
+
+# WASM (Web Assembly)
+
+Make sure wasm-bindgen-cli is installed!
+
+`cargo install -f wasm-bindgen-cli`
