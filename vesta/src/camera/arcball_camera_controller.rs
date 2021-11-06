@@ -46,8 +46,8 @@ impl ArcBallCameraController {
         let pivot = Vector4::new(camera.center.x, camera.center.y, camera.center.z, 1.0);
 
         // step 1 : Calculate the amount of rotation given the mouse movement.
-        let delta_angle_x =
-            self.mouse_sensitivity * 2.0 * f32::PI() / camera.projection.get_window_size().width as f32; // a movement from left to right = 2*PI = 360 deg
+        let delta_angle_x = self.mouse_sensitivity * 2.0 * f32::PI()
+            / camera.projection.get_window_size().width as f32; // a movement from left to right = 2*PI = 360 deg
         let delta_angle_y =
             self.mouse_sensitivity * f32::PI() / camera.projection.get_window_size().height as f32; // a movement from top to bottom = PI = 180 deg
 

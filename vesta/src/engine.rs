@@ -192,6 +192,9 @@ impl Engine {
                 // Run the frame update
                 app.update(self);
 
+                self.io.mouse.clear_events();
+                self.io.keyboard.clear_events();
+
                 // Perform the actual rendering
                 match self.render(gui, app) {
                     Ok(_) => {}
@@ -205,10 +208,7 @@ impl Engine {
                     Err(e) => eprintln!("{:?}", e),
                 }
             }
-            Event::NewEvents(_) => {
-                self.io.mouse.clear_events();
-                self.io.keyboard.clear_events();
-            }
+            Event::MainEventsCleared => {}
             Event::RedrawEventsCleared => {
                 self.window.request_redraw();
             }
