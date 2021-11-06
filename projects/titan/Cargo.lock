@@ -1807,7 +1807,6 @@ version = "0.1.0"
 dependencies = [
  "bracket-noise",
  "env_logger",
- "futures",
  "lagoon",
  "log",
  "rand",

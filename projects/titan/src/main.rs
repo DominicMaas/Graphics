@@ -5,11 +5,13 @@ mod sky_shader;
 mod world;
 
 use app::App;
-use futures::executor::block_on;
 
 fn main() {
-    // Get log events
-    env_logger::init();
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // Get log events
+        env_logger::init();
+    }
 
     // Config for the engine
     let config = vesta::Config {
@@ -17,7 +19,6 @@ fn main() {
         window_size: (1920, 1080).into(),
     };
 
-    // Unable to run async in main, so block the async,
-    // create for App, and pass in the config
-    block_on(vesta::Engine::run::<App>(config));
+    // Create for App, and pass in the config
+    vesta::Engine::run::<App>(config);
 }
