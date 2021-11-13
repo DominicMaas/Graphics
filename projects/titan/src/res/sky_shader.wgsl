@@ -21,10 +21,10 @@ struct FragData {
 };
 
 [[group(0), binding(0)]]
-var r_data: Data;
+var<uniform> r_data: Data;
 
 [[group(1), binding(0)]]
-var frag_data: FragData;
+var<uniform> frag_data: FragData;
 
 [[stage(vertex)]]
 fn main([[builtin(vertex_index)]] vertex_index: u32) -> VertexOutput {
@@ -71,4 +71,3 @@ fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
     
     return vec4<f32>(sky.x, sky.y, sky.z, 1.0);
 }
-
