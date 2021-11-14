@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <PackageReference Include="ComputeSharp" Version="2.0.0-alpha.7" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
   </ItemGroup>
 
 </Project>

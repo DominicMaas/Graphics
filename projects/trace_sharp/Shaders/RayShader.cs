@@ -12,7 +12,7 @@ namespace TraceSharp.Shaders;
 [AutoConstructor]
 public readonly partial struct RayShader : IComputeShader
 {
-    public readonly ReadWriteBuffer<Vector3> buffer;
+    public readonly IReadWriteTexture2D<float4> textureBuffer;
 
     public readonly Scene scene;
 
@@ -20,19 +20,16 @@ public readonly partial struct RayShader : IComputeShader
 
     public void Execute()
     {
-        var x = ThreadIds.X % scene.Width;
-        var y = ThreadIds.X / scene.Width;
-
-        var ray = Ray.CreatePrime(x, y, scene);
+        var ray = Ray.CreatePrime(ThreadIds.X, ThreadIds.Y, scene);
 
         var intersection = Trace(ray);
         if (intersection.EntityIndex != -1)
         {
-            buffer[ThreadIds.X] = GetColor(scene, ray, intersection);
+            textureBuffer[ThreadIds.XY] = GetColor(scene, ray, intersection);
         }
         else
         {
-            buffer[ThreadIds.X] = new Vector3(0.0f, 0.0f, 0.0f);
+            textureBuffer[ThreadIds.XY] = new Float4(0.0f, 0.0f, 0.0f, 1.0f);
         }
     }
 
@@ -70,7 +67,7 @@ public readonly partial struct RayShader : IComputeShader
         return intersection;
     }
 
-    private Vector3 GetColor(Scene scene, Ray ray, Intersection intersection)
+    private Float4 GetColor(Scene scene, Ray ray, Intersection intersection)
     {
         var entity = renderableEntities[intersection.EntityIndex];
 
@@ -89,6 +86,6 @@ public readonly partial struct RayShader : IComputeShader
         var lightReflected = entity.Albedo / MathF.PI;
 
         var color = entity.Color * scene.Light.Color * lightPower * lightReflected;
-        return color;
+        return new Float4(color.X, color.Y, color.Z, 1.0f);
     }
 }
