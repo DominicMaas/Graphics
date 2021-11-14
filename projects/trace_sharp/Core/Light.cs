@@ -1,10 +1,17 @@
-﻿using TerraFX.Numerics;
+﻿using System.Numerics;
 
 namespace TraceSharp.Core;
 
-public class Light
+public struct Light
 {
-    public Vector3 Direction { get; set; }
-    public Vector3 Color { get; set; }
-    public float Intensity { get; set; }
+    public Light(Vector3 direction, Vector3 color, float intensity)
+    {
+        Direction = direction;
+        Color = color;
+        Intensity = intensity;
+    }
+
+    public Vector3 Direction;
+    public Vector3 Color;
+    public float Intensity;
 }

@@ -1,11 +1,11 @@
-﻿using TerraFX.Numerics;
+﻿using System.Numerics;
 
 namespace TraceSharp.Core.Math;
 
-public class Ray
+public struct Ray
 {
-    public Vector3 Origin { get; }
-    public Vector3 Direction { get; }
+    public Vector3 Origin;
+    public Vector3 Direction;
 
     public Ray(Vector3 origin, Vector3 direction)
     {
@@ -30,6 +30,12 @@ public class Ray
         sensorX *= fovAdjustment;
         sensorY *= fovAdjustment;
 
-        return new Ray(new Vector3(),Vector3.Normalize(new Vector3(sensorX, sensorY, -1.0f)));
+#pragma warning disable IDE0017 // Simplify object initialization
+        var ray = new Ray();
+        ray.Origin = new Vector3();
+        ray.Direction = Vector3.Normalize(new Vector3(sensorX, sensorY, -1.0f));
+#pragma warning restore IDE0017 // Simplify object initialization
+
+        return ray;
     }
 }

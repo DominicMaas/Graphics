@@ -1,30 +1,19 @@
-﻿using SixLabors.ImageSharp.PixelFormats;
-using TerraFX.Numerics;
-using TraceSharp.Core.Math;
+﻿using System.Numerics;
 
 namespace TraceSharp.Core;
 
-public class Scene
+public struct Scene
 {
-    public int Width { get; set; }
-    public int Height { get; set; }
-    public float FieldOfView { get; set; }
-
-    public Light Light { get; set; } = new Light
+    public Scene(int width, int height, float fov)
     {
-        Direction = new Vector3(-0.25f, -1.0f, -1.0f),
-        Color = new Vector3(1, 1, 1),
-        Intensity = 20.0f
-    };
-
-    public IEnumerable<RenderObject> RenderObjects { get; set; } = new List<RenderObject>();
-
-    public Intersection? Trace(Ray ray)
-    {
-        return RenderObjects
-            .Select(x => new { Obj = x, Ray = x.IntersectWithRay(ray) })
-            .Where(x => x.Ray.Intersecting)
-            .Select(x => new Intersection(x.Ray.Distance, x.Obj))
-            .OrderBy(x => x.Distance).FirstOrDefault();
+        Width = width;
+        Height = height;
+        FieldOfView = fov;
+        Light = new Light(new Vector3(-0.25f, -1.0f, -1.0f), new Vector3(1, 1, 1), 20.0f);
     }
+
+    public int Width;
+    public int Height;
+    public float FieldOfView;
+    public Light Light;
 }
