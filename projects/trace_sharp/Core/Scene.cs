@@ -9,7 +9,7 @@ public struct Scene
         Width = width;
         Height = height;
         FieldOfView = fov;
-        Light = new Light(new Vector3(-0.25f, -1.0f, -1.0f), new Vector3(1, 1, 1), 20.0f);
+        Light = new Light(new Vector3(-0.45f, -2.0f, -1.0f), new Vector3(1, 1, 1), 20.0f);
     }
 
     public int Width;

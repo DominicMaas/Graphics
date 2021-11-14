@@ -20,16 +20,14 @@ public readonly partial struct RayShader : IComputeShader
 
     public void Execute()
     {
+        textureBuffer[ThreadIds.XY] = new Float4(0.05f, 0.05f, 0.05f, 1.0f);
+
         var ray = Ray.CreatePrime(ThreadIds.X, ThreadIds.Y, scene);
 
         var intersection = Trace(ray);
         if (intersection.EntityIndex != -1)
         {
             textureBuffer[ThreadIds.XY] = GetColor(scene, ray, intersection);
-        }
-        else
-        {
-            textureBuffer[ThreadIds.XY] = new Float4(0.0f, 0.0f, 0.0f, 1.0f);
         }
     }
 
@@ -81,7 +79,7 @@ public readonly partial struct RayShader : IComputeShader
 
         var inLight = Trace(shadowRay).EntityIndex == -1;
 
-        var lightIntensity = inLight ? scene.Light.Intensity : 0.0f;
+        var lightIntensity = inLight ? scene.Light.Intensity : 0.5f;
         var lightPower = Vector3.Dot(surfaceNormal, directionToLight) * lightIntensity;
         var lightReflected = entity.Albedo / MathF.PI;
 
