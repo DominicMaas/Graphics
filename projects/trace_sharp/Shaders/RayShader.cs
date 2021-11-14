@@ -20,7 +20,7 @@ public readonly partial struct RayShader : IComputeShader
 
     public void Execute()
     {
-        textureBuffer[ThreadIds.XY] = new Float4(0.05f, 0.05f, 0.05f, 1.0f);
+        textureBuffer[ThreadIds.XY] = new Float4(0, 0, 0, 1);
 
         var ray = Ray.CreatePrime(ThreadIds.X, ThreadIds.Y, scene);
 
@@ -79,11 +79,11 @@ public readonly partial struct RayShader : IComputeShader
 
         var inLight = Trace(shadowRay).EntityIndex == -1;
 
-        var lightIntensity = inLight ? scene.Light.Intensity : 0.5f;
+        var lightIntensity = inLight ? scene.Light.Intensity : 0.0f;
         var lightPower = Vector3.Dot(surfaceNormal, directionToLight) * lightIntensity;
         var lightReflected = entity.Albedo / MathF.PI;
 
         var color = entity.Color * scene.Light.Color * lightPower * lightReflected;
-        return new Float4(color.X, color.Y, color.Z, 1.0f);
+        return new Float4(color.X, color.Y, color.Z, 1);
     }
 }
