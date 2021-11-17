@@ -21,7 +21,7 @@ public struct Ray
 
     public static Ray CreatePrime(int x, int y, Scene scene)
     {
-        var fovAdjustment = Hlsl.Tan((scene.FieldOfView * (MathF.PI / 180.0f)) / 2);
+        var fovAdjustment = Hlsl.Tan((scene.Camera.FOV * (MathF.PI / 180.0f)) / 2);
         var aspectRatio = (float)scene.Width / (float)scene.Height;
 
         var sensorX = ((((x + 0.5f) / scene.Width) * 2.0f - 1.0f) * aspectRatio);

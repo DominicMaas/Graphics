@@ -9,6 +9,11 @@ namespace TraceSharp.Core.Renderable
 
         public static RayIntersection IntersectWithRay(RenderableEntity entity, Ray ray)
         {
+            return IntersectSphereWithRay(entity, ray);
+        }
+
+        private static RayIntersection IntersectSphereWithRay(RenderableEntity entity, Ray ray)
+        {
             // Create a line segment between the ray origin and the center of the sphere
             var line = entity.Position - ray.Origin;
 

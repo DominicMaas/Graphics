@@ -19,14 +19,18 @@ public readonly partial struct RayShader : IComputeShader
 
     public void Execute()
     {
-        textureBuffer[ThreadIds.XY] = new Float4(0, 0, 0, 1);
+        // Create a prime ray from the camera for our initial intersection
+        var primeRay = Ray.CreatePrime(ThreadIds.X, ThreadIds.Y, scene);
 
-        var ray = Ray.CreatePrime(ThreadIds.X, ThreadIds.Y, scene);
-
-        var intersection = Trace(ray);
+        // Determine if there is an intersection, if so, shade, otherwise set to black
+        var intersection = PathTrace(primeRay);
         if (intersection.EntityIndex != -1)
         {
-            textureBuffer[ThreadIds.XY] = GetColor(scene, ray, intersection);
+            textureBuffer[ThreadIds.XY] = GetColor(scene, primeRay, intersection);
+        }
+        else
+        {
+            textureBuffer[ThreadIds.XY] = new Float4(0, 0, 0, 1);
         }
     }
 
@@ -35,7 +39,7 @@ public readonly partial struct RayShader : IComputeShader
     /// </summary>
     /// <param name="ray">The ray to trace</param>
     /// <returns>The distance and entity id if a ray was intersected. Otherwise the entity id is set to -1</returns>
-    private Intersection Trace(Ray ray)
+    private Intersection PathTrace(Ray ray)
     {
         var entityId = -1;
         var shortestDistance = float.MaxValue;
@@ -76,7 +80,7 @@ public readonly partial struct RayShader : IComputeShader
         shadowRay.Origin = hitPoint + (surfaceNormal * 0.0001f);
         shadowRay.Direction = directionToLight;
 
-        var inLight = Trace(shadowRay).EntityIndex == -1;
+        var inLight = PathTrace(shadowRay).EntityIndex == -1;
 
         var lightIntensity = inLight ? scene.Light.Intensity : 0.0f;
         var lightPower = Hlsl.Dot(surfaceNormal, directionToLight) * lightIntensity;
