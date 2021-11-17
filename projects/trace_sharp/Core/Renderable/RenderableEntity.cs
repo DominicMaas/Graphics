@@ -15,12 +15,12 @@ public struct RenderableEntity
     /// <summary>
     ///     The position of this object
     /// </summary>
-    public Vector3 Position;
+    public float3 Position;
 
     /// <summary>
     ///     The color of this render object (this ray tracer is very basic!!!)
     /// </summary>
-    public Vector3 Color;
+    public float3 Color;
 
     /// <summary>
     ///     The albedo of this render object (this ray tracer is very basic!!!)
@@ -35,7 +35,7 @@ public struct RenderableEntity
     /// <summary>
     ///     Create a sphere
     /// </summary>
-    public static RenderableEntity CreateSphere(Vector3 position, Vector3 color, float albedo, float radius)
+    public static RenderableEntity CreateSphere(float3 position, float3 color, float albedo, float radius)
     {
         return new RenderableEntity
         {

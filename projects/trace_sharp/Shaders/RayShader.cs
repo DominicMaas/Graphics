@@ -1,5 +1,4 @@
 ﻿using ComputeSharp;
-using System.Numerics;
 using TraceSharp.Core;
 using TraceSharp.Core.Math;
 using TraceSharp.Core.Renderable;
@@ -65,25 +64,25 @@ public readonly partial struct RayShader : IComputeShader
         return intersection;
     }
 
-    private Float4 GetColor(Scene scene, Ray ray, Intersection intersection)
+    private float4 GetColor(Scene scene, Ray ray, Intersection intersection)
     {
         var entity = renderableEntities[intersection.EntityIndex];
 
-        var hitPoint = ray.Origin + (ray.Direction * intersection.Distance);
-        var surfaceNormal = RenderableEntities.SurfaceNormal(entity, hitPoint);
-        var directionToLight = -Vector3.Normalize(scene.Light.Direction);
+        float3 hitPoint = ray.Origin + (ray.Direction * intersection.Distance);
+        float3 surfaceNormal = RenderableEntities.SurfaceNormal(entity, hitPoint);
+        float3 directionToLight = -Hlsl.Normalize(scene.Light.Direction);
 
         var shadowRay = new Ray();
-        shadowRay.Origin = hitPoint + (surfaceNormal * new Vector3(0.0001f, 0.0001f, 0.0001f));
+        shadowRay.Origin = hitPoint + (surfaceNormal * 0.0001f);
         shadowRay.Direction = directionToLight;
 
         var inLight = Trace(shadowRay).EntityIndex == -1;
 
         var lightIntensity = inLight ? scene.Light.Intensity : 0.0f;
-        var lightPower = Vector3.Dot(surfaceNormal, directionToLight) * lightIntensity;
+        var lightPower = Hlsl.Dot(surfaceNormal, directionToLight) * lightIntensity;
         var lightReflected = entity.Albedo / MathF.PI;
 
-        var color = entity.Color * scene.Light.Color * lightPower * lightReflected;
-        return new Float4(color.X, color.Y, color.Z, 1);
+        float3 color = entity.Color * scene.Light.Color * lightPower * lightReflected;
+        return new float4(color, 1);
     }
 }

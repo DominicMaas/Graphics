@@ -1,26 +1,27 @@
-﻿using System.Numerics;
+﻿using ComputeSharp;
+using System.Numerics;
 
 namespace TraceSharp.Core.Math;
 
 public struct Ray
 {
-    public Vector3 Origin;
-    public Vector3 Direction;
+    public float3 Origin;
+    public float3 Direction;
 
-    public Ray(Vector3 origin, Vector3 direction)
+    public Ray(float3 origin, float3 direction)
     {
         Origin = origin;
         Direction = direction;
     }
 
-    public Vector3 At(float t)
+    public float3 At(float t)
     {
         return Origin + Direction * t;
     }
 
     public static Ray CreatePrime(int x, int y, Scene scene)
     {
-        var fovAdjustment = MathF.Tan((scene.FieldOfView * (MathF.PI / 180.0f)) / 2);
+        var fovAdjustment = Hlsl.Tan((scene.FieldOfView * (MathF.PI / 180.0f)) / 2);
         var aspectRatio = (float)scene.Width / (float)scene.Height;
 
         var sensorX = ((((x + 0.5f) / scene.Width) * 2.0f - 1.0f) * aspectRatio);
@@ -33,7 +34,7 @@ public struct Ray
 #pragma warning disable IDE0017 // Simplify object initialization
         var ray = new Ray();
         ray.Origin = new Vector3();
-        ray.Direction = Vector3.Normalize(new Vector3(sensorX, sensorY, -1.0f));
+        ray.Direction = Hlsl.Normalize(new float3(sensorX, sensorY, -1.0f));
 #pragma warning restore IDE0017 // Simplify object initialization
 
         return ray;

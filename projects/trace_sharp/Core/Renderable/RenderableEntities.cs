@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+﻿using ComputeSharp;
 using TraceSharp.Core.Math;
 
 namespace TraceSharp.Core.Renderable
@@ -13,10 +13,10 @@ namespace TraceSharp.Core.Renderable
             var line = entity.Position - ray.Origin;
 
             // Use line as a hypotenuse and find the length of the adjacent side
-            var adjacent = Vector3.Dot(line, ray.Direction);
+            var adjacent = Hlsl.Dot(line, ray.Direction);
 
             // Find the length-squared of the opposite side
-            var length2 = Vector3.Dot(line, line) - (adjacent * adjacent);
+            var length2 = Hlsl.Dot(line, line) - (adjacent * adjacent);
 
             // Determine the radius squared
             var radius2 = entity.Radius * entity.Radius;
@@ -48,9 +48,9 @@ namespace TraceSharp.Core.Renderable
             return rayIntersection;
         }
 
-        public static Vector3 SurfaceNormal(RenderableEntity entity, Vector3 hitPoint)
+        public static float3 SurfaceNormal(RenderableEntity entity, float3 hitPoint)
         {
-            return Vector3.Normalize(hitPoint - entity.Position);
+            return Hlsl.Normalize(hitPoint - entity.Position);
         }
     }
 }
