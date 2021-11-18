@@ -17,21 +17,33 @@ public readonly partial struct RayShader : IComputeShader
 
     public readonly ReadOnlyBuffer<RenderableEntity> renderableEntities;
 
+    // https://computergraphics.stackexchange.com/questions/4248/how-is-anti-aliasing-implemented-in-ray-tracing
+    public static readonly float4x2 JitterMatrix = new(
+        new(-1.0f / 4.0f, 3.0f / 4.0f),
+        new(3.0f / 4.0f, 1.0f / 3.0f),
+        new(-3.0f / 4.0f, -1.0f / 4.0f),
+        new(1.0f / 4.0f, -3.0f / 4.0f));
+
     public void Execute()
     {
-        // Create a prime ray from the camera for our initial intersection
-        var primeRay = Ray.CreatePrime(ThreadIds.X, ThreadIds.Y, scene);
+        // Base color
+        float3 baseColor = new(0, 0, 0);
 
-        // Determine if there is an intersection, if so, shade, otherwise set to black
-        var intersection = PathTrace(primeRay);
-        if (intersection.EntityIndex != -1)
+        // 4 samples
+        for (var sample = 0; sample < 4; sample++)
         {
-            textureBuffer[ThreadIds.XY] = GetColor(scene, primeRay, intersection);
+            // Create a prime ray from the camera for our initial intersection
+            var primeRay = Ray.CreatePrime(ThreadIds.X, ThreadIds.Y, scene, sample, JitterMatrix);
+
+            // Determine if there is an intersection, if so, shade, otherwise set to black
+            var intersection = PathTrace(primeRay);
+            if (intersection.EntityIndex != -1)
+            {
+                baseColor += GetColor(scene, primeRay, intersection);
+            }
         }
-        else
-        {
-            textureBuffer[ThreadIds.XY] = new Float4(0, 0, 0, 1);
-        }
+
+        textureBuffer[ThreadIds.XY] = new float4(baseColor / 4f, 1);
     }
 
     /// <summary>
@@ -68,7 +80,7 @@ public readonly partial struct RayShader : IComputeShader
         return intersection;
     }
 
-    private float4 GetColor(Scene scene, Ray ray, Intersection intersection)
+    private float3 GetColor(Scene scene, Ray ray, Intersection intersection)
     {
         var entity = renderableEntities[intersection.EntityIndex];
 
@@ -87,6 +99,6 @@ public readonly partial struct RayShader : IComputeShader
         var lightReflected = entity.Albedo / MathF.PI;
 
         float3 color = entity.Color * scene.Light.Color * lightPower * lightReflected;
-        return new float4(color, 1);
+        return color;
     }
 }

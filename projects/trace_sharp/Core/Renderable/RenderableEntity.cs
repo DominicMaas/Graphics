@@ -28,9 +28,14 @@ public struct RenderableEntity
     public float Albedo;
 
     /// <summary>
-    ///     The radius of this shape (if supported)
+    ///     The radius of this renderable entity (if supported)
     /// </summary>
     public float Radius;
+
+    /// <summary>
+    ///     The normal of this renderable entity (if supported)
+    /// </summary>
+    public float3 Normal;
 
     /// <summary>
     ///     Create a sphere
@@ -44,6 +49,21 @@ public struct RenderableEntity
             Color = color,
             Albedo = albedo,
             Radius = radius
+        };
+    }
+
+    /// <summary>
+    ///     Create a plane
+    /// </summary>
+    public static RenderableEntity CreatePlane(float3 position, float3 color, float albedo, float3 normal)
+    {
+        return new RenderableEntity
+        {
+            Type = RenderableEntities.PLANE,
+            Position = position,
+            Color = color,
+            Albedo = albedo,
+            Normal = normal
         };
     }
 }

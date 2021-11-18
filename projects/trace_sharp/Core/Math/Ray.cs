@@ -19,15 +19,18 @@ public struct Ray
         return Origin + Direction * t;
     }
 
-    public static Ray CreatePrime(int x, int y, Scene scene)
+    public static Ray CreatePrime(int x, int y, Scene scene, int sample, float4x2 jitterMatrix)
     {
-        var fovAdjustment = Hlsl.Tan((scene.Camera.FOV * (MathF.PI / 180.0f)) / 2);
-        var aspectRatio = (float)scene.Width / (float)scene.Height;
+        // Determine X and Y
+        var sensorX = (2f * (x + jitterMatrix[sample][0]) / scene.Width) - 1f;
+        var sensorY = 1f - (2f * (y + jitterMatrix[sample][1]) / scene.Height);
 
-        var sensorX = ((((x + 0.5f) / scene.Width) * 2.0f - 1.0f) * aspectRatio);
-        var sensorY = (1.0f - ((y + 0.5f) / scene.Height) * 2.0f);
+        // Adjust for the aspect ratio
+        var aspectRatio = (float)scene.Width / (float)scene.Height;
+        sensorX *= aspectRatio;
 
         // Adjust for the FOV
+        var fovAdjustment = Hlsl.Tan((scene.Camera.FOV * (MathF.PI / 180f)) / 2f);
         sensorX *= fovAdjustment;
         sensorY *= fovAdjustment;
 

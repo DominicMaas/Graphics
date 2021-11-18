@@ -6,10 +6,21 @@ namespace TraceSharp.Core.Renderable
     public static class RenderableEntities
     {
         public const int SPHERE = 0;
+        public const int PLANE = 1;
 
         public static RayIntersection IntersectWithRay(RenderableEntity entity, Ray ray)
         {
-            return IntersectSphereWithRay(entity, ray);
+            switch (entity.Type)
+            {
+                case SPHERE:
+                    return IntersectSphereWithRay(entity, ray);
+
+                case PLANE:
+                    return IntersectPlaneWithRay(entity, ray);
+
+                default:
+                    return new RayIntersection();
+            }
         }
 
         private static RayIntersection IntersectSphereWithRay(RenderableEntity entity, Ray ray)
@@ -53,9 +64,51 @@ namespace TraceSharp.Core.Renderable
             return rayIntersection;
         }
 
+        private static RayIntersection IntersectPlaneWithRay(RenderableEntity entity, Ray ray)
+        {
+            var denom = Hlsl.Dot(entity.Normal, ray.Direction);
+            if (denom > 0.000001f)
+            {
+                var v = entity.Position - ray.Origin;
+                var distance = Hlsl.Dot(v, entity.Normal) / denom;
+                if (distance >= 0.0)
+                {
+#pragma warning disable IDE0017 // Simplify object initialization
+                    var rayIntersection = new RayIntersection();
+                    rayIntersection.Intersecting = true;
+                    rayIntersection.Distance = distance;
+#pragma warning restore IDE0017 // Simplify object initialization
+
+                    return rayIntersection;
+                }
+            }
+
+            return new RayIntersection();
+        }
+
         public static float3 SurfaceNormal(RenderableEntity entity, float3 hitPoint)
         {
+            switch (entity.Type)
+            {
+                case SPHERE:
+                    return SphereSurfaceNormal(entity, hitPoint);
+
+                case PLANE:
+                    return PlaneSurfaceNormal(entity, hitPoint);
+
+                default:
+                    return new float3(0, 0, 0);
+            }
+        }
+
+        private static float3 SphereSurfaceNormal(RenderableEntity entity, float3 hitPoint)
+        {
             return Hlsl.Normalize(hitPoint - entity.Position);
+        }
+
+        private static float3 PlaneSurfaceNormal(RenderableEntity entity, float3 hitPoint)
+        {
+            return -Hlsl.Normalize(entity.Normal);
         }
     }
 }
