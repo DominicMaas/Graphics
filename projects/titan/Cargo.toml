@@ -9,3 +9,4 @@ vesta = { path = "../../vesta" }
 bracket-noise = "0.8.2"
 rand = "0.8"
 lagoon = "0.1.3"
+hashbrown = "0.11"

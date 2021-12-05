@@ -1,3 +1,6 @@
+use std::sync::Arc;
+
+use hashbrown::HashMap;
 use vesta::cgmath::Vector3;
 
 use crate::world::Generator;
@@ -33,6 +36,7 @@ const DELETE_DISTANCE: u32 = CREATE_DISTANCE + 4;
 
 pub struct World {
     chunks: Vec<Chunk>,
+    //chunk_map: HashMap<Vector3<i32>, Arc<Chunk>>,
     block_map_texture: vesta::Texture,
     pub rendered_chunks: usize,
     generator: Generator,
@@ -64,6 +68,8 @@ impl World {
         let generator = Generator::new(seed);
 
         let pool = lagoon::ThreadPool::default();
+
+        //HashMap<Vec2<i32>, Arc<V>>
 
         Self {
             chunks,
