@@ -14,18 +14,15 @@ struct VertexOutput {
 };
 
 // Data structures 
-[[block]]
 struct Camera {
     view_proj: mat4x4<f32>;
 };
 
-[[block]]
 struct Model {
     model: mat4x4<f32>;
     normal: mat3x3<f32>;
 };
 
-[[block]]
 struct Light {
     position: vec4<f32>;
     color: vec4<f32>;
@@ -49,7 +46,7 @@ var<uniform> u_light: Light;
 
 // Vertex Shader
 [[stage(vertex)]]
-fn main(in: VertexInput) -> VertexOutput {
+fn vs_main(in: VertexInput) -> VertexOutput {
     let w = u_model.model;
     let model_space = u_model.model * vec4<f32>(in.position, 1.0); // world_pos
     
@@ -64,7 +61,7 @@ fn main(in: VertexInput) -> VertexOutput {
 
 // Fragment Shader
 [[stage(fragment)]]
-fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
+fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
     // Determine the color of this pixel based on the texture coords
     let object_color = textureSample(u_diffuse_texture, u_sampler, in.tex_coord);
     

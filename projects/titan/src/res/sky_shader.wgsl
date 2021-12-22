@@ -3,7 +3,6 @@ struct VertexOutput {
     [[location(0)]] uv: vec3<f32>;
 };
 
-[[block]]
 struct Data {
     // from camera to screen
     proj: mat4x4<f32>;
@@ -15,7 +14,6 @@ struct Data {
     cam_pos: vec4<f32>;
 };
 
-[[block]]
 struct FragData {
     scatter_amount: f32;
 };
@@ -27,7 +25,7 @@ var<uniform> r_data: Data;
 var<uniform> frag_data: FragData;
 
 [[stage(vertex)]]
-fn main([[builtin(vertex_index)]] vertex_index: u32) -> VertexOutput {
+fn vs_main([[builtin(vertex_index)]] vertex_index: u32) -> VertexOutput {
     // hacky way to draw a large triangle
     let tmp1 = i32(vertex_index) / 2;
     let tmp2 = i32(vertex_index) & 1;
@@ -65,7 +63,7 @@ fn get_sky(uv: vec2<f32>, scatter: f32) -> vec3<f32>
 
 //mat4 modelViewMatrix = modelUBO.model * sceneUBO.view;
 [[stage(fragment)]]
-fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
+fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
     
     let sky = get_sky(in.uv.xy, frag_data.scatter_amount);
     

@@ -14,13 +14,11 @@ struct VertexOutput {
 };
 
 // Data structures 
-[[block]]
 struct Camera {
     view_proj: mat4x4<f32>;
     view_pos: vec4<f32>;
 };
 
-[[block]]
 struct Model {
     model: mat4x4<f32>;
     normal: mat3x3<f32>;
@@ -35,7 +33,7 @@ var<uniform> u_model: Model;
 
 // Vertex Shader
 [[stage(vertex)]]
-fn main(in: VertexInput) -> VertexOutput {
+fn vs_main(in: VertexInput) -> VertexOutput {
     
     var out: VertexOutput;
     out.tex_coord = in.tex_coord;
@@ -53,8 +51,6 @@ var u_diffuse_texture: texture_2d<f32>;
 
 [[group(2), binding(1)]]
 var u_sampler: sampler;
-
-
 
 fn get_fog(d: f32) -> f32
 {
@@ -80,7 +76,7 @@ fn apply_fog(rgb: vec3<f32>, d: f32, b: f32) -> vec3<f32> {
 
 // Fragment Shader
 [[stage(fragment)]]
-fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
+fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
     // Sample the texture color
     let tex = textureSample(u_diffuse_texture, u_sampler, in.tex_coord);   
     let color = pow(tex.xyz, vec3<f32>(2.2));

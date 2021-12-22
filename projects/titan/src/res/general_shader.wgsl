@@ -12,13 +12,11 @@ struct VertexOutput {
 };
 
 // Data structures 
-[[block]]
 struct Camera {
     view_proj: mat4x4<f32>;
     view_pos: vec4<f32>;
 };
 
-[[block]]
 struct Model {
     model: mat4x4<f32>;
     normal: mat3x3<f32>;
@@ -33,7 +31,7 @@ var<uniform> u_model: Model;
 
 // Vertex Shader
 [[stage(vertex)]]
-fn main(in: VertexInput) -> VertexOutput {  
+fn vs_main(in: VertexInput) -> VertexOutput {  
     var out: VertexOutput;
     out.position = u_camera.view_proj * u_model.model * vec4<f32>(in.position, 1.0);
     out.color = in.color;
@@ -44,6 +42,6 @@ fn main(in: VertexInput) -> VertexOutput {
 
 // Fragment Shader
 [[stage(fragment)]]
-fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
+fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
     return vec4<f32>(0.0, 0.0, 0.0, 0.7);    
 }

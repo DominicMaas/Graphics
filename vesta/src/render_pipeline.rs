@@ -23,8 +23,8 @@ impl<'a> RenderPipelineBuilder<'a> {
         Self {
             layout: None,
             shader_source: None,
-            vertex_shader_entry: "main",
-            fragment_shader_entry: "main",
+            vertex_shader_entry: "vs_main",
+            fragment_shader_entry: "fs_main",
             texture_format,
             pipeline_name,
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
@@ -140,11 +140,8 @@ impl<'a> RenderPipelineBuilder<'a> {
                 strip_index_format: None,
                 front_face: self.front_face,
                 cull_mode: self.cull_mode,
-                // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
-                // Setting this to true requires Features::DEPTH_CLAMPING
-                clamp_depth: false,
-                // Requires Features::CONSERVATIVE_RASTERIZATION
+                unclipped_depth: false,
                 conservative: false,
             },
             depth_stencil: Some(wgpu::DepthStencilState {
@@ -179,6 +176,7 @@ impl<'a> RenderPipelineBuilder<'a> {
                     write_mask: wgpu::ColorWrites::ALL,
                 }],
             }),
+            multiview: None,
         });
 
         Ok(pipeline)

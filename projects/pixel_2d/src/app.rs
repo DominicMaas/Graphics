@@ -51,8 +51,6 @@ impl vesta::VestaApp for App {
         ))
         .with_layout(&render_pipeline_layout)
         .with_cull_mode(None) // TODO: Fix rendering and remove this
-        .with_vertex_shader_entry("vs_main")
-        .with_fragment_shader_entry("fs_main")
         .build(&engine.renderer.device)
         .unwrap();
 

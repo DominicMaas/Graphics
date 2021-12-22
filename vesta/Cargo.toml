@@ -5,38 +5,36 @@ authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2021"
 
 [dependencies]
-winit = "0.25"
-wgpu = "0.11"
-image = "0.23"
-cgmath = { version = "0.18", features = [ "swizzle" ] }
-bytemuck = { version = "1.7.2", features = [ "derive" ] }
-anyhow = "1.0.45"
+winit = "0.26.0"
+wgpu = "0.12.0"
+image = "0.23.14"
+cgmath = { version = "0.18.0", features = [ "swizzle" ] }
+bytemuck = { version = "1.7.3", features = [ "derive" ] }
+anyhow = "1.0.51"
 
-futures = "0.3"
+futures = "0.3.19"
 
 # Custom timing that supports WASM
-instant = "0.1"
+instant = "0.1.12"
 
 # Logging
-log = "0.4"
-env_logger = "0.9"
+log = "0.4.14"
+env_logger = "0.9.0"
 
 # GUI
 egui = "0.15"
-egui_wgpu_backend = "0.14"
-egui_winit_platform = "0.11"
+egui_wgpu_backend = "0.15.0"
+egui_winit_platform = "0.12.0"
 
 # Web Assembly
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.78"
 web-sys = "0.3.55"
 
-winit = { version = "0.25", features = [ "web-sys" ] }
-
 wasm-bindgen-futures = "0.4.28"
 
 # Custom timing that supports WASM
-instant = { version = "0.1", features = [ "stdweb" ] }
+instant = { version = "0.1.12", features = [ "stdweb" ] }
 
 # Logging
 console_error_panic_hook = "0.1.7"

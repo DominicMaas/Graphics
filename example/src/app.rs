@@ -44,8 +44,6 @@ impl vesta::VestaApp for App {
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
             include_str!("shader.wgsl").into(),
         ))
-        .with_vertex_shader_entry("vs_main")
-        .with_fragment_shader_entry("fs_main")
         .with_layout(&render_pipeline_layout)
         .build(&engine.renderer.device)
         .unwrap();

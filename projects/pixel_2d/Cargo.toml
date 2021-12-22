@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 vesta = { path = "../../vesta" }
 bracket-noise = "0.8.2"
-rand = "0.8.0"
+rand = "0.8.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-getrandom = { version = "0.2", features = ["js"] }
+getrandom = { version = "0.2.3", features = ["js"] }
