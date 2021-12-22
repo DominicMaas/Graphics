@@ -1,6 +1,6 @@
+use std::mem::ManuallyDrop;
 use std::num::NonZeroU32;
 
-use bracket_noise::prelude::{FastNoise, FractalType, NoiseType};
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use vesta::cgmath::{Matrix3, Matrix4, Quaternion, SquareMatrix, Vector2, Vector3};
@@ -22,15 +22,14 @@ pub struct Chunk {
     texture_bind_group: vesta::wgpu::BindGroup,
     uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
     data: Vec<Pixel>,
-    color_buffer: Vec<u8>,
+    color_buffer: Box<[u8; CHUNK_SIZE as usize * CHUNK_SIZE as usize * 4]>, //Vec<u8>,
     loaded: bool,
     rng: ThreadRng,
-    noise: FastNoise,
     dirty: bool,
 }
 
 impl Chunk {
-    pub fn new(renderer: &vesta::Renderer, position: Vector2<f32>, seed: u64) -> Self {
+    pub fn new(renderer: &vesta::Renderer, position: Vector2<f32>, _seed: u64) -> Self {
         // Simple square which the texture will be rendered onto
         let mut vertices = Vec::new();
         vertices.push(Self::create_vertex(1.0, 1.0, 1.0, 0.0)); // Top Right      1,1   0,1   0,0   1,0   1,1
@@ -75,7 +74,8 @@ impl Chunk {
                 sample_count: 1,
                 dimension: vesta::wgpu::TextureDimension::D2,
                 format: vesta::wgpu::TextureFormat::Rgba8UnormSrgb,
-                usage: vesta::wgpu::TextureUsages::TEXTURE_BINDING | vesta::wgpu::TextureUsages::COPY_DST,
+                usage: vesta::wgpu::TextureUsages::TEXTURE_BINDING
+                    | vesta::wgpu::TextureUsages::COPY_DST,
             });
 
         let view = texture.create_view(&vesta::wgpu::TextureViewDescriptor::default());
@@ -113,14 +113,6 @@ impl Chunk {
         let data = vec![Pixel::default(); (CHUNK_SIZE * CHUNK_SIZE) as usize];
         let rng = rand::thread_rng();
 
-        let mut noise = FastNoise::seeded(seed);
-        noise.set_noise_type(NoiseType::SimplexFractal);
-        noise.set_fractal_type(FractalType::FBM);
-        noise.set_fractal_octaves(5);
-        noise.set_fractal_gain(1.0);
-        noise.set_fractal_lacunarity(2.0);
-        noise.set_frequency(0.005);
-
         Self {
             position,
             texture_mesh,
@@ -128,11 +120,20 @@ impl Chunk {
             texture_bind_group,
             uniform_buffer,
             data,
-            color_buffer: vec![0u8; (4 * CHUNK_SIZE * CHUNK_SIZE) as usize],
+            color_buffer: Self::create_color_buffer(),
             loaded: false,
             rng,
-            noise,
             dirty: false,
+        }
+    }
+
+    /// Helper function to create the color buffer
+    fn create_color_buffer() -> Box<[u8; CHUNK_SIZE as usize * CHUNK_SIZE as usize * 4]> {
+        let mut data = ManuallyDrop::new(vec![0; CHUNK_SIZE as usize * CHUNK_SIZE as usize * 4]);
+        unsafe {
+            Box::from_raw(
+                data.as_mut_ptr() as *mut [u8; CHUNK_SIZE as usize * CHUNK_SIZE as usize * 4]
+            )
         }
     }
 
@@ -155,16 +156,18 @@ impl Chunk {
     pub fn rand_noise(&mut self) {
         for x in 0..CHUNK_SIZE {
             for y in 0..CHUNK_SIZE {
-                let gx = self.position.x + x as f32;
-                let gy = self.position.y + y as f32;
+                //let gx = self.position.x + x as f32;
+                //let gy = self.position.y + y as f32;
 
-                let r = self.noise.get_noise(gx, gy) * 250.0;
+                //let r = self.noise.get_noise(gx, gy) * 250.0;
 
-                if r >= y as f32 {
-                    self.set_pixel_raw(x, y, Pixel::new(PixelType::Ground));
-                } else {
-                    self.set_pixel_raw(x, y, Pixel::new(PixelType::Air));
-                }
+                self.set_pixel_raw(x, y, Pixel::new(PixelType::Air));
+
+                //if r >= y as f32 {
+                //self.set_pixel_raw(x, y, Pixel::new(PixelType::Ground));
+                //} else {
+                //self.set_pixel_raw(x, y, Pixel::new(PixelType::Air));
+                //}
             }
         }
     }
@@ -193,9 +196,9 @@ impl Chunk {
                 texture: &self.texture,
                 mip_level: 0,
                 origin: vesta::wgpu::Origin3d::ZERO,
-                aspect: vesta::wgpu::TextureAspect::All
+                aspect: vesta::wgpu::TextureAspect::All,
             },
-            self.color_buffer.as_slice(),
+            self.color_buffer.as_mut(),
             vesta::wgpu::ImageDataLayout {
                 offset: 0,
                 bytes_per_row: NonZeroU32::new((4 * CHUNK_SIZE) as u32),
