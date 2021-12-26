@@ -232,8 +232,8 @@ impl Cube {
     }
 
     pub fn draw<'a>(&'a self, render_pass: &mut vesta::wgpu::RenderPass<'a>) {
-        render_pass.set_bind_group(1, &self.uniform_buffer.bind_group, &[]);
-        render_pass.set_bind_group(2, self.texture.bind_group.as_ref().unwrap(), &[]);
+        render_pass.set_bind_group(0, self.texture.bind_group.as_ref().unwrap(), &[]);
+        render_pass.set_bind_group(2, &self.uniform_buffer.bind_group, &[]);
         render_pass.draw_mesh(&self.mesh);
     }
 }

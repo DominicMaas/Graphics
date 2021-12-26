@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 vesta = { path = "../../vesta" }
+crevice = { version = "0.8.0", features = [ "cgmath" ] }
 bracket-noise = "0.8.2"
 rand = "0.8.4"
 lagoon = "0.1.3"

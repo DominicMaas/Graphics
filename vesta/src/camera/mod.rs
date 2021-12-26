@@ -11,8 +11,10 @@ use cgmath::{EuclideanSpace, Matrix, Matrix4, Point3, Rad, SquareMatrix, Vector3
 
 use crate::{Projection, UniformBuffer};
 
+use crevice::std140::AsStd140;
+
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, AsStd140)]
 pub struct CameraUniform {
     pub view_proj: Matrix4<f32>,
     pub view_pos: Vector4<f32>,
@@ -24,7 +26,7 @@ unsafe impl bytemuck::Pod for CameraUniform {}
 // Holds the camera position, yaw and pitch
 pub struct Camera {
     pub position: Vector3<f32>, // eye
-    pub center: Vector3<f32>,  // look at
+    pub center: Vector3<f32>,   // look at
 
     pub up: Vector3<f32>,
 

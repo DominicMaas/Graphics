@@ -24,15 +24,15 @@ impl vesta::VestaApp for App {
                 .create_pipeline_layout(&vesta::wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
                     bind_group_layouts: &[
-                        &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStages::VERTEX,
-                            &engine.renderer.device,
-                        ),
-                        &vesta::UniformBufferUtils::create_bind_group_layout(
-                            vesta::wgpu::ShaderStages::VERTEX,
-                            &engine.renderer.device,
-                        ),
                         &vesta::Texture::create_bind_group_layout(&engine.renderer.device),
+                        &vesta::UniformBufferUtils::create_bind_group_layout(
+                            vesta::wgpu::ShaderStages::VERTEX,
+                            &engine.renderer.device,
+                        ),
+                        &vesta::UniformBufferUtils::create_bind_group_layout(
+                            vesta::wgpu::ShaderStages::VERTEX,
+                            &engine.renderer.device,
+                        ),
                     ],
                     push_constant_ranges: &[],
                 });
@@ -120,7 +120,7 @@ impl vesta::VestaApp for App {
         _engine: &vesta::Engine,
     ) {
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_bind_group(0, &self.camera.uniform_buffer.bind_group, &[]);
+        render_pass.set_bind_group(1, &self.camera.uniform_buffer.bind_group, &[]);
         self.cube.draw(render_pass);
     }
 

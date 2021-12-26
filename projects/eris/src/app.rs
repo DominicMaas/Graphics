@@ -1,13 +1,10 @@
 use std::time::Duration;
 
-use crate::{
-    c_body::{CBody, CelestialBodySettings, CelestialBodyTerrain},
-    utils::LightUniform,
-};
+use crate::c_body::{CBody, CelestialBodySettings, CelestialBodyTerrain};
 use vesta::{
     cgmath::{num_traits::FloatConst, InnerSpace, Vector3},
     winit::event::{MouseButton, VirtualKeyCode},
-    DrawMesh,
+    DrawMesh, LightUniform,
 };
 
 pub struct App {
@@ -208,12 +205,7 @@ impl vesta::VestaApp for App {
 
             // Run simulations
             body.update(Duration::from_secs_f32(dt));
-
-            engine.renderer.queue.write_buffer(
-                &body.uniform_buffer.buffer,
-                0,
-                vesta::bytemuck::cast_slice(&[body.uniform_buffer.data]),
-            );
+            engine.renderer.write_uniform_buffer(&body.uniform_buffer);
         }
     }
 
@@ -244,11 +236,8 @@ impl vesta::VestaApp for App {
         //self.lights.data.position =
         //    cgmath::Quaternion::from_axis_angle((0.0, 1.0, 0.0).into(), cgmath::Deg(1.0))
         //        * old_position;
-        engine.renderer.queue.write_buffer(
-            &self.lights_uniform.buffer,
-            0,
-            vesta::bytemuck::cast_slice(&[self.lights_uniform.data]),
-        );
+
+        engine.renderer.write_uniform_buffer(&self.lights_uniform);
     }
 
     fn render_ui(&mut self, ctx: &vesta::egui::CtxRef, _engine: &vesta::Engine) {

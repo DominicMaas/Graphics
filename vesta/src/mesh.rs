@@ -88,7 +88,7 @@ where
         self.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
 
         if mesh.num_indices == 0 {
-            self.draw(0..mesh.num_vertices, 0..1)
+            self.draw(0..mesh.num_vertices, 0..1);
         } else {
             self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
             self.draw_indexed(0..mesh.num_indices, 0, 0..1);

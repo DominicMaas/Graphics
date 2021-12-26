@@ -3,6 +3,7 @@ struct VertexInput {
     [[location(0)]] position: vec3<f32>;
     [[location(1)]] color: vec3<f32>;
     [[location(2)]] tex_coord: vec2<f32>;
+    [[location(3)]] normal: vec3<f32>;
 };
 
 struct VertexOutput {
@@ -24,9 +25,15 @@ struct Model {
 
 // Uniform bindings
 [[group(0), binding(0)]]
-var<uniform> u_camera: Camera;
+var u_diffuse_texture: texture_2d<f32>;
+
+[[group(0), binding(1)]]
+var u_sampler: sampler;
 
 [[group(1), binding(0)]]
+var<uniform> u_camera: Camera;
+
+[[group(2), binding(0)]]
 var<uniform> u_model: Model;
 
 // Vertex Shader
@@ -38,14 +45,6 @@ fn vs_main(in: VertexInput) -> VertexOutput {
     out.position = u_camera.view_proj * u_model.model * vec4<f32>(in.position, 1.0); 
     return out;
 }
-
-// ---------------------------------------------------------------- //
-
-[[group(2), binding(0)]]
-var u_diffuse_texture: texture_2d<f32>;
-
-[[group(2), binding(1)]]
-var u_sampler: sampler;
 
 // Fragment Shader
 [[stage(fragment)]]

@@ -5,7 +5,7 @@ use vesta::{
 };
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, crevice::std140::AsStd140)]
 pub struct SkyUniform {
     pub proj: Matrix4<f32>,
     pub proj_inv: Matrix4<f32>,
@@ -17,7 +17,7 @@ unsafe impl bytemuck::Zeroable for SkyUniform {}
 unsafe impl bytemuck::Pod for SkyUniform {}
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, crevice::std140::AsStd140)]
 pub struct SkyFragUniform {
     pub scatter_amount: f32,
 }
