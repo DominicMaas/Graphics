@@ -104,7 +104,7 @@ impl Engine {
         let window_size = window.inner_size();
 
         // New WGPU instance and surface to render on
-        let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
+        let instance = wgpu::Instance::new(Self::determine_backends());
         let surface = unsafe { instance.create_surface(&window) };
 
         // Request a high performance adapter
@@ -120,7 +120,7 @@ impl Engine {
         // Request a device and queue
         let (device, queue) = adapter
             .request_device(
-                &wgpu::DeviceDescriptor::default(),
+                &Self::determine_device_descriptor(),
                 None, // Trace path
             )
             .await
@@ -205,6 +205,35 @@ impl Engine {
             // Handle engine events
             engine.handle_events(&event, control_flow, &mut app, &mut gui);
         });
+    }
+
+    fn determine_backends() -> wgpu::Backends {
+        // WASM
+        #[cfg(target_arch = "wasm32")]
+        {
+            return wgpu::Backends::all();
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            return wgpu::Backends::PRIMARY;
+        }
+    }
+
+    fn determine_device_descriptor() -> wgpu::DeviceDescriptor<'static> {
+        // WASM
+        #[cfg(target_arch = "wasm32")]
+        {
+            return wgpu::DeviceDescriptor {
+                limits: wgpu::Limits::downlevel_webgl2_defaults(),
+                ..Default::default()
+            };
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            return wgpu::DeviceDescriptor::default();
+        }
     }
 
     fn handle_events<V: VestaApp>(

@@ -30,6 +30,7 @@ egui_winit_platform = "0.12.0"
 
 # Web Assembly
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+wgpu = { version = "0.12.0", features = [ "webgl" ]}
 wasm-bindgen = "0.2.78"
 web-sys = "0.3.55"
 
