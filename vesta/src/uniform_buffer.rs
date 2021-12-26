@@ -1,3 +1,4 @@
+use bytemuck::cast_slice;
 use bytemuck::Pod;
 use bytemuck::Zeroable;
 use cgmath::Vector3;
@@ -41,7 +42,7 @@ impl LightUniform {
 /// A holder for a uniform buffer, contains the data and raw buffer
 pub struct UniformBuffer<T>
 where
-    T: Copy + bytemuck::Pod + bytemuck::Zeroable + AsStd140,
+    T: Pod + AsStd140,
 {
     pub data: T,
     pub buffer: wgpu::Buffer,
@@ -50,39 +51,26 @@ where
 
 impl crate::Renderer {
     /// Write the specified uniform buffer to the GPU
-    pub fn write_uniform_buffer<T: Copy + bytemuck::Pod + bytemuck::Zeroable + AsStd140>(
-        &self,
-        uniform_buffer: &UniformBuffer<T>,
-    ) {
-        //engine.renderer.queue.write_buffer(
-        //    &body.uniform_buffer.buffer,
-        //    0,
-        //    vesta::bytemuck::cast_slice(&[body.uniform_buffer.data]),
-        //);
-
+    pub fn write_uniform_buffer<T: Pod + AsStd140>(&self, uniform_buffer: &UniformBuffer<T>) {
         self.queue.write_buffer(
             &uniform_buffer.buffer,
             0,
-            bytemuck::cast_slice(&[uniform_buffer.data.as_std140()]),
+            cast_slice(&[uniform_buffer.data.as_std140()]),
         );
     }
 }
 
-impl<T: Copy + bytemuck::Pod + bytemuck::Zeroable + AsStd140> UniformBuffer<T> {
-    #[deprecated(note = "Please use renderer.write_uniform_buffer() instead")]
-    pub fn write_buffer(&self, queue: &wgpu::Queue) {
-        queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&[self.data]));
-    }
-
-    //noinspection RsBorrowChecker
+impl<T: Pod + AsStd140> UniformBuffer<T> {
     /// Crate a new uniform buffer to store data of type
     pub fn new(name: &str, visibility: wgpu::ShaderStages, data: T, device: &wgpu::Device) -> Self {
+        // Create the actual buffer
         let buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some(name),
-            contents: bytemuck::cast_slice(&[data.as_std140()]),
+            contents: cast_slice(&[data.as_std140()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
 
+        // Create the binding group for this uniform buffer
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &UniformBufferUtils::create_bind_group_layout(visibility, device),
             entries: &[wgpu::BindGroupEntry {
