@@ -78,7 +78,7 @@ impl Texture {
     }
 
     /// Create a texture from an image
-    pub fn from_image(
+    fn from_image(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         img: &image::DynamicImage,

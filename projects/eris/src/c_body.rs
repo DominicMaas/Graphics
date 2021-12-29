@@ -9,6 +9,7 @@ pub struct CBody {
     pub name: String,
     pub mass: f32,
     pub settings: CelestialBodySettings,
+    generator: CelestialBodyTerrainGenerator,
     pub velocity: Vector3<f32>,
     pub transform: vesta::components::Transform,
     pub uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
@@ -55,16 +56,11 @@ impl CBody {
         faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 0.0, 1.0))); // Front?
         faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 0.0, -1.0))); // Back?
 
-        let generator = CelestialBodyTerrainGenerator::new();
-
-        for face in faces.iter_mut() {
-            face.construct_mesh(renderer, settings, &generator);
-        }
-
         Self {
             name,
             mass,
             settings,
+            generator: CelestialBodyTerrainGenerator::new(),
             velocity,
             transform,
             uniform_buffer,
@@ -90,7 +86,7 @@ impl CBody {
         nd.sqrt()
     }
 
-    pub fn update(&mut self, _dt: Duration) {
+    pub fn update(&mut self, _dt: f32) {
         //let rotation_speed_deg: f32 = 0.01;
         //let rotation_speed: f32 = rotation_speed_deg * f32::PI() / 180.0;
 
@@ -111,6 +107,12 @@ impl CBody {
         // Update the uniform buffer
         self.uniform_buffer.data.model = self.transform.calculate_model_matrix();
         self.uniform_buffer.data.normal = self.transform.calculate_normal_matrix();
+    }
+
+    pub fn rebuild_mesh(&mut self, renderer: &vesta::Renderer) {
+        for face in self.faces.iter_mut() {
+            face.construct_mesh(renderer, self.settings, &self.generator);
+        }
     }
 }
 

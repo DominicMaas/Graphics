@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ComputeSharp" Version="2.0.0-alpha.8" />
+    <PackageReference Include="ComputeSharp" Version="2.0.0-alpha.9" />
   </ItemGroup>
 
 </Project>

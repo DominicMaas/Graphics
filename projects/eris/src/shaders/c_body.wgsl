@@ -28,6 +28,10 @@ struct Light {
     color: vec4<f32>;
 };
 
+struct BodyDetails {
+    
+};
+
 // Uniform bindings
 [[group(0), binding(0)]]
 var u_diffuse_texture: texture_2d<f32>;

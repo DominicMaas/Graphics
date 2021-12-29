@@ -3,6 +3,7 @@ use std::time::Duration;
 use crate::c_body::{CBody, CelestialBodySettings, CelestialBodyTerrain};
 use vesta::{
     cgmath::{num_traits::FloatConst, InnerSpace, Vector3},
+    egui::{Slider, Ui},
     winit::event::{MouseButton, VirtualKeyCode},
     DrawMesh, LightUniform,
 };
@@ -106,14 +107,6 @@ impl vesta::VestaApp for App {
                 Default::default(),
             )
             .unwrap();
-        let moon_texture = engine
-            .renderer
-            .create_texture_from_bytes(
-                include_bytes!("images/earth.png"),
-                Some("earth.png"),
-                Default::default(),
-            )
-            .unwrap();
 
         let mut bodies = Vec::new();
 
@@ -121,7 +114,7 @@ impl vesta::VestaApp for App {
             "Sun".to_string(),
             1000000.0,
             CelestialBodySettings {
-                radius: 32.0,
+                radius: 64.0,
                 terrain: CelestialBodyTerrain {
                     strength: 0.0,
                     ..Default::default()
@@ -137,37 +130,30 @@ impl vesta::VestaApp for App {
             "Earth".to_string(),
             10000.0,
             CelestialBodySettings {
-                radius: 12.0,
+                radius: 32.0,
                 terrain: CelestialBodyTerrain {
-                    strength: 0.0,
-                    ..Default::default()
+                    strength: 0.1,
+                    num_layers: 4,
+                    base_roughness: 1.82,
+                    roughness: 2.21,
+                    persistence: 0.5,
+                    center: (0.0, 6.0, 0.0).into(),
+                    min_value: 0.93,
                 },
             },
-            Vector3::new(200.0, 0.0, 0.0),
+            Vector3::new(300.0, 0.0, 0.0),
             Vector3::new(0.0, 0.0, -sun.calculate_velocity_at_radius(200.0)),
             earth_texture,
             &engine.renderer,
         );
 
-        let moon = CBody::new(
-            "Moon".to_string(),
-            0.1,
-            CelestialBodySettings {
-                radius: 2.0,
-                terrain: CelestialBodyTerrain {
-                    strength: 0.0,
-                    ..Default::default()
-                },
-            },
-            Vector3::new(200.0 + 12.0, 0.0, 0.0),
-            Vector3::new(0.0, 0.0, -earth.calculate_velocity_at_radius(12.0)),
-            moon_texture,
-            &engine.renderer,
-        );
-
         bodies.push(sun);
         bodies.push(earth);
-        bodies.push(moon);
+
+        // Build the meshes for these bodies
+        for b in bodies.iter_mut() {
+            b.rebuild_mesh(&engine.renderer);
+        }
 
         engine.set_cursor_captured(true);
 
@@ -204,7 +190,7 @@ impl vesta::VestaApp for App {
             }
 
             // Run simulations
-            body.update(Duration::from_secs_f32(dt));
+            body.update(dt);
             engine.renderer.write_uniform_buffer(&body.uniform_buffer);
         }
     }
@@ -240,8 +226,8 @@ impl vesta::VestaApp for App {
         engine.renderer.write_uniform_buffer(&self.lights_uniform);
     }
 
-    fn render_ui(&mut self, ctx: &vesta::egui::CtxRef, _engine: &vesta::Engine) {
-        let ui_bodies = self.bodies.iter();
+    fn render_ui(&mut self, ctx: &vesta::egui::CtxRef, engine: &vesta::Engine) {
+        let ui_bodies = self.bodies.iter_mut();
         let cam = &self.camera;
 
         vesta::egui::Window::new("Debug").show(&ctx, |ui| {
@@ -266,6 +252,83 @@ impl vesta::VestaApp for App {
                         "Position: {:.2}, {:.2}, {:.2}",
                         b.transform.position.x, b.transform.position.y, b.transform.position.z
                     ));
+
+                    // A helper function for building the terrain generator functions
+                    let mut build_generator_settings = || {
+                        ui.separator();
+
+                        ui.horizontal(|ui| {
+                            ui.label("Strength: ");
+                            ui.add(
+                                vesta::egui::DragValue::new(&mut b.settings.terrain.strength)
+                                    .speed(0.01),
+                            );
+                        });
+
+                        ui.horizontal(|ui| {
+                            ui.label("Num Layers: ");
+                            ui.add(
+                                vesta::egui::DragValue::new(&mut b.settings.terrain.num_layers)
+                                    .speed(1),
+                            );
+                        });
+
+                        ui.horizontal(|ui| {
+                            ui.label("Base Roughness: ");
+                            ui.add(
+                                vesta::egui::DragValue::new(&mut b.settings.terrain.base_roughness)
+                                    .speed(0.01),
+                            );
+                        });
+
+                        ui.horizontal(|ui| {
+                            ui.label("Roughness: ");
+                            ui.add(
+                                vesta::egui::DragValue::new(&mut b.settings.terrain.roughness)
+                                    .speed(0.01),
+                            );
+                        });
+
+                        ui.horizontal(|ui| {
+                            ui.label("Persistence: ");
+                            ui.add(
+                                vesta::egui::DragValue::new(&mut b.settings.terrain.persistence)
+                                    .speed(0.01),
+                            );
+                        });
+
+                        ui.horizontal(|ui| {
+                            ui.label("Center (xyz): ");
+                            ui.add(
+                                vesta::egui::DragValue::new(&mut b.settings.terrain.center.x)
+                                    .speed(1),
+                            );
+                            ui.add(
+                                vesta::egui::DragValue::new(&mut b.settings.terrain.center.y)
+                                    .speed(1),
+                            );
+                            ui.add(
+                                vesta::egui::DragValue::new(&mut b.settings.terrain.center.z)
+                                    .speed(1),
+                            );
+                        });
+
+                        ui.horizontal(|ui| {
+                            ui.label("Min Value: ");
+                            ui.add(
+                                vesta::egui::DragValue::new(&mut b.settings.terrain.min_value)
+                                    .speed(0.01),
+                            );
+                        });
+
+                        if ui.button("Rebuild Terrain").clicked() {
+                            b.rebuild_mesh(&engine.renderer);
+                        }
+
+                        ui.separator();
+                    };
+
+                    build_generator_settings();
                 });
             }
         });

@@ -6,6 +6,7 @@ use vesta::{
 
 use crate::c_body::{CelestialBodySettings, CelestialBodyTerrainGenerator};
 
+/// Represents a single face of terrain for a celestial body
 pub struct TerrainFace {
     pub mesh: Option<Mesh>,
     resolution: u32,
@@ -52,8 +53,13 @@ impl TerrainFace {
                     * settings.radius
                     * (1.0 + generator.evaluate(point_on_unit_cube, settings));
 
-                vertices[i as usize] =
-                    vesta::Vertex::with_color(point_on_unit_sphere, Vector3::new(1.0, 1.0, 1.0));
+                vertices[i as usize] = vesta::Vertex::with_tex_coords(
+                    point_on_unit_sphere,
+                    Vector2::new(
+                        x as f32 / self.resolution as f32,
+                        y as f32 / self.resolution as f32,
+                    ),
+                );
 
                 if x != self.resolution - 1 && y != self.resolution - 1 {
                     triangles[tri_index] = i;
@@ -69,8 +75,7 @@ impl TerrainFace {
             }
         }
 
-        // mesh.clear
-
+        // Create a mesh with the specified vertices and indices
         self.mesh = Some(renderer.create_mesh(vertices, triangles));
     }
 }
