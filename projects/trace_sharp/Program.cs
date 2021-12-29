@@ -14,11 +14,11 @@ var renderSpheres = new RenderableEntity[]
     RenderableEntity.CreatePlane(new float3(  0.0f, -2.0f,   0.0f), new float3(0.2f, 0.2f, 0.2f), 0.18f, new float3(0f,-1f,0f))
 };
 
-using var textureBuffer = Gpu.Default.AllocateReadWriteTexture2D<Rgba32, float4>(scene.Width, scene.Height);
-using var renderSphereBuffer = Gpu.Default.AllocateReadOnlyBuffer(renderSpheres);
+using var textureBuffer = GraphicsDevice.Default.AllocateReadWriteTexture2D<Rgba32, float4>(scene.Width, scene.Height);
+using var renderSphereBuffer = GraphicsDevice.Default.AllocateReadOnlyBuffer(renderSpheres);
 
 // Launch the shader
-Gpu.Default.For(scene.Width, scene.Height, new RayShader(textureBuffer, scene, renderSphereBuffer));
+GraphicsDevice.Default.For(scene.Width, scene.Height, new RayShader(textureBuffer, scene, renderSphereBuffer));
 
 // Save the texture and then open it
 textureBuffer.Save("output.png");
