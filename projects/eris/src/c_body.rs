@@ -10,7 +10,7 @@ pub struct CBody {
     pub settings: CelestialBodySettings,
     generator: CelestialBodyTerrainGenerator,
     pub velocity: Vector3<f32>,
-    pub transform: vesta::components::Transform,
+    pub transform: vesta::components::Transform<f32>,
     pub uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
     pub texture: vesta::Texture,
     pub faces: Vec<TerrainFace>,
