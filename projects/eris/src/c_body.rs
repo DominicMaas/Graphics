@@ -163,12 +163,13 @@ impl vesta::components::GameObject for CBody {
         &'a mut self,
         render_pass: &mut vesta::wgpu::RenderPass<'a>,
         engine: &vesta::Engine,
+        camera: &vesta::Camera,
     ) {
         render_pass.set_bind_group(0, &self.texture.bind_group.as_ref().unwrap(), &[]);
         render_pass.set_bind_group(2, &self.uniform_buffer.bind_group, &[]);
 
         for face in self.faces.iter_mut() {
-            face.render(render_pass, engine);
+            face.render(render_pass, engine, camera);
         }
     }
 }

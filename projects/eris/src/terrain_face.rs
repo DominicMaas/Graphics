@@ -170,11 +170,12 @@ impl vesta::components::GameObject for TerrainFace {
         &'a mut self,
         render_pass: &mut vesta::wgpu::RenderPass<'a>,
         engine: &vesta::Engine,
+        camera: &vesta::Camera,
     ) {
         match self.children.as_mut() {
             Some(children) => {
                 for child in children.iter_mut() {
-                    child.render(render_pass, engine);
+                    child.render(render_pass, engine, camera);
                 }
             }
             None => match &self.mesh {

@@ -81,7 +81,7 @@ impl vesta::VestaApp for App {
 
         // Setup the main camera
         let camera = vesta::CameraBuilder::new()
-            .with_position((1910.0, 0.0, 0.0).into())
+            .with_position((3450.0, 0.0, 0.0).into())
             .build(
                 vesta::PerspectiveProjection::new(
                     engine.get_window_size().width,
@@ -142,7 +142,7 @@ impl vesta::VestaApp for App {
             "Earth".to_string(),
             10000.0,
             CelestialBodySettings {
-                radius: 64.0,
+                radius: 256.0,
                 terrain: CelestialBodyTerrain {
                     strength: 0.1,
                     num_layers: 5,
@@ -153,8 +153,8 @@ impl vesta::VestaApp for App {
                     min_value: 0.73,
                 },
             },
-            Vector3::new(2000.0, 0.0, 0.0),
-            Vector3::new(0.0, 0.0, -sun.calculate_velocity_at_radius(200.0)),
+            Vector3::new(4000.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, -sun.calculate_velocity_at_radius(4000.0)),
             earth_texture,
             &engine.renderer,
         );
@@ -372,7 +372,7 @@ impl vesta::VestaApp for App {
         render_pass.set_bind_group(3, &self.lights_uniform.bind_group, &[]);
 
         for body in self.bodies.iter_mut() {
-            body.render(render_pass, engine);
+            body.render(render_pass, engine, &self.camera);
         }
     }
 
