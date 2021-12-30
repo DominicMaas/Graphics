@@ -1,3 +1,4 @@
+use crate::c_body_uniform::CelestialBodyDetails;
 use crate::terrain_face::TerrainFace;
 use crate::utils::G;
 use bracket_noise::prelude::FastNoise;
@@ -11,7 +12,7 @@ pub struct CBody {
     generator: CelestialBodyTerrainGenerator,
     pub velocity: Vector3<f32>,
     pub transform: vesta::components::Transform<f32>,
-    pub uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
+    pub uniform_buffer: vesta::UniformBuffer<CelestialBodyDetails>,
     pub texture: vesta::Texture,
     pub faces: Vec<TerrainFace>,
     pub resolution: u32,
@@ -32,11 +33,7 @@ impl CBody {
             ..Default::default()
         };
 
-        let uniform_data = vesta::ModelUniform {
-            model: transform.calculate_model_matrix(),
-            normal: transform.calculate_normal_matrix(),
-        };
-
+        let uniform_data = CelestialBodyDetails::new(transform, settings);
         let uniform_buffer = vesta::UniformBuffer::new(
             "C-Body Uniform Buffer",
             vesta::wgpu::ShaderStages::VERTEX,
@@ -178,6 +175,26 @@ impl vesta::components::GameObject for CBody {
 #[derive(Copy, Clone, Debug)]
 pub struct CelestialBodySettings {
     pub radius: f32,
+    /// Not entirely accurate scale of temps, used for the shader to determine
+    /// if a body should be a star or not, will cleanup in the future
+    ///
+    /// 30,000 - 60,000K    | Blue stars
+    ///
+    /// 10,000 - 30,000K    | Blue-white stars
+    ///
+    /// 7,500 - 10,000K     | White stars
+    ///
+    /// 6,000 - 7,500K      | Yellow-white stars
+    ///
+    /// 5,000 - 6,000K      | Yellow stars (like the Sun)
+    ///
+    /// 3,500 - 5,000K      | Yellow-orange stars
+    ///
+    /// 1,000 - 3,500K      | Red stars
+    ///
+    /// < 1,000K            | Planets
+    pub temp_k: f32,
+    pub atmosphere_density: f32,
     pub terrain: CelestialBodyTerrain,
 }
 

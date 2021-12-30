@@ -1,5 +1,6 @@
 mod app;
 mod c_body;
+mod c_body_uniform;
 mod terrain_face;
 mod utils;
 

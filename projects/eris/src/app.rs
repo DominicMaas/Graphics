@@ -1,4 +1,7 @@
-use crate::c_body::{CBody, CelestialBodySettings, CelestialBodyTerrain};
+use crate::{
+    c_body::{CBody, CelestialBodySettings, CelestialBodyTerrain},
+    c_body_uniform::CelestialBodyPipeline,
+};
 use vesta::{
     cgmath::{num_traits::FloatConst, InnerSpace, Vector3},
     components::GameObject,
@@ -8,8 +11,7 @@ use vesta::{
 
 pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
-    c_body_pipeline: vesta::wgpu::RenderPipeline,
-    c_body_pipeline_wireframe: vesta::wgpu::RenderPipeline,
+    c_body_pipeline: CelestialBodyPipeline,
     camera: vesta::Camera,
     camera_controller: vesta::FpsCameraController,
     bodies: Vec<CBody>,
@@ -20,12 +22,9 @@ pub struct App {
 impl vesta::VestaApp for App {
     fn init(engine: &mut vesta::Engine) -> Self {
         // Shader strings (todo: in the future load these in as resources or something)
-        let noise_shader_src = include_str!("shaders/noise/noise.wgsl");
-
         let main_shader_src = include_str!("shaders/main.wgsl");
-        let c_body_shader_src = include_str!("shaders/c_body.wgsl");
 
-        let c_body_shader_final_src = [noise_shader_src, c_body_shader_src].join("\n");
+        let c_body_pipeline = CelestialBodyPipeline::new(engine);
 
         // Pipeline layout
         let render_pipeline_layout =
@@ -58,29 +57,6 @@ impl vesta::VestaApp for App {
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(main_shader_src.into()))
         .with_layout(&render_pipeline_layout)
-        .build(&engine.renderer.device)
-        .unwrap();
-
-        let c_body_pipeline = vesta::RenderPipelineBuilder::new(
-            engine.renderer.surface_config.format,
-            "C Body Pipeline",
-        )
-        .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
-            c_body_shader_final_src.clone().into(),
-        ))
-        .with_layout(&render_pipeline_layout)
-        .build(&engine.renderer.device)
-        .unwrap();
-
-        let c_body_pipeline_wireframe = vesta::RenderPipelineBuilder::new(
-            engine.renderer.surface_config.format,
-            "C Body Pipeline (Writeframe)",
-        )
-        .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
-            c_body_shader_final_src.clone().into(),
-        ))
-        .with_layout(&render_pipeline_layout)
-        .with_topology(vesta::wgpu::PrimitiveTopology::LineList)
         .build(&engine.renderer.device)
         .unwrap();
 
@@ -132,6 +108,8 @@ impl vesta::VestaApp for App {
             1000000.0,
             CelestialBodySettings {
                 radius: 512.0,
+                temp_k: 5500.0,
+                atmosphere_density: 0.0,
                 terrain: CelestialBodyTerrain {
                     strength: 0.0,
                     ..Default::default()
@@ -148,6 +126,8 @@ impl vesta::VestaApp for App {
             10000.0,
             CelestialBodySettings {
                 radius: 256.0,
+                temp_k: 300.0,
+                atmosphere_density: 1.0,
                 terrain: CelestialBodyTerrain {
                     strength: 0.1,
                     num_layers: 5,
@@ -177,7 +157,6 @@ impl vesta::VestaApp for App {
         Self {
             render_pipeline,
             c_body_pipeline,
-            c_body_pipeline_wireframe,
             camera,
             camera_controller,
             bodies,
@@ -368,9 +347,9 @@ impl vesta::VestaApp for App {
 
         // Render bodies
         if self.render_wire_frame {
-            render_pass.set_pipeline(&self.c_body_pipeline_wireframe);
+            render_pass.set_pipeline(&self.c_body_pipeline.outline_render_pipeline);
         } else {
-            render_pass.set_pipeline(&self.c_body_pipeline);
+            render_pass.set_pipeline(&self.c_body_pipeline.render_pipeline);
         }
 
         render_pass.set_bind_group(1, &self.camera.uniform_buffer.bind_group, &[]);

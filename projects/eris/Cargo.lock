@@ -648,6 +648,7 @@ name = "eris"
 version = "0.1.0"
 dependencies = [
  "bracket-noise",
+ "crevice",
  "getrandom",
  "vesta",
 ]
