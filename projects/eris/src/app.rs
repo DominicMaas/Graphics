@@ -159,7 +159,7 @@ impl vesta::VestaApp for App {
             &engine.renderer,
         );
 
-        //bodies.push(sun);
+        bodies.push(sun);
         bodies.push(earth);
 
         // Build the meshes for these bodies

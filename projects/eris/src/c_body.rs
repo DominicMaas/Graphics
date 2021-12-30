@@ -45,6 +45,7 @@ impl CBody {
         );
 
         let resolution = 8;
+        let max_depth = 2;
 
         // Create meshes!
         let mut faces: Vec<TerrainFace> = Vec::new();
@@ -52,8 +53,7 @@ impl CBody {
         faces.push(TerrainFace::new(
             resolution,
             0,
-            3,
-            (0.0, 0.0).into(),
+            max_depth,
             (0.0, 0.0).into(),
             Vector3::new(0.0, 1.0, 0.0),
         )); // Top
@@ -61,8 +61,7 @@ impl CBody {
         faces.push(TerrainFace::new(
             resolution,
             0,
-            3,
-            (0.0, 0.0).into(),
+            max_depth,
             (0.0, 0.0).into(),
             Vector3::new(0.0, -1.0, 0.0),
         )); // Bottom
@@ -70,8 +69,7 @@ impl CBody {
         faces.push(TerrainFace::new(
             resolution,
             0,
-            3,
-            (0.0, 0.0).into(),
+            max_depth,
             (0.0, 0.0).into(),
             Vector3::new(1.0, 0.0, 0.0),
         )); // Left
@@ -79,8 +77,7 @@ impl CBody {
         faces.push(TerrainFace::new(
             resolution,
             0,
-            3,
-            (0.0, 0.0).into(),
+            max_depth,
             (0.0, 0.0).into(),
             (-1.0, 0.0, 0.0).into(),
         )); // Right
@@ -88,8 +85,7 @@ impl CBody {
         faces.push(TerrainFace::new(
             resolution,
             0,
-            3,
-            (0.0, 0.0).into(),
+            max_depth,
             (0.0, 0.0).into(),
             Vector3::new(0.0, 0.0, 1.0),
         )); // Front?
@@ -97,8 +93,7 @@ impl CBody {
         faces.push(TerrainFace::new(
             resolution,
             0,
-            3,
-            (0.0, 0.0).into(),
+            max_depth,
             (0.0, 0.0).into(),
             Vector3::new(0.0, 0.0, -1.0),
         )); // Back?

@@ -12,10 +12,7 @@ use crate::c_body::{CelestialBodySettings, CelestialBodyTerrainGenerator};
 pub struct TerrainFace {
     mesh: Option<Mesh>,
     resolution: u32,
-    depth: u32,
     depth_scale: f32,
-    unit_scale: f32,
-    quad_position: Vector2<f32>,
     // Represents the top left base offset of this terrain face (used to render the children)
     quad_offset: Vector2<f32>,
     up: Vector3<f32>,
@@ -29,7 +26,6 @@ impl TerrainFace {
         resolution: u32,
         depth: u32,
         max_depth: u32,
-        quad_position: Vector2<f32>,
         quad_offset: Vector2<f32>,
         up: Vector3<f32>,
     ) -> Self {
@@ -37,27 +33,19 @@ impl TerrainFace {
         let axis_b = up.cross(axis_a);
 
         let depth_scale = pow(2, depth as usize) as f32;
-        let unit_scale = 1.0 / depth_scale;
 
         let mut children_optional: Option<Vec<TerrainFace>> = None;
 
         if depth < max_depth {
-            let unit_scale_m1 = unit_scale / 2.0;
-            //if unit_scale_m1 == 1.0 {
-            //    unit_scale_m1 = 0.0
-            //}
-
+            let unit_scale = (1.0 / depth_scale) / 2.0;
             let res_scale = resolution * 2;
 
             let mut children: Vec<TerrainFace> = Vec::new();
-
-            println!("Unit Scale m1: {}", unit_scale_m1);
 
             children.push(TerrainFace::new(
                 res_scale,
                 depth + 1,
                 max_depth,
-                (0.0, 0.0).into(),
                 quad_offset + Vector2::new(0.0, 0.0),
                 up,
             ));
@@ -66,8 +54,7 @@ impl TerrainFace {
                 res_scale,
                 depth + 1,
                 max_depth,
-                (1.0, 0.0).into(),
-                quad_offset + Vector2::new(unit_scale_m1, 0.0),
+                quad_offset + Vector2::new(unit_scale, 0.0),
                 up,
             ));
 
@@ -75,8 +62,7 @@ impl TerrainFace {
                 res_scale,
                 depth + 1,
                 max_depth,
-                (0.0, 1.0).into(),
-                quad_offset + Vector2::new(0.0, unit_scale_m1),
+                quad_offset + Vector2::new(0.0, unit_scale),
                 up,
             ));
 
@@ -84,8 +70,7 @@ impl TerrainFace {
                 res_scale,
                 depth + 1,
                 max_depth,
-                (1.0, 1.0).into(),
-                quad_offset + Vector2::new(unit_scale_m1, unit_scale_m1),
+                quad_offset + Vector2::new(unit_scale, unit_scale),
                 up,
             ));
 
@@ -95,10 +80,7 @@ impl TerrainFace {
         Self {
             mesh: None,
             resolution,
-            depth,
             depth_scale,
-            unit_scale,
-            quad_position,
             quad_offset,
             up,
             axis_a,
@@ -118,24 +100,12 @@ impl TerrainFace {
 
         let mut tri_index = 0;
 
-        let percent_min = self.calc_mesh_percentage(0.0, 0.0);
-        let percent_max = self.calc_mesh_percentage(
-            (self.resolution as f32) - 1.0,
-            (self.resolution as f32) - 1.0,
-        );
-
-        println!(
-            "Constructing mesh (res:{}) (depth:{}) (depth scale:{}) (unit scale:{}) (quad offset:{:?}) (x% {}-{}) (y% {}-{})",
-            self.resolution, self.depth, self.depth_scale, self.unit_scale, self.quad_offset,percent_min.x, percent_max.x, percent_min.y, percent_max.y
-        );
-
         for y in 0..self.resolution {
             for x in 0..self.resolution {
                 // Index in the vertices array
                 let i = x + y * self.resolution;
 
-                // The percentage we are through the current resolution, this changes based on the current
-                // depth
+                // The percentage we are through the current resolution
                 let percent = self.calc_mesh_percentage(x as f32, y as f32);
 
                 // Generates a Vector 3 ranging from 1 to -1 (if % is 0 to 100)
@@ -189,15 +159,6 @@ impl TerrainFace {
         // Apply the top left offset from the parent (we still need
         // to calculate the local offsets below)
         percent += self.quad_offset;
-
-        // Now adjust the offset of the percent based on the quad position
-        if self.quad_position.x == 1.0 {
-            //percent.x += self.unit_scale;
-        }
-
-        if self.quad_position.y == 1.0 {
-            // percent.y += self.unit_scale;
-        }
 
         return percent;
     }
