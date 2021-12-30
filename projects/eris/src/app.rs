@@ -1,20 +1,20 @@
-use std::time::Duration;
-
 use crate::c_body::{CBody, CelestialBodySettings, CelestialBodyTerrain};
 use vesta::{
     cgmath::{num_traits::FloatConst, InnerSpace, Vector3},
-    egui::{Slider, Ui},
+    components::GameObject,
     winit::event::{MouseButton, VirtualKeyCode},
-    DrawMesh, LightUniform,
+    LightUniform,
 };
 
 pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
     c_body_pipeline: vesta::wgpu::RenderPipeline,
+    c_body_pipeline_wireframe: vesta::wgpu::RenderPipeline,
     camera: vesta::Camera,
     camera_controller: vesta::FpsCameraController,
     bodies: Vec<CBody>,
     lights_uniform: vesta::UniformBuffer<LightUniform>,
+    render_wire_frame: bool,
 }
 
 impl vesta::VestaApp for App {
@@ -67,16 +67,28 @@ impl vesta::VestaApp for App {
         .build(&engine.renderer.device)
         .unwrap();
 
+        let c_body_pipeline_wireframe = vesta::RenderPipelineBuilder::new(
+            engine.renderer.surface_config.format,
+            "C Body Pipeline (Writeframe)",
+        )
+        .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
+            include_str!("shaders/c_body.wgsl").into(),
+        ))
+        .with_layout(&render_pipeline_layout)
+        .with_topology(vesta::wgpu::PrimitiveTopology::LineList)
+        .build(&engine.renderer.device)
+        .unwrap();
+
         // Setup the main camera
         let camera = vesta::CameraBuilder::new()
-            .with_position((0.0, 0.0, 0.0).into())
+            .with_position((1910.0, 0.0, 0.0).into())
             .build(
                 vesta::PerspectiveProjection::new(
                     engine.get_window_size().width,
                     engine.get_window_size().height,
                     vesta::cgmath::Rad(70.0 / 180.0 * f32::PI()),
                     0.01,
-                    1000.0,
+                    10000.0,
                 ),
                 &engine.renderer.device,
             );
@@ -114,7 +126,7 @@ impl vesta::VestaApp for App {
             "Sun".to_string(),
             1000000.0,
             CelestialBodySettings {
-                radius: 64.0,
+                radius: 512.0,
                 terrain: CelestialBodyTerrain {
                     strength: 0.0,
                     ..Default::default()
@@ -130,24 +142,24 @@ impl vesta::VestaApp for App {
             "Earth".to_string(),
             10000.0,
             CelestialBodySettings {
-                radius: 32.0,
+                radius: 64.0,
                 terrain: CelestialBodyTerrain {
                     strength: 0.1,
-                    num_layers: 4,
+                    num_layers: 5,
                     base_roughness: 1.82,
-                    roughness: 2.21,
-                    persistence: 0.5,
-                    center: (0.0, 6.0, 0.0).into(),
-                    min_value: 0.93,
+                    roughness: 2.31,
+                    persistence: 0.37,
+                    center: (-10.0, 24.0, 165.0).into(),
+                    min_value: 0.73,
                 },
             },
-            Vector3::new(300.0, 0.0, 0.0),
+            Vector3::new(2000.0, 0.0, 0.0),
             Vector3::new(0.0, 0.0, -sun.calculate_velocity_at_radius(200.0)),
             earth_texture,
             &engine.renderer,
         );
 
-        bodies.push(sun);
+        //bodies.push(sun);
         bodies.push(earth);
 
         // Build the meshes for these bodies
@@ -160,10 +172,12 @@ impl vesta::VestaApp for App {
         Self {
             render_pipeline,
             c_body_pipeline,
+            c_body_pipeline_wireframe,
             camera,
             camera_controller,
             bodies,
             lights_uniform,
+            render_wire_frame: true,
         }
     }
 
@@ -229,8 +243,13 @@ impl vesta::VestaApp for App {
     fn render_ui(&mut self, ctx: &vesta::egui::CtxRef, engine: &vesta::Engine) {
         let ui_bodies = self.bodies.iter_mut();
         let cam = &self.camera;
+        let render_wire_frame = &mut self.render_wire_frame;
 
         vesta::egui::Window::new("Debug").show(&ctx, |ui| {
+            ui.checkbox(render_wire_frame, "Render Wireframe");
+
+            ui.separator();
+
             ui.heading("Camera");
             ui.label(format!(
                 "Position: {:.2}, {:.2}, {:.2}",
@@ -337,26 +356,23 @@ impl vesta::VestaApp for App {
     fn render<'a>(
         &'a mut self,
         render_pass: &mut vesta::wgpu::RenderPass<'a>,
-        _engine: &vesta::Engine,
+        engine: &vesta::Engine,
     ) {
         // General
         render_pass.set_pipeline(&self.render_pipeline);
 
         // Render bodies
-        render_pass.set_pipeline(&self.c_body_pipeline);
+        if self.render_wire_frame {
+            render_pass.set_pipeline(&self.c_body_pipeline_wireframe);
+        } else {
+            render_pass.set_pipeline(&self.c_body_pipeline);
+        }
+
         render_pass.set_bind_group(1, &self.camera.uniform_buffer.bind_group, &[]);
         render_pass.set_bind_group(3, &self.lights_uniform.bind_group, &[]);
 
-        for body in self.bodies.iter() {
-            render_pass.set_bind_group(0, &body.texture.bind_group.as_ref().unwrap(), &[]);
-            render_pass.set_bind_group(2, &body.uniform_buffer.bind_group, &[]);
-
-            for face in body.faces.iter() {
-                match &face.mesh {
-                    Some(mesh) => render_pass.draw_mesh(&mesh),
-                    None => {}
-                }
-            }
+        for body in self.bodies.iter_mut() {
+            body.render(render_pass, engine);
         }
     }
 

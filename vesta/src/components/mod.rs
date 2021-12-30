@@ -1,6 +1,8 @@
+pub mod game_object;
 pub mod light;
 pub mod transform;
 
+pub use game_object::*;
 pub use light::*;
 pub use transform::*;
 

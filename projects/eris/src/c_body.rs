@@ -1,7 +1,6 @@
 use crate::terrain_face::TerrainFace;
 use crate::utils::G;
 use bracket_noise::prelude::FastNoise;
-use std::time::Duration;
 use vesta::cgmath::Vector3;
 use vesta::Math;
 
@@ -45,16 +44,64 @@ impl CBody {
             &renderer.device,
         );
 
-        let resolution = 32;
+        let resolution = 8;
 
         // Create meshes!
         let mut faces: Vec<TerrainFace> = Vec::new();
-        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 1.0, 0.0))); // Top
-        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, -1.0, 0.0))); // Bottom
-        faces.push(TerrainFace::new(resolution, Vector3::new(1.0, 0.0, 0.0))); // Left
-        faces.push(TerrainFace::new(resolution, Vector3::new(-1.0, 0.0, 0.0))); // Right
-        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 0.0, 1.0))); // Front?
-        faces.push(TerrainFace::new(resolution, Vector3::new(0.0, 0.0, -1.0))); // Back?
+
+        faces.push(TerrainFace::new(
+            resolution,
+            0,
+            3,
+            (0.0, 0.0).into(),
+            (0.0, 0.0).into(),
+            Vector3::new(0.0, 1.0, 0.0),
+        )); // Top
+
+        faces.push(TerrainFace::new(
+            resolution,
+            0,
+            3,
+            (0.0, 0.0).into(),
+            (0.0, 0.0).into(),
+            Vector3::new(0.0, -1.0, 0.0),
+        )); // Bottom
+
+        faces.push(TerrainFace::new(
+            resolution,
+            0,
+            3,
+            (0.0, 0.0).into(),
+            (0.0, 0.0).into(),
+            Vector3::new(1.0, 0.0, 0.0),
+        )); // Left
+
+        faces.push(TerrainFace::new(
+            resolution,
+            0,
+            3,
+            (0.0, 0.0).into(),
+            (0.0, 0.0).into(),
+            (-1.0, 0.0, 0.0).into(),
+        )); // Right
+
+        faces.push(TerrainFace::new(
+            resolution,
+            0,
+            3,
+            (0.0, 0.0).into(),
+            (0.0, 0.0).into(),
+            Vector3::new(0.0, 0.0, 1.0),
+        )); // Front?
+
+        faces.push(TerrainFace::new(
+            resolution,
+            0,
+            3,
+            (0.0, 0.0).into(),
+            (0.0, 0.0).into(),
+            Vector3::new(0.0, 0.0, -1.0),
+        )); // Back?
 
         Self {
             name,
@@ -112,6 +159,21 @@ impl CBody {
     pub fn rebuild_mesh(&mut self, renderer: &vesta::Renderer) {
         for face in self.faces.iter_mut() {
             face.construct_mesh(renderer, self.settings, &self.generator);
+        }
+    }
+}
+
+impl vesta::components::GameObject for CBody {
+    fn render<'a>(
+        &'a mut self,
+        render_pass: &mut vesta::wgpu::RenderPass<'a>,
+        engine: &vesta::Engine,
+    ) {
+        render_pass.set_bind_group(0, &self.texture.bind_group.as_ref().unwrap(), &[]);
+        render_pass.set_bind_group(2, &self.uniform_buffer.bind_group, &[]);
+
+        for face in self.faces.iter_mut() {
+            face.render(render_pass, engine);
         }
     }
 }
