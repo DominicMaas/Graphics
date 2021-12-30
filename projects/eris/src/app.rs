@@ -19,6 +19,14 @@ pub struct App {
 
 impl vesta::VestaApp for App {
     fn init(engine: &mut vesta::Engine) -> Self {
+        // Shader strings (todo: in the future load these in as resources or something)
+        let noise_shader_src = include_str!("shaders/noise/noise.wgsl");
+
+        let main_shader_src = include_str!("shaders/main.wgsl");
+        let c_body_shader_src = include_str!("shaders/c_body.wgsl");
+
+        let c_body_shader_final_src = [noise_shader_src, c_body_shader_src].join("\n");
+
         // Pipeline layout
         let render_pipeline_layout =
             engine
@@ -48,9 +56,7 @@ impl vesta::VestaApp for App {
             engine.renderer.surface_config.format,
             "Main Pipeline",
         )
-        .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
-            include_str!("shaders/main.wgsl").into(),
-        ))
+        .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(main_shader_src.into()))
         .with_layout(&render_pipeline_layout)
         .build(&engine.renderer.device)
         .unwrap();
@@ -60,10 +66,9 @@ impl vesta::VestaApp for App {
             "C Body Pipeline",
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
-            include_str!("shaders/c_body.wgsl").into(),
+            c_body_shader_final_src.clone().into(),
         ))
         .with_layout(&render_pipeline_layout)
-        //.with_topology(vesta::wgpu::PrimitiveTopology::LineList)
         .build(&engine.renderer.device)
         .unwrap();
 
@@ -72,7 +77,7 @@ impl vesta::VestaApp for App {
             "C Body Pipeline (Writeframe)",
         )
         .with_shader_source(vesta::wgpu::ShaderSource::Wgsl(
-            include_str!("shaders/c_body.wgsl").into(),
+            c_body_shader_final_src.clone().into(),
         ))
         .with_layout(&render_pipeline_layout)
         .with_topology(vesta::wgpu::PrimitiveTopology::LineList)

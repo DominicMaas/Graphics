@@ -1,3 +1,5 @@
+//#include noise/noise32.wgsl
+
 // Vertex input and output
 struct VertexInput {
     [[location(0)]] position: vec3<f32>;
@@ -70,7 +72,7 @@ fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
     let object_color = textureSample(u_diffuse_texture, u_sampler, in.tex_coord);
     
     // We don't need (or want) much ambient light, so 0.1 is fine
-    let ambient_strength: f32 = 0.1;
+    let ambient_strength: f32 = 0.01;
     let ambient_color: vec3<f32> = u_light.color.xyz * ambient_strength;
     
     // Diffuse
