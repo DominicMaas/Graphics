@@ -5,16 +5,16 @@ authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2021"
 
 [dependencies]
-winit = "0.26.0"
+winit = "0.26.1"
 wgpu = "0.12.0"
-image = "0.23.14"
+image = "0.24"
 cgmath = { version = "0.18.0", features = [ "swizzle" ] }
 bytemuck = { version = "1.7.3", features = [ "derive" ] }
 crevice = { version = "0.8.0", features = [ "cgmath" ] }
 
-anyhow = "1.0.51"
+anyhow = "1.0.53"
 
-futures = "0.3.19"
+futures = "0.3.21"
 
 # Custom timing that supports WASM
 instant = "0.1.12"
@@ -24,17 +24,19 @@ log = "0.4.14"
 env_logger = "0.9.0"
 
 # GUI
-egui = "0.15"
-egui_wgpu_backend = "0.15.0"
-egui_winit_platform = "0.12.0"
+egui = "0.16.1"
+egui_wgpu_backend = "0.16.0"
+egui_winit_platform = "0.13.0"
+
+bevy_ecs = "0.6.0"
 
 # Web Assembly
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wgpu = { version = "0.12.0", features = [ "webgl" ]}
-wasm-bindgen = "0.2.78"
-web-sys = "0.3.55"
+wasm-bindgen = "0.2.79"
+web-sys = "0.3.56"
 
-wasm-bindgen-futures = "0.4.28"
+wasm-bindgen-futures = "0.4.29"
 
 # Custom timing that supports WASM
 instant = { version = "0.1.12", features = [ "stdweb" ] }
