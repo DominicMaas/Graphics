@@ -1,16 +1,15 @@
 use vesta::{
-    cgmath::num_traits::FloatConst, components::Light, components::Transform, log::info,
-    winit::dpi::PhysicalSize, Engine, Entity,
+    cgmath::num_traits::FloatConst, egui::CtxRef, log::info, winit::dpi::PhysicalSize, Engine,
 };
 
 use crate::cube::Cube;
-use vesta::egui::CtxRef;
 
 pub struct App {
     render_pipeline: vesta::wgpu::RenderPipeline,
     cube: Cube,
     camera: vesta::Camera,
     camera_controller: vesta::ArcBallCameraController,
+    scene: vesta::Scene,
 }
 
 impl vesta::VestaApp for App {
@@ -48,15 +47,6 @@ impl vesta::VestaApp for App {
         .build(&engine.renderer.device)
         .unwrap();
 
-        // Test???
-        let mut light_entity = Entity::new(Transform {
-            ..Default::default()
-        });
-
-        light_entity.add_component(Light {
-            ..Default::default()
-        });
-
         let cube = Cube::new(&engine.renderer);
 
         // Setup the main camera
@@ -77,11 +67,21 @@ impl vesta::VestaApp for App {
 
         info!("Init Finish!");
 
+        let mut scene = vesta::Scene::default();
+
+        // Create a cube mesh with a default transform
+        scene
+            .world()
+            .spawn()
+            .insert(vesta::components::Transform::default())
+            .insert(engine.renderer.create_cube_mesh());
+
         Self {
             render_pipeline,
             cube,
             camera,
             camera_controller,
+            scene,
         }
     }
 

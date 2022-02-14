@@ -1,12 +1,7 @@
-use crate::{cgmath::InnerSpace, components::Component};
+use crate::cgmath::InnerSpace;
 use wgpu::util::DeviceExt;
 
-pub struct Mesh {
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    num_indices: u32,
-    num_vertices: u32,
-}
+use super::Mesh;
 
 impl crate::Renderer {
     /// Create a new mesh
@@ -93,12 +88,5 @@ where
             self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
             self.draw_indexed(0..mesh.num_indices, 0, 0..1);
         }
-    }
-}
-
-/// Component metadata for the light
-impl Component for Mesh {
-    fn get_name() -> &'static str {
-        "Mesh"
     }
 }

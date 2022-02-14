@@ -400,7 +400,7 @@ impl Engine {
             gui.renderer.update_texture(
                 &self.renderer.device,
                 &self.renderer.queue,
-                &gui.platform.context().texture(),
+                &gui.platform.context().font_image(),
             );
             gui.renderer
                 .update_user_textures(&self.renderer.device, &self.renderer.queue);

@@ -1,7 +1,8 @@
+use bevy_ecs::prelude::*;
 use cgmath::{BaseFloat, Matrix3, Matrix4, Quaternion, Rotation, Vector3};
 
 /// Describes the position, rotation and scale of an object.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Component)]
 pub struct Transform<S> {
     /// The world space position of the Transform.
     pub position: Vector3<S>,

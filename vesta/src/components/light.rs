@@ -1,4 +1,3 @@
-use super::Component;
 use cgmath::{Deg, Vector3};
 
 /// Light component (added to a game object)
@@ -37,12 +36,5 @@ impl Default for Light {
             color: Vector3::new(1.0, 1.0, 1.0),
             intensity: 1.0,
         }
-    }
-}
-
-/// Component metadata for the light
-impl Component for Light {
-    fn get_name() -> &'static str {
-        "Light"
     }
 }

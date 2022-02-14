@@ -1,8 +1,8 @@
 use vesta::cgmath::{Matrix3, Matrix4, Vector2, Vector3};
-use vesta::DrawMesh;
+use vesta::components::DrawMesh;
 
 pub struct Cube {
-    mesh: vesta::Mesh,
+    mesh: vesta::components::Mesh,
     uniform_buffer: vesta::UniformBuffer<vesta::ModelUniform>,
     texture: vesta::Texture,
     angle: f32,
