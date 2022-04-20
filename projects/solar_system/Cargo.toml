@@ -1,11 +1,9 @@
 [package]
-name = "pixel_2d"
+name = "solar_system"
 version = "0.1.0"
 authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2021"
 
 [dependencies]
 bevy = "0.6.0"
-vesta = { path = "../../vesta" }
-bracket-noise = "0.8.2"
-rand = "0.8.4"
+smooth-bevy-cameras = "0.2.0"

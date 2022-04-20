@@ -5,5 +5,5 @@ authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2021"
 
 [dependencies]
-bevy = "0.6.0"
-smooth-bevy-cameras = "0.2.0"
+bevy = "0.7.0"
+smooth-bevy-cameras = "0.4.0"

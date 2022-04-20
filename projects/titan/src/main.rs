@@ -1,18 +1,111 @@
-mod app;
-mod cube;
-mod entities;
-mod sky_shader;
-mod world;
+mod terrain;
 
-use app::App;
+use bevy::prelude::*;
+use smooth_bevy_cameras::{
+    controllers::fps::{FpsCameraBundle, FpsCameraController, FpsCameraPlugin},
+    LookTransformPlugin,
+};
+use terrain::TerrainPlugin;
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum BlockType {
+    Air,
+    Dirt,
+    Sand,
+    Grass,
+    Stone,
+    Water { flowing: bool },
+}
+
+pub const CHUNK_HEIGHT: u32 = 32;
+pub const CHUNK_WIDTH: u32 = 16;
 
 fn main() {
-    // Config for the engine
-    let config = vesta::Config {
-        window_title: "Project Titan".to_string(),
-        window_size: (1920, 1080).into(),
-    };
+    App::new()
+        .insert_resource(Msaa { samples: 4 })
+        .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
+        .insert_resource(WindowDescriptor {
+            title: "Project Titan".to_string(),
+            width: 1920.,
+            height: 1080.,
+            cursor_visible: false,
+            cursor_locked: true,
+            ..Default::default()
+        })
+        .add_plugins(DefaultPlugins)
+        .add_plugin(LookTransformPlugin)
+        .add_plugin(FpsCameraPlugin::default())
+        .add_plugin(TerrainPlugin)
+        .add_startup_system(setup)
+        .run();
+}
 
-    // Create for App, and pass in the config
-    vesta::Engine::run::<App>(config);
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
+) {
+    // Texture for the cube
+    let block_map_texture_handle = asset_server.load("block_map.png");
+
+    // Tell the asset server to watch for asset changes on disk:
+    asset_server.watch_for_changes().unwrap();
+
+    // Simple plane that the cube is floating on top of
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Plane { size: 6.0 })),
+        material: materials.add(StandardMaterial {
+            base_color_texture: Some(block_map_texture_handle.clone()),
+            ..Default::default()
+        }),
+        transform: Transform::from_xyz(0.0, -1.0, 0.0),
+        ..Default::default()
+    });
+
+    // Cube that we rotate around (also rotate around the plane)
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        transform: Transform::from_xyz(0.0, 0.0, 0.0),
+        ..Default::default()
+    });
+
+    // Light for the scene
+    const HALF_SIZE: f32 = 10.0;
+    commands.spawn_bundle(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            // Configure the projection to better fit the scene
+            shadow_projection: OrthographicProjection {
+                left: -HALF_SIZE,
+                right: HALF_SIZE,
+                bottom: -HALF_SIZE,
+                top: HALF_SIZE,
+                near: -10.0 * HALF_SIZE,
+                far: 10.0 * HALF_SIZE,
+                ..Default::default()
+            },
+            shadows_enabled: true,
+            ..Default::default()
+        },
+        transform: Transform {
+            translation: Vec3::new(0.0, 2.0, 0.0),
+            rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_4),
+            ..Default::default()
+        },
+        ..Default::default()
+    });
+
+    // Camera
+    commands.spawn_bundle(FpsCameraBundle::new(
+        FpsCameraController {
+            smoothing_weight: 0.0,
+            mouse_rotate_sensitivity: Vec2::splat(0.0007),
+            translate_sensitivity: 0.3,
+            ..Default::default()
+        },
+        PerspectiveCameraBundle::default(),
+        Vec3::new(-2.0, 5.0, 5.0),
+        Vec3::new(0., 0., 0.),
+    ));
 }

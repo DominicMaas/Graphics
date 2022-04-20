@@ -27,6 +27,10 @@
     {
       "path": "projects/titan",
       "name": "Project Titan"
+    },
+    {
+      "path": "projects/solar_system",
+	  "name": "Solar System"
     }
   ],
   "tasks": {

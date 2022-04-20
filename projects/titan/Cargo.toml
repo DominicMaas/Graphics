@@ -5,12 +5,15 @@ authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2021"
 
 [dependencies]
+bevy = "0.7.0"
+smooth-bevy-cameras = "0.4.0"
+
 vesta = { path = "../../vesta" }
 crevice = { version = "0.8.0", features = [ "cgmath" ] }
 bracket-noise = "0.8.2"
-rand = "0.8.4"
+rand = "0.8.5"
 lagoon = "0.1.3"
-hashbrown = "0.11.2"
+hashbrown = "0.12.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2.3", features = ["js"] }
