@@ -1,8 +1,7 @@
+use bevy::math::Vec2;
 use rand::Rng;
-use vesta::cgmath::Vector2;
 
-use crate::chunk::CHUNK_SIZE;
-
+// Represents a basic color
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Color {
     pub r: u8,
@@ -10,24 +9,23 @@ pub struct Color {
     pub b: u8,
 }
 
-impl Color {
-    pub fn write_color_to_buffer(
-        &self,
-        i: usize,
-        buffer: &mut Box<[u8; CHUNK_SIZE as usize * CHUNK_SIZE as usize * 4]>,
-    ) {
-        buffer[(i * 4)] = self.r;
-        buffer[(i * 4) + 1] = self.g;
-        buffer[(i * 4) + 2] = self.b;
-        buffer[(i * 4) + 3] = 255;
-    }
+// A enum of all pixel types within the game
+#[derive(Default, Copy, Clone, Debug, PartialEq)]
+pub enum PixelType {
+    #[default]
+    Air,
+    Water,
+    Snow,
+    Sand,
+    Ground,
 }
 
+// Represents a pixel
 #[derive(Copy, Clone, Debug)]
 pub struct Pixel {
     color: Color,
     pixel_type: PixelType,
-    pub velocity: Vector2<f32>,
+    pub velocity: Vec2,
     pub updated_this_frame: bool,
 }
 
@@ -38,6 +36,7 @@ impl Default for Pixel {
 }
 
 impl Pixel {
+    /// Generate a new pixel of type
     pub fn new(pixel_type: PixelType) -> Self {
         Self {
             pixel_type,
@@ -68,29 +67,23 @@ impl Pixel {
                     b: 128,
                 }),
             },
-            velocity: Vector2::new(0.0, 0.0),
+            velocity: Vec2::new(0.0, 0.0),
             updated_this_frame: false,
         }
     }
 
+    /// Get the type of this pixel
     pub fn get_type(&self) -> PixelType {
         self.pixel_type
     }
 
+    /// Get the color of this pixel;
     pub fn get_color(&self) -> Color {
         self.color
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum PixelType {
-    Air,
-    Water,
-    Snow,
-    Sand,
-    Ground,
-}
-
+/// Vary the color of the provided color
 fn vary_color(color: Color) -> Color {
     let mut rng = rand::thread_rng();
     let val = (rng.gen_range(0..20) % 3) * 5;
@@ -101,3 +94,27 @@ fn vary_color(color: Color) -> Color {
         b: color.b - val,
     }
 }
+
+/*use rand::Rng;
+use vesta::cgmath::Vector2;
+
+use crate::chunk::CHUNK_SIZE;
+
+
+
+impl Color {
+    pub fn write_color_to_buffer(
+        &self,
+        i: usize,
+        buffer: &mut Box<[u8; CHUNK_SIZE as usize * CHUNK_SIZE as usize * 4]>,
+    ) {
+        buffer[(i * 4)] = self.r;
+        buffer[(i * 4) + 1] = self.g;
+        buffer[(i * 4) + 2] = self.b;
+        buffer[(i * 4) + 3] = 255;
+    }
+}
+
+
+
+(/)*/

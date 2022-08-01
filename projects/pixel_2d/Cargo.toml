@@ -5,7 +5,7 @@ authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2021"
 
 [dependencies]
-bevy = "0.6.0"
-vesta = { path = "../../vesta" }
+bevy = "0.8.0"
+bevy_egui = "0.15"
 bracket-noise = "0.8.2"
-rand = "0.8.4"
+rand = "0.8.5"

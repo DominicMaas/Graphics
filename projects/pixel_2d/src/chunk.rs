@@ -1,4 +1,139 @@
-use std::mem::ManuallyDrop;
+use bevy::{
+    prelude::*,
+    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
+};
+
+use crate::pixel::{Pixel, PixelType};
+
+pub const CHUNK_SIZE: usize = 256;
+
+#[derive(Component)]
+pub struct Chunk {
+    // Raw pixel data
+    pixels: Vec<Pixel>,
+
+    // If this flag is set, the chunk texture is out of date
+    dirty: bool,
+}
+
+impl Chunk {
+    #[inline(always)]
+    fn pixel_in_bounds(x: usize, y: usize) -> bool {
+        if x >= CHUNK_SIZE || y >= CHUNK_SIZE || x < 0 || y < 0 {
+            return false;
+        }
+
+        return true;
+    }
+
+    #[inline(always)]
+    fn pixel_index(x: usize, y: usize) -> usize {
+        CHUNK_SIZE * x + y
+    }
+
+    #[inline(always)]
+    fn get_pixel_raw(&mut self, x: usize, y: usize) -> Option<&mut Pixel> {
+        if Self::pixel_in_bounds(x, y) == false {
+            return None;
+        }
+
+        Some(&mut self.pixels[Self::pixel_index(x, y)])
+    }
+
+    /// Grab a read only version of the pixel
+    pub fn get_pixel(&self, x: usize, y: usize) -> Option<Pixel> {
+        if Self::pixel_in_bounds(x, y) == false {
+            return None;
+        }
+
+        Some(self.pixels[Self::pixel_index(x, y)])
+    }
+
+    #[inline(always)]
+    fn set_pixel_raw(&mut self, x: usize, y: usize, pixel: Pixel) {
+        if Self::pixel_in_bounds(x, y) == false {
+            return;
+        }
+
+        self.pixels[Self::pixel_index(x, y)] = pixel;
+        self.dirty = true;
+    }
+
+    pub fn rand_noise(&mut self) {
+        for x in 0..CHUNK_SIZE {
+            for y in 0..CHUNK_SIZE {
+                //let gx = self.position.x + x as f32;
+                //let gy = self.position.y + y as f32;
+
+                //let r = self.noise.get_noise(gx, gy) * 250.0;
+
+                self.set_pixel_raw(x, y, Pixel::new(PixelType::Air));
+
+                //if r >= y as f32 {
+                //self.set_pixel_raw(x, y, Pixel::new(PixelType::Ground));
+                //} else {
+                //self.set_pixel_raw(x, y, Pixel::new(PixelType::Air));
+                //}
+            }
+        }
+    }
+}
+
+pub fn setup_chunks(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
+    let pixels = vec![Pixel::default(); (CHUNK_SIZE * CHUNK_SIZE) as usize];
+
+    let default_data = vec![50; CHUNK_SIZE * CHUNK_SIZE];
+    let image = Image::new_fill(
+        Extent3d {
+            width: CHUNK_SIZE as u32,
+            height: CHUNK_SIZE as u32,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        &default_data,
+        TextureFormat::Rgba8UnormSrgb,
+    );
+
+    let image_handle = images.add(image);
+
+    commands
+        .spawn_bundle(SpriteBundle {
+            texture: image_handle,
+            ..Default::default()
+        })
+        .insert(Chunk {
+            pixels,
+            dirty: true,
+        });
+}
+
+// This system is in charge of updating the textures of dirty chunks on the GPU
+pub fn update_chunk_textures_system(
+    mut images: ResMut<Assets<Image>>,
+    mut query: Query<(&mut Chunk, &Handle<Image>)>,
+) {
+    for (mut chunk, handle) in query.iter_mut() {
+        if chunk.dirty {
+            let image = images
+                .get_mut(handle)
+                .expect("Chunk should have a chunk texture!");
+
+            let mut i = 0;
+            for p in chunk.pixels.iter() {
+                image.data[i] = p.get_color().r;
+                image.data[i + 1] = p.get_color().g;
+                image.data[i + 2] = p.get_color().b;
+                image.data[i + 3] = 255;
+
+                i += 4;
+            }
+
+            chunk.dirty = false
+        }
+    }
+}
+
+/*use std::mem::ManuallyDrop;
 use std::num::NonZeroU32;
 
 use rand::rngs::ThreadRng;
@@ -608,3 +743,4 @@ impl Chunk {
         return true;
     }
 }
+*/

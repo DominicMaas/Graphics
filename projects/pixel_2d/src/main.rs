@@ -1,23 +1,25 @@
+mod chunk;
+mod pixel;
+
 use bevy::prelude::*;
+use bevy_egui::{egui, EguiContext, EguiPlugin};
+use pixel::PixelType;
 
-//use crate::app::App;
-//use vesta::winit::dpi::PhysicalSize;
+struct WorldState {
+    brush_size: i32,
+    brush_type: PixelType,
+}
 
-//mod app;
-//mod chunk;
-//mod pixel;
-//mod world;
+impl Default for WorldState {
+    fn default() -> Self {
+        Self {
+            brush_size: 10,
+            brush_type: Default::default(),
+        }
+    }
+}
 
 fn main() {
-    // Config for the engine
-    //let config = vesta::Config {
-    //    window_title: "Pixel 2D".to_string(),
-    //    window_size: PhysicalSize::new(1920, 1080),
-    //};
-
-    // Create for App, and pass in the config
-    //vesta::Engine::run::<App>(config);
-
     App::new()
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .insert_resource(WindowDescriptor {
@@ -27,24 +29,36 @@ fn main() {
 
             ..Default::default()
         })
+        .init_resource::<WorldState>()
         .add_plugins(DefaultPlugins)
+        .add_plugin(EguiPlugin)
         .add_startup_system(setup)
+        .add_startup_system(chunk::setup_chunks)
+        .add_system(process_ui)
+        .add_system(chunk::update_chunk_textures_system)
         .run();
 }
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    commands.spawn_bundle(SpriteBundle {
-        sprite: Sprite {
-            color: Color::rgb(0.25, 0.25, 0.75),
-            custom_size: Some(Vec2::new(50.0, 50.0)),
-            ..Default::default()
-        },
-        ..Default::default()
-    });
 
+fn setup(mut commands: Commands) {
     // Camera
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(Camera2dBundle::new_with_far(0.1));
+}
+
+fn process_ui(mut egui_context: ResMut<EguiContext>, mut world_state: ResMut<WorldState>) {
+    egui::Window::new("Toolbox").show(egui_context.ctx_mut(), |ui| {
+        ui.heading("Pixel 2D");
+        ui.label("Created by Dominic Maas");
+        ui.separator();
+
+        ui.label("Brush Size:");
+        ui.add(egui::Slider::new(&mut world_state.brush_size, 1..=100));
+
+        ui.add_space(5.0);
+        ui.label("Brush Type:");
+        ui.radio_value(&mut world_state.brush_type, PixelType::Air, "Air");
+        ui.radio_value(&mut world_state.brush_type, PixelType::Snow, "Snow");
+        ui.radio_value(&mut world_state.brush_type, PixelType::Water, "Water");
+        ui.radio_value(&mut world_state.brush_type, PixelType::Sand, "Sand");
+        ui.radio_value(&mut world_state.brush_type, PixelType::Ground, "Ground");
+    });
 }
