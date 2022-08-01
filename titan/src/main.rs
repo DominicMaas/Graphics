@@ -1,4 +1,7 @@
+mod chunk;
+
 use bevy::prelude::*;
+use chunk::Chunk;
 use smooth_bevy_cameras::{
     controllers::orbit::{OrbitCameraBundle, OrbitCameraController, OrbitCameraPlugin},
     LookTransformPlugin,
@@ -32,6 +35,8 @@ fn setup(
         material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
         ..Default::default()
     });
+
+    let c = Chunk::new(Vec3::new(0.0, 0.0, 0.0));
 
     // cube
     commands.spawn_bundle(PbrBundle {
