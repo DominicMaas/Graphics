@@ -84,15 +84,16 @@ fn setup(
     });
 
     // Main camera to look through
-    commands.spawn_bundle(OrbitCameraBundle::new(
-        OrbitCameraController {
-            smoothing_weight: 0.0,
-            ..Default::default()
-        },
-        PerspectiveCameraBundle::default(),
-        Vec3::new(0.0, 0.0, 5.0),
-        Vec3::new(0., 0., 0.),
-    ));
+    commands
+        .spawn_bundle(OrbitCameraBundle::new(
+            OrbitCameraController {
+                smoothing_weight: 0.0,
+                ..Default::default()
+            },
+            Vec3::new(7.0, 3.0, 7.0),
+            Vec3::new(0.0, 0.0, 0.0),
+        ))
+        .insert_bundle(Camera3dBundle::default());
 }
 
 fn animate_cube(time: Res<Time>, mut query: Query<&mut Transform, With<Movable>>) {
