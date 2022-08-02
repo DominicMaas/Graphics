@@ -1,13 +1,20 @@
 mod chunk;
+mod input;
 mod pixel;
 
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext, EguiPlugin};
-use pixel::PixelType;
+use pixel::{Pixel, PixelType};
 
-struct WorldState {
+/// Tag for the main camera so we can find it during input processing
+#[derive(Component)]
+pub struct MainCamera;
+
+/// Represents current game state
+pub struct WorldState {
     brush_size: i32,
     brush_type: PixelType,
+    selected_pixel: Option<Pixel>,
 }
 
 impl Default for WorldState {
@@ -15,13 +22,14 @@ impl Default for WorldState {
         Self {
             brush_size: 10,
             brush_type: Default::default(),
+            selected_pixel: None,
         }
     }
 }
 
 fn main() {
     App::new()
-        .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
+        .insert_resource(ClearColor(Color::rgb(0.0, 191.0, 255.0)))
         .insert_resource(WindowDescriptor {
             title: "Pixel 2D".to_string(),
             width: 1920.,
@@ -36,12 +44,23 @@ fn main() {
         .add_startup_system(chunk::setup_chunks)
         .add_system(process_ui)
         .add_system(chunk::update_chunk_textures_system)
+        .add_system(chunk::update_chunks)
+        .add_system(input::input_system)
         .run();
 }
 
 fn setup(mut commands: Commands) {
     // Camera
-    commands.spawn_bundle(Camera2dBundle::new_with_far(0.1));
+    commands
+        .spawn()
+        .insert_bundle(Camera2dBundle {
+            projection: OrthographicProjection {
+                scale: 0.2,
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .insert(MainCamera);
 }
 
 fn process_ui(mut egui_context: ResMut<EguiContext>, mut world_state: ResMut<WorldState>) {
@@ -60,5 +79,24 @@ fn process_ui(mut egui_context: ResMut<EguiContext>, mut world_state: ResMut<Wor
         ui.radio_value(&mut world_state.brush_type, PixelType::Water, "Water");
         ui.radio_value(&mut world_state.brush_type, PixelType::Sand, "Sand");
         ui.radio_value(&mut world_state.brush_type, PixelType::Ground, "Ground");
+
+        match world_state.selected_pixel {
+            Some(pixel) => {
+                ui.separator();
+                ui.heading("Selected Pixel");
+                ui.label(format!("Type: {:?}", pixel.get_type()));
+                ui.label(format!(
+                    "Color: {},{},{}",
+                    pixel.get_color().r,
+                    pixel.get_color().g,
+                    pixel.get_color().b
+                ));
+                ui.label(format!(
+                    "Velocity: {},{}:",
+                    pixel.velocity.x, pixel.velocity.y
+                ));
+            }
+            None => {}
+        }
     });
 }

@@ -94,27 +94,3 @@ fn vary_color(color: Color) -> Color {
         b: color.b - val,
     }
 }
-
-/*use rand::Rng;
-use vesta::cgmath::Vector2;
-
-use crate::chunk::CHUNK_SIZE;
-
-
-
-impl Color {
-    pub fn write_color_to_buffer(
-        &self,
-        i: usize,
-        buffer: &mut Box<[u8; CHUNK_SIZE as usize * CHUNK_SIZE as usize * 4]>,
-    ) {
-        buffer[(i * 4)] = self.r;
-        buffer[(i * 4) + 1] = self.g;
-        buffer[(i * 4) + 2] = self.b;
-        buffer[(i * 4) + 3] = 255;
-    }
-}
-
-
-
-(/)*/
