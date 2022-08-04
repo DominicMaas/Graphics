@@ -9,3 +9,15 @@ bevy = "0.8.0"
 bevy_egui = "0.15"
 bracket-noise = "0.8.2"
 rand = "0.8.5"
+
+# Enable max optimizations for dependencies, but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
+
+# Enable only a small amount of optimization in debug mode
+[profile.dev]
+opt-level = 1
+
+# Awesome amounts of optimization in release mode
+[profile.release]
+lto = "thin"

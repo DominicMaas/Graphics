@@ -10,7 +10,6 @@ use rand::Rng;
 use crate::pixel::{Pixel, PixelType};
 
 pub const CHUNK_SIZE: usize = 128;
-pub const GRAVITY: f32 = -9.8;
 
 #[derive(Component)]
 pub struct Chunk {
@@ -90,6 +89,108 @@ impl Chunk {
             None => false,
         }
     }
+
+    /// Returns none if the pixel is not in the given type, otherwise returns the
+    /// position in which the pixel is touching the type
+    fn pixel_in_type(&self, pos: Vec2, pixel_type: PixelType) -> Option<Vec2> {
+        if self.pixel_is(pos, pixel_type) {
+            return Some(pos);
+        }
+
+        if self.pixel_is(pos + Vec2::new(0.0, -1.0), pixel_type) {
+            return Some(pos + Vec2::new(0.0, -1.0));
+        }
+
+        if self.pixel_is(pos + Vec2::new(0.0, 1.0), pixel_type) {
+            return Some(pos + Vec2::new(0.0, 1.0));
+        }
+
+        if self.pixel_is(pos + Vec2::new(-1.0, 0.0), pixel_type) {
+            return Some(pos + Vec2::new(-1.0, 0.0));
+        }
+
+        if self.pixel_is(pos + Vec2::new(-1.0, -1.0), pixel_type) {
+            return Some(pos + Vec2::new(-1.0, -1.0));
+        }
+
+        if self.pixel_is(pos + Vec2::new(-1.0, 1.0), pixel_type) {
+            return Some(pos + Vec2::new(-1.0, 1.0));
+        }
+
+        if self.pixel_is(pos + Vec2::new(1.0, 0.0), pixel_type) {
+            return Some(pos + Vec2::new(1.0, 0.0));
+        }
+
+        if self.pixel_is(pos + Vec2::new(1.0, -1.0), pixel_type) {
+            return Some(pos + Vec2::new(1.0, -1.0));
+        }
+
+        if self.pixel_is(pos + Vec2::new(1.0, 1.0), pixel_type) {
+            return Some(pos + Vec2::new(1.0, 1.0));
+        }
+
+        return None;
+    }
+
+    fn pixel_completely_surrounded(&self, pos: Vec2) -> bool {
+        // Top
+        if Self::pixel_in_bounds(pos + Vec2::new(1.0, 0.0))
+            && self.pixel_is(pos + Vec2::new(1.0, 0.0), PixelType::Air)
+        {
+            return false;
+        }
+
+        // Bottom
+        if Self::pixel_in_bounds(pos + Vec2::new(-1.0, 0.0))
+            && self.pixel_is(pos + Vec2::new(-1.0, 0.0), PixelType::Air)
+        {
+            return false;
+        }
+
+        // Left
+        if Self::pixel_in_bounds(pos + Vec2::new(-1.0, 0.0))
+            && self.pixel_is(pos + Vec2::new(-1.0, 0.0), PixelType::Air)
+        {
+            return false;
+        }
+
+        // Right
+        if Self::pixel_in_bounds(pos + Vec2::new(1.0, 0.0))
+            && self.pixel_is(pos + Vec2::new(1.0, 0.0), PixelType::Air)
+        {
+            return false;
+        }
+
+        // Top Left
+        if Self::pixel_in_bounds(pos + Vec2::new(-1.0, -1.0))
+            && self.pixel_is(pos + Vec2::new(-1.0, -1.0), PixelType::Air)
+        {
+            return false;
+        }
+
+        // Top Right
+        if Self::pixel_in_bounds(pos + Vec2::new(1.0, -1.0))
+            && self.pixel_is(pos + Vec2::new(1.0, -1.0), PixelType::Air)
+        {
+            return false;
+        }
+
+        // Bottom Left
+        if Self::pixel_in_bounds(pos + Vec2::new(-1.0, 1.0))
+            && self.pixel_is(pos + Vec2::new(-1.0, 1.0), PixelType::Air)
+        {
+            return false;
+        }
+
+        // Bottom Right
+        if Self::pixel_in_bounds(pos + Vec2::new(1.0, 1.0))
+            && self.pixel_is(pos + Vec2::new(1.0, 1.0), PixelType::Air)
+        {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 pub fn setup_chunks(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
@@ -152,15 +253,15 @@ pub fn update_chunk_textures_system(
 
 pub fn update_chunks(mut query: Query<&mut Chunk>) {
     for mut chunk in query.iter_mut() {
-        for x in 0..CHUNK_SIZE {
-            for y in 0..CHUNK_SIZE {
+        for y in 0..CHUNK_SIZE {
+            for x in 0..CHUNK_SIZE {
                 let pos = Vec2::new(x as f32, y as f32);
 
                 match chunk.get_pixel_mut(pos) {
                     Some(pixel) => match pixel.get_type() {
-                        //PixelType::Water => update_water(pos),
-                        PixelType::Snow => update_sand(&mut chunk, pos, 0.001),
-                        PixelType::Sand => update_sand(&mut chunk, pos, 0.001),
+                        PixelType::Water => update_water(&mut chunk, pos),
+                        PixelType::Snow => update_sand(&mut chunk, pos),
+                        PixelType::Sand => update_sand(&mut chunk, pos),
                         _ => {}
                     },
                     None => {}
@@ -170,52 +271,92 @@ pub fn update_chunks(mut query: Query<&mut Chunk>) {
     }
 }
 
-fn update_sand(chunk: &mut Chunk, pos: Vec2, dt: f32) {
+fn update_sand(chunk: &mut Chunk, pos: Vec2) {
     let mut rng = rand::thread_rng();
-    let ran = rng.gen_range(0..=1);
-
-    let offset = if ran == 0 { 1.0 } else { -1.0 };
 
     let b_pos = Vec2::new(pos.x, pos.y - 1.0);
-    let br_pos = Vec2::new(pos.x + offset, pos.y - 1.0);
-    let bl_pos = Vec2::new(pos.x + -offset, pos.y - 1.0);
+    let br_pos = Vec2::new(pos.x + 1.0, pos.y - 1.0);
+    let bl_pos = Vec2::new(pos.x - 1.0, pos.y - 1.0);
 
-    // Update the velocity
-    let pixel = chunk.get_pixel_mut(pos).unwrap();
-    pixel.velocity.y = f32::clamp(pixel.velocity.y + (GRAVITY * dt), -10.0, 10.0);
-
-    // Just check if can move directly below, if not, then reset velocity
-    if !chunk.pixel_is(b_pos, PixelType::Air) {
-        chunk.get_pixel(pos).unwrap().velocity.y /= 2.0;
-    }
-
-    let pixel = chunk.get_pixel(pos).unwrap();
-    let v_pos = Vec2::new(pos.x + pixel.velocity.x, pos.y + pixel.velocity.y);
-
-    // Physics
-    if chunk.pixel_is(v_pos, PixelType::Air) || (chunk.pixel_is(v_pos, PixelType::Water)) {
-        if chunk.pixel_is(v_pos, PixelType::Air) {
-            chunk.swap_pixel(pos, v_pos);
-        }
-    } else if chunk.pixel_is(b_pos, PixelType::Air) || chunk.pixel_is(b_pos, PixelType::Water) {
-        let pixel = chunk.get_pixel_mut(pos).unwrap();
-        pixel.velocity.y += GRAVITY * dt;
-
+    // If below is free, move below
+    if chunk.pixel_is(b_pos, PixelType::Air) {
         chunk.swap_pixel(pos, b_pos);
-    } else if chunk.pixel_is(bl_pos, PixelType::Air) || chunk.pixel_is(bl_pos, PixelType::Water) {
-        let pixel = chunk.get_pixel_mut(pos).unwrap();
-        pixel.velocity.x = 0.0;
-        pixel.velocity.y += GRAVITY * dt;
-
-        chunk.swap_pixel(pos, bl_pos);
-    } else if chunk.pixel_is(br_pos, PixelType::Air) || chunk.pixel_is(br_pos, PixelType::Water) {
-        let pixel = chunk.get_pixel_mut(pos).unwrap();
-        pixel.velocity.x = 0.0;
-        pixel.velocity.y += GRAVITY * dt;
-
-        chunk.swap_pixel(pos, br_pos);
     } else {
-        // Do Nothing
+        let left_free = chunk.pixel_is(bl_pos, PixelType::Air);
+        let right_free = chunk.pixel_is(br_pos, PixelType::Air);
+
+        if left_free && right_free {
+            let ran = rng.gen_range(0..2);
+            if ran == 1 {
+                chunk.swap_pixel(pos, bl_pos);
+            } else {
+                chunk.swap_pixel(pos, br_pos);
+            }
+        } else if left_free {
+            chunk.swap_pixel(pos, bl_pos);
+        } else if right_free {
+            chunk.swap_pixel(pos, br_pos); //
+        }
+    }
+}
+
+fn update_water(chunk: &mut Chunk, pos: Vec2) {
+    let fall_rate = 2.0;
+    let spread_rate = 5.0;
+
+    let mut rng = rand::thread_rng();
+    let ran = rng.gen_range(0..=1);
+    let spread_rate_right = if ran == 0 { spread_rate } else { -spread_rate };
+    let spread_rate_left = -spread_rate_right;
+
+    let b_pos = Vec2::new(pos.x, pos.y - fall_rate);
+    let br_pos = Vec2::new(pos.x + spread_rate_right, pos.y - fall_rate);
+    let bl_pos = Vec2::new(pos.x + spread_rate_left, pos.y - fall_rate);
+    let _r_pos = Vec2::new(pos.x + spread_rate_right, pos.y);
+    let _l_pos = Vec2::new(pos.x - spread_rate_left, pos.y);
+
+    if chunk.pixel_is(b_pos, PixelType::Air) {
+        chunk.swap_pixel(pos, b_pos);
+    } else if chunk.pixel_is(bl_pos, PixelType::Air) || chunk.pixel_is(br_pos, PixelType::Air) {
+        // AHHHHHHHHHHHHHH FUCK
+        let left_free = chunk.pixel_is(bl_pos, PixelType::Air);
+        let right_free = chunk.pixel_is(br_pos, PixelType::Air);
+
+        if left_free && right_free {
+            let ran = rng.gen_range(0..2);
+            if ran == 1 {
+                chunk.swap_pixel(pos, bl_pos);
+            } else {
+                chunk.swap_pixel(pos, br_pos);
+            }
+        } else if left_free {
+            chunk.swap_pixel(pos, bl_pos);
+        } else if right_free {
+            chunk.swap_pixel(pos, br_pos);
+        }
+    } else if rng.gen_range(0..=10) == 0 {
+        // In water, sometimes move around?
+        if let Some(water_pos) = chunk.pixel_in_type(pos, PixelType::Water) {
+            chunk.swap_pixel(pos, water_pos);
+        }
+    } else {
+        // Don't try to spread if something directly above
+        if !chunk.pixel_completely_surrounded(pos) {
+            for i in 0..fall_rate as i32 {
+                for j in (0..spread_rate as i32).rev() {
+                    let x_minus_j_y_plus_i = Vec2::new(pos.x - j as f32, pos.y + i as f32);
+                    let x_plus_j_y_plus_i = Vec2::new(pos.x + j as f32, pos.y + i as f32);
+
+                    if chunk.pixel_is(x_minus_j_y_plus_i, PixelType::Air) {
+                        chunk.swap_pixel(pos, x_minus_j_y_plus_i);
+                    }
+
+                    if chunk.pixel_is(x_plus_j_y_plus_i, PixelType::Air) {
+                        chunk.swap_pixel(pos, x_plus_j_y_plus_i);
+                    }
+                }
+            }
+        }
     }
 }
 

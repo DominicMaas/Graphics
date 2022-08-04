@@ -91,10 +91,6 @@ fn process_ui(mut egui_context: ResMut<EguiContext>, mut world_state: ResMut<Wor
                     pixel.get_color().g,
                     pixel.get_color().b
                 ));
-                ui.label(format!(
-                    "Velocity: {},{}:",
-                    pixel.velocity.x, pixel.velocity.y
-                ));
             }
             None => {}
         }

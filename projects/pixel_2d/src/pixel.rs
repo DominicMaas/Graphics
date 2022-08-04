@@ -1,4 +1,3 @@
-use bevy::math::Vec2;
 use rand::Rng;
 
 // Represents a basic color
@@ -25,8 +24,6 @@ pub enum PixelType {
 pub struct Pixel {
     color: Color,
     pixel_type: PixelType,
-    pub velocity: Vec2,
-    pub updated_this_frame: bool,
 }
 
 impl Default for Pixel {
@@ -67,8 +64,6 @@ impl Pixel {
                     b: 128,
                 }),
             },
-            velocity: Vec2::new(0.0, 0.0),
-            updated_this_frame: false,
         }
     }
 
