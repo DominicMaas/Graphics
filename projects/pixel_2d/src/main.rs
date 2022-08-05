@@ -55,7 +55,7 @@ fn setup(mut commands: Commands) {
         .spawn()
         .insert_bundle(Camera2dBundle {
             projection: OrthographicProjection {
-                scale: 0.2,
+                scale: 0.25,
                 ..Default::default()
             },
             ..Default::default()

@@ -62,8 +62,6 @@ pub fn input_system(
                         }
                     }
                 }
-
-                //c.set_pixel(adj_pos, Pixel::new(world_state.brush_type));
             }
         }
     }
