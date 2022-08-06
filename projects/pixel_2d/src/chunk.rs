@@ -9,8 +9,8 @@ use rand::Rng;
 
 use crate::pixel::{Pixel, PixelType};
 
-pub const CHUNK_SIZE: usize = 128;
-pub const GRAVITY: f32 = -9.8;
+pub const CHUNK_WIDTH: usize = 64;
+pub const CHUNK_HEIGHT: usize = 256;
 
 #[derive(Component)]
 pub struct Chunk {
@@ -25,7 +25,8 @@ impl Chunk {
     /// Checks if the provided coordinates are
     /// in bounds of this chunk
     fn pixel_in_bounds(pos: Vec2) -> bool {
-        if pos.x >= CHUNK_SIZE as f32 || pos.y >= CHUNK_SIZE as f32 || pos.x < 0.0 || pos.y < 0.0 {
+        if pos.x >= CHUNK_WIDTH as f32 || pos.y >= CHUNK_HEIGHT as f32 || pos.x < 0.0 || pos.y < 0.0
+        {
             return false;
         }
 
@@ -36,7 +37,7 @@ impl Chunk {
     /// index
     #[inline(always)]
     fn pixel_index(x: usize, y: usize) -> usize {
-        CHUNK_SIZE * y + x
+        CHUNK_WIDTH * y + x
     }
 
     /// Get the mutable pixel at the specified coordinate
@@ -98,140 +99,41 @@ impl Chunk {
             None => false,
         }
     }
-
-    /// Returns none if the pixel is not in the given type, otherwise returns the
-    /// position in which the pixel is touching the type
-    fn pixel_in_type(&self, pos: Vec2, pixel_type: PixelType) -> Option<Vec2> {
-        if self.pixel_is(pos, pixel_type) {
-            return Some(pos);
-        }
-
-        if self.pixel_is(pos + Vec2::new(0.0, -1.0), pixel_type) {
-            return Some(pos + Vec2::new(0.0, -1.0));
-        }
-
-        if self.pixel_is(pos + Vec2::new(0.0, 1.0), pixel_type) {
-            return Some(pos + Vec2::new(0.0, 1.0));
-        }
-
-        if self.pixel_is(pos + Vec2::new(-1.0, 0.0), pixel_type) {
-            return Some(pos + Vec2::new(-1.0, 0.0));
-        }
-
-        if self.pixel_is(pos + Vec2::new(-1.0, -1.0), pixel_type) {
-            return Some(pos + Vec2::new(-1.0, -1.0));
-        }
-
-        if self.pixel_is(pos + Vec2::new(-1.0, 1.0), pixel_type) {
-            return Some(pos + Vec2::new(-1.0, 1.0));
-        }
-
-        if self.pixel_is(pos + Vec2::new(1.0, 0.0), pixel_type) {
-            return Some(pos + Vec2::new(1.0, 0.0));
-        }
-
-        if self.pixel_is(pos + Vec2::new(1.0, -1.0), pixel_type) {
-            return Some(pos + Vec2::new(1.0, -1.0));
-        }
-
-        if self.pixel_is(pos + Vec2::new(1.0, 1.0), pixel_type) {
-            return Some(pos + Vec2::new(1.0, 1.0));
-        }
-
-        return None;
-    }
-
-    fn pixel_completely_surrounded(&self, pos: Vec2) -> bool {
-        // Top
-        if Self::pixel_in_bounds(pos + Vec2::new(1.0, 0.0))
-            && self.pixel_is(pos + Vec2::new(1.0, 0.0), PixelType::Air)
-        {
-            return false;
-        }
-
-        // Bottom
-        if Self::pixel_in_bounds(pos + Vec2::new(-1.0, 0.0))
-            && self.pixel_is(pos + Vec2::new(-1.0, 0.0), PixelType::Air)
-        {
-            return false;
-        }
-
-        // Left
-        if Self::pixel_in_bounds(pos + Vec2::new(-1.0, 0.0))
-            && self.pixel_is(pos + Vec2::new(-1.0, 0.0), PixelType::Air)
-        {
-            return false;
-        }
-
-        // Right
-        if Self::pixel_in_bounds(pos + Vec2::new(1.0, 0.0))
-            && self.pixel_is(pos + Vec2::new(1.0, 0.0), PixelType::Air)
-        {
-            return false;
-        }
-
-        // Top Left
-        if Self::pixel_in_bounds(pos + Vec2::new(-1.0, -1.0))
-            && self.pixel_is(pos + Vec2::new(-1.0, -1.0), PixelType::Air)
-        {
-            return false;
-        }
-
-        // Top Right
-        if Self::pixel_in_bounds(pos + Vec2::new(1.0, -1.0))
-            && self.pixel_is(pos + Vec2::new(1.0, -1.0), PixelType::Air)
-        {
-            return false;
-        }
-
-        // Bottom Left
-        if Self::pixel_in_bounds(pos + Vec2::new(-1.0, 1.0))
-            && self.pixel_is(pos + Vec2::new(-1.0, 1.0), PixelType::Air)
-        {
-            return false;
-        }
-
-        // Bottom Right
-        if Self::pixel_in_bounds(pos + Vec2::new(1.0, 1.0))
-            && self.pixel_is(pos + Vec2::new(1.0, 1.0), PixelType::Air)
-        {
-            return false;
-        }
-
-        return true;
-    }
 }
 
 pub fn setup_chunks(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
-    let pixels = vec![Pixel::default(); (CHUNK_SIZE * CHUNK_SIZE) as usize];
+    for i in -4..4 {
+        let pixels = vec![Pixel::default(); (CHUNK_WIDTH * CHUNK_HEIGHT) as usize];
 
-    let default_data = vec![50; CHUNK_SIZE * CHUNK_SIZE];
-    let mut image = Image::new_fill(
-        Extent3d {
-            width: CHUNK_SIZE as u32,
-            height: CHUNK_SIZE as u32,
-            depth_or_array_layers: 1,
-        },
-        TextureDimension::D2,
-        &default_data,
-        TextureFormat::Rgba8UnormSrgb,
-    );
-
-    image.sampler_descriptor = ImageSampler::nearest();
-
-    commands
-        .spawn_bundle(SpriteBundle {
-            texture: images.add(image),
-            sprite: Sprite {
-                flip_y: true,
-                ..Default::default()
+        let default_data = vec![0; CHUNK_WIDTH * CHUNK_HEIGHT];
+        let mut image = Image::new_fill(
+            Extent3d {
+                width: CHUNK_WIDTH as u32,
+                height: CHUNK_HEIGHT as u32,
+                depth_or_array_layers: 1,
             },
-            ..Default::default()
-        })
-        .insert(Chunk {
-            pixels,
-            dirty: true,
-        });
+            TextureDimension::D2,
+            &default_data,
+            TextureFormat::Rgba8UnormSrgb,
+        );
+
+        image.sampler_descriptor = ImageSampler::nearest();
+
+        commands
+            .spawn_bundle(SpriteBundle {
+                texture: images.add(image),
+                sprite: Sprite {
+                    flip_y: true,
+                    ..Default::default()
+                },
+                transform: Transform::from_xyz(CHUNK_WIDTH as f32 * i as f32, 0.0, 0.0),
+                ..Default::default()
+            })
+            .insert(Chunk {
+                pixels,
+                dirty: true,
+            });
+    }
 }
 
 // This system is in charge of updating the textures of dirty chunks on the GPU
@@ -247,10 +149,12 @@ pub fn update_chunk_textures_system(
 
             let mut i = 0;
             for p in chunk.pixels.iter() {
-                image.data[i] = p.get_color().r;
-                image.data[i + 1] = p.get_color().g;
-                image.data[i + 2] = p.get_color().b;
-                image.data[i + 3] = 255;
+                let color = p.get_color();
+
+                image.data[i] = color.r;
+                image.data[i + 1] = color.g;
+                image.data[i + 2] = color.b;
+                image.data[i + 3] = color.a;
 
                 i += 4;
             }
@@ -260,17 +164,17 @@ pub fn update_chunk_textures_system(
     }
 }
 
-pub fn update_chunks(time: Res<Time>, mut query: Query<&mut Chunk>) {
+pub fn update_chunks(mut query: Query<&mut Chunk>) {
     for mut chunk in query.iter_mut() {
-        for y in 0..CHUNK_SIZE {
-            for x in 0..CHUNK_SIZE {
+        for y in 0..CHUNK_HEIGHT {
+            for x in 0..CHUNK_WIDTH {
                 let pos = Vec2::new(x as f32, y as f32);
 
                 match chunk.get_pixel_mut(pos) {
                     Some(pixel) => match pixel.get_type() {
-                        PixelType::Water => update_water(&mut chunk, pos, time.delta_seconds()),
-                        PixelType::Snow => update_sand(&mut chunk, pos, time.delta_seconds()),
-                        PixelType::Sand => update_sand(&mut chunk, pos, time.delta_seconds()),
+                        PixelType::Water => update_water(&mut chunk, pos),
+                        PixelType::Snow => update_sand(&mut chunk, pos),
+                        PixelType::Sand => update_sand(&mut chunk, pos),
                         _ => {}
                     },
                     None => {}
@@ -280,56 +184,9 @@ pub fn update_chunks(time: Res<Time>, mut query: Query<&mut Chunk>) {
     }
 }
 
-fn update_sand(chunk: &mut Chunk, pos: Vec2, dt: f32) {
-    let below_pos = pos - Vec2::new(0.0, 1.0);
-    let can_move_down = chunk.can_move(below_pos);
-
-    // Update the velocity
-    let pixel = chunk.get_pixel_mut(pos).unwrap();
-    pixel.velocity.y = f32::clamp(pixel.velocity.y + (GRAVITY * dt), -10.0, 10.0);
-
-    if !can_move_down {
-        pixel.velocity.y /= 2.0;
-    }
-
-    // Update the velocity
-    let velocity_pos = pos + pixel.velocity;
-
-    // If below (velocity) is free, move below
-    if chunk.can_move(velocity_pos) {
-        chunk.swap_pixel(pos, velocity_pos);
-        return;
-    }
-
-    // Below velocity was not free, how about normal below?
-    if chunk.can_move(below_pos) {
-        chunk.swap_pixel(pos, below_pos);
-        return;
-    }
-
-    // Neither the belows are free, now try to the side
-    if let Some(new_pos) = get_rand_pos(chunk, below_pos) {
-        chunk.swap_pixel(pos, new_pos);
-        return;
-    }
-
-    // Cannot move at all, zero out velocity
-
-    /*if let Some(new_pos) = get_rand_pos(chunk, velocity_pos) {
-        chunk.swap_pixel(pos, new_pos);
-        return;
-    }
-
-    // How about immediately to the side?
-    if let Some(new_pos) = get_rand_pos(chunk, below_pos) {
-        chunk.swap_pixel(pos, new_pos);
-        return;
-    }*/
-}
-
-fn get_rand_pos(chunk: &mut Chunk, pos: Vec2) -> Option<Vec2> {
-    let left = pos + Vec2::new(-1.0, 0.0);
-    let right = pos + Vec2::new(1.0, 0.0);
+fn get_rand_pos(chunk: &mut Chunk, pos: Vec2, x_offset: f32) -> Option<Vec2> {
+    let left = pos - Vec2::new(1.0 + x_offset, 0.0);
+    let right = pos + Vec2::new(1.0 + x_offset, 0.0);
 
     let left_free = chunk.can_move(left);
     let right_free = chunk.can_move(right);
@@ -350,22 +207,29 @@ fn get_rand_pos(chunk: &mut Chunk, pos: Vec2) -> Option<Vec2> {
     return None;
 }
 
-fn update_water(chunk: &mut Chunk, pos: Vec2, dt: f32) {
+fn update_sand(chunk: &mut Chunk, pos: Vec2) {
+    let below_pos = pos - Vec2::new(0.0, 1.0);
+
+    if chunk.can_move(below_pos) {
+        chunk.swap_pixel(pos, below_pos);
+        return;
+    } else if let Some(new_pos) = get_rand_pos(chunk, below_pos, 0.0) {
+        chunk.swap_pixel(pos, new_pos);
+        return;
+    }
+}
+
+fn update_water(chunk: &mut Chunk, pos: Vec2) {
     let b_pos = Vec2::new(pos.x, pos.y - 1.0);
-    let b2_pos = Vec2::new(pos.x, pos.y - 2.0);
 
     // Go straight down
     if chunk.pixel_is(b_pos, PixelType::Air) {
         chunk.swap_pixel(pos, b_pos);
-    } else if chunk.pixel_is(b2_pos, PixelType::Air) {
-        chunk.swap_pixel(pos, b2_pos);
     } else {
         // Go random below left or right
-        if let Some(new_pos) = get_rand_pos(chunk, b_pos) {
+        if let Some(new_pos) = get_rand_pos(chunk, b_pos, 0.0) {
             chunk.swap_pixel(pos, new_pos);
-        } else if let Some(new_pos) = get_rand_pos(chunk, b2_pos) {
-            chunk.swap_pixel(pos, new_pos);
-        } else if let Some(new_pos) = get_rand_pos(chunk, pos) {
+        } else if let Some(new_pos) = get_rand_pos(chunk, pos, 0.0) {
             chunk.swap_pixel(pos, new_pos);
         }
     }

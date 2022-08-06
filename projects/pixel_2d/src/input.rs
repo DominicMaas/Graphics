@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy::render::camera::RenderTarget;
 
 use crate::chunk::Chunk;
-use crate::chunk::CHUNK_SIZE;
-use crate::pixel::Pixel;
+use crate::chunk::CHUNK_HEIGHT;
+use crate::chunk::CHUNK_WIDTH;
 use crate::MainCamera;
 use crate::WorldState;
 
@@ -14,7 +14,7 @@ pub fn input_system(
     mut world_state: ResMut<WorldState>,
     buttons: Res<Input<MouseButton>>,
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
-    mut q_chunk: Query<&mut Chunk>,
+    mut q_chunk: Query<(&mut Chunk, &Transform)>,
 ) {
     // get the camera info and transform
     // assuming there is exactly one main camera entity, so query::single() is OK
@@ -44,18 +44,20 @@ pub fn input_system(
         // reduce it to a 2D value
         let world_pos: Vec2 = world_pos.truncate();
 
-        let adj_pos = world_pos + Vec2::new(CHUNK_SIZE as f32 / 2.0, CHUNK_SIZE as f32 / 2.0);
+        let adj_pos = world_pos + Vec2::new(CHUNK_WIDTH as f32 / 2.0, CHUNK_HEIGHT as f32 / 2.0);
 
         if buttons.pressed(MouseButton::Left) {
-            for mut c in q_chunk.iter_mut() {
+            for (mut c, transform) in q_chunk.iter_mut() {
+                let chunk_adjust_pos = adj_pos - transform.translation.truncate();
+
                 if world_state.brush_size == 1 {
-                    c.overwrite_pixel(adj_pos, world_state.brush_type);
+                    c.overwrite_pixel(chunk_adjust_pos, world_state.brush_type);
                 } else {
                     for x in -world_state.brush_size..world_state.brush_size {
                         for y in -world_state.brush_size..world_state.brush_size {
                             if x * x + y * y <= world_state.brush_size * world_state.brush_size {
                                 c.overwrite_pixel(
-                                    adj_pos + Vec2::new(x as f32, y as f32),
+                                    chunk_adjust_pos + Vec2::new(x as f32, y as f32),
                                     world_state.brush_type,
                                 );
                             }

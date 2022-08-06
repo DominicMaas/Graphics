@@ -29,7 +29,7 @@ impl Default for WorldState {
 
 fn main() {
     App::new()
-        .insert_resource(ClearColor(Color::rgb(0.0, 191.0, 255.0)))
+        .insert_resource(ClearColor(Color::rgb(0.0, 191.0 / 255.0, 1.0)))
         .insert_resource(WindowDescriptor {
             title: "Pixel 2D".to_string(),
             width: 1920.,
@@ -55,9 +55,10 @@ fn setup(mut commands: Commands) {
         .spawn()
         .insert_bundle(Camera2dBundle {
             projection: OrthographicProjection {
-                scale: 0.25,
+                scale: 0.15,
                 ..Default::default()
             },
+            transform: Transform::from_xyz(0.0, -42.0, 0.0),
             ..Default::default()
         })
         .insert(MainCamera);
