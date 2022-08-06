@@ -1,7 +1,4 @@
-use bevy::{
-    math::Vec3,
-    prelude::{Component, Mesh},
-};
+use bevy::prelude::*;
 
 // Chunk constants
 
@@ -9,33 +6,40 @@ pub const CHUNK_XZ: usize = 16;
 pub const CHUNK_Y: usize = 32;
 pub const CHUNK_SZ: usize = CHUNK_XZ * CHUNK_Y;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Default, Clone, Copy, PartialEq)]
 pub enum VoxelType {
+    #[default]
     Air,
     Dirt,
 }
 
 /// Represents a single chunk in the world
-#[derive(Component)]
+#[derive(Default, Component)]
 pub struct Chunk {
-    /// The mesh for this chunk
-    pub mesh: Option<Mesh>,
-
-    /// The position this chunk is in
-    pub position: Vec3,
-
     /// 1D Array of all blocks in this chunk
     pub blocks: Vec<VoxelType>,
 }
 
+#[derive(Default, Bundle)]
+struct ChunkBundle {
+    /// Chunk data
+    pub chunk: Chunk,
+    /// The chunk material (this is standard)
+    pub material: Handle<StandardMaterial>,
+    /// Where the chunk is located in the world
+    pub transform: Transform,
+    /// Global world transform
+    pub global_transform: GlobalTransform,
+    /// User indication of whether an entity is visible
+    pub visibility: Visibility,
+    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering
+    pub computed_visibility: ComputedVisibility,
+}
+
 impl Chunk {
-    pub fn new(position: Vec3) -> Self {
+    pub fn new() -> Self {
         let mut blocks = Vec::with_capacity(CHUNK_SZ);
         blocks.resize(CHUNK_SZ, VoxelType::Dirt);
-        Self {
-            mesh: None,
-            position,
-            blocks,
-        }
+        Self { blocks }
     }
 }
