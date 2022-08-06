@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = "0.7"                                                                            # Actual Game Engine
+bevy = "0.8"      
+bevy_egui = "0.15"                                                                      # Actual Game Engine
 smooth-bevy-cameras = { git = "https://github.com/bonsairobo/smooth-bevy-cameras" }     # Nice cameras for moving around
 
 # Enable only a small amount of optimization in debug mode

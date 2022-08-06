@@ -3,7 +3,7 @@ mod chunk;
 use bevy::prelude::*;
 use chunk::Chunk;
 use smooth_bevy_cameras::{
-    controllers::orbit::{OrbitCameraBundle, OrbitCameraController, OrbitCameraPlugin},
+    controllers::fps::{FpsCameraBundle, FpsCameraController, FpsCameraPlugin},
     LookTransformPlugin,
 };
 
@@ -18,7 +18,7 @@ fn main() {
             ..Default::default()
         })
         .add_plugin(LookTransformPlugin)
-        .add_plugin(OrbitCameraPlugin::default())
+        .add_plugin(FpsCameraPlugin::default())
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup)
         .run();
@@ -36,7 +36,7 @@ fn setup(
         ..Default::default()
     });
 
-    let c = Chunk::new(Vec3::new(0.0, 0.0, 0.0));
+    let c = Chunk::new();
 
     // cube
     commands.spawn_bundle(PbrBundle {
@@ -53,10 +53,11 @@ fn setup(
     });
 
     // Camera
-    commands.spawn_bundle(OrbitCameraBundle::new(
-        OrbitCameraController::default(),
-        PerspectiveCameraBundle::default(),
-        Vec3::new(-2.0, 5.0, 5.0),
-        Vec3::new(0., 0., 0.),
-    ));
+    commands
+        .spawn_bundle(Camera3dBundle::default())
+        .insert_bundle(FpsCameraBundle::new(
+            FpsCameraController::default(),
+            Vec3::new(-2.0, 5.0, 5.0),
+            Vec3::new(0., 0., 0.),
+        ));
 }
