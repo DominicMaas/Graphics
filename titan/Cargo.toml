@@ -5,7 +5,8 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.8"      
-bevy_egui = "0.15"                                                                      # Actual Game Engine
+bevy_egui = "0.15"      
+bevy_rapier3d = { version = "0.16.0", features = [ "simd-stable", "debug-render" ] }                                                              # Actual Game Engine
 smooth-bevy-cameras = { git = "https://github.com/bonsairobo/smooth-bevy-cameras" }     # Nice cameras for moving around
 
 # Enable only a small amount of optimization in debug mode
@@ -19,3 +20,4 @@ opt-level = 3
 # High performance for release, slow compile times
 [profile.release]
 lto = "thin"
+codegen-units = 1
