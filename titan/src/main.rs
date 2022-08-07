@@ -1,3 +1,4 @@
+mod block_map;
 mod chunk;
 
 use bevy::prelude::*;
