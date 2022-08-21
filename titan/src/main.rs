@@ -2,6 +2,7 @@ mod block_map;
 mod chunk;
 
 use bevy::prelude::*;
+use bevy_atmosphere::prelude::*;
 use bevy_rapier3d::prelude::*;
 use chunk::chunk_setup;
 use smooth_bevy_cameras::{
@@ -12,6 +13,7 @@ use smooth_bevy_cameras::{
 fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
+        .insert_resource(Atmosphere::default())
         .insert_resource(ClearColor(Color::rgb(0.5294, 0.8078, 0.9216)))
         .insert_resource(AmbientLight {
             color: Color::WHITE,
@@ -24,6 +26,7 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(AtmospherePlugin)
         .add_plugin(LookTransformPlugin)
         .add_plugin(FpsCameraPlugin::default())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
@@ -34,11 +37,14 @@ fn main() {
 }
 
 fn setup(
+    mut atmosphere: ResMut<Atmosphere>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // light
+    // Sun
+    atmosphere.sun_position = Vec3::new(0.7, 1.0, 0.7);
+
     commands.spawn_bundle(DirectionalLightBundle {
         directional_light: DirectionalLight {
             illuminance: 10000.0,
@@ -47,7 +53,9 @@ fn setup(
         },
         transform: Transform {
             translation: Vec3::new(0.0, 100.0, 0.0),
-            rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_4),
+            rotation: Quat::from_rotation_x(
+                -atmosphere.sun_position.y.atan2(atmosphere.sun_position.z),
+            ),
             ..default()
         },
         ..Default::default()
@@ -67,7 +75,8 @@ fn setup(
         .spawn_bundle(Camera3dBundle::default())
         .insert_bundle(FpsCameraBundle::new(
             FpsCameraController::default(),
-            Vec3::new(-2.0, 5.0, 5.0),
+            Vec3::new(0.0, 5.0, 5.0),
             Vec3::new(0., 0., 0.),
-        ));
+        ))
+        .insert(AtmosphereCamera(None));
 }
