@@ -25,12 +25,12 @@
       "name": "Project Eris"
     },
     {
-      "path": "projects/titan",
-      "name": "Project Titan"
+      "path": "projects/solar_system",
+      "name": "Solar System"
     },
     {
-      "path": "projects/solar_system",
-	  "name": "Solar System"
+      "path": "titan",
+      "name": "Project Titan (Voxel Game)"
     }
   ],
   "tasks": {
