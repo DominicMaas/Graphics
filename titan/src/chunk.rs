@@ -4,13 +4,16 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::*;
 
-use crate::block_map::{vertex_offset, FACE_FRONT, INDEX_MAP, NORMAL_MAP, VERTEX_MAP};
+use crate::block_map::{
+    vertex_offset, FACE_BACK, FACE_BOTTOM, FACE_FRONT, FACE_LEFT, FACE_RIGHT, FACE_TOP, INDEX_MAP,
+    NORMAL_MAP, VERTEX_MAP,
+};
 
 // Chunk constants
 
 pub const CHUNK_XZ: usize = 16;
 pub const CHUNK_Y: usize = 16;
-pub const CHUNK_SZ: usize = CHUNK_XZ * CHUNK_Y;
+pub const CHUNK_SZ: usize = CHUNK_XZ * CHUNK_XZ * CHUNK_Y;
 
 pub const WORLD_XZ: isize = 4;
 
@@ -48,6 +51,8 @@ impl Default for Chunk {
     fn default() -> Self {
         let mut blocks = Vec::with_capacity(CHUNK_SZ);
         blocks.resize(CHUNK_SZ, VoxelType::Dirt);
+
+        blocks[(0 * CHUNK_XZ * CHUNK_Y + 15 * CHUNK_XZ + 0)] = VoxelType::Air;
         Self { blocks }
     }
 }
@@ -55,6 +60,28 @@ impl Default for Chunk {
 impl Chunk {
     pub fn get_block(&self, x: usize, y: usize, z: usize) -> VoxelType {
         self.blocks[(z * CHUNK_XZ * CHUNK_Y + y * CHUNK_XZ + x) as usize]
+    }
+
+    /// Returns if the specified block is transparent (air, water, etc.)
+    /// Used for block culling
+    fn is_transparent(&self, x: f32, y: f32, z: f32) -> bool {
+        // Always air on top of a chunk
+        if y >= CHUNK_Y as f32 {
+            return true;
+        }
+
+        // No need to render the bottom of the world
+        if y < 0.0 {
+            return false;
+        }
+
+        // If outside this chunk
+        if (x < 0.0) || (z < 0.0) || (x >= CHUNK_XZ as f32) || (z >= CHUNK_XZ as f32) {
+            // Always true for now
+            return true;
+        }
+
+        return self.get_block(x as usize, y as usize, z as usize) == VoxelType::Air;
     }
 
     pub fn create_mesh(&self) -> Mesh {
@@ -73,16 +100,89 @@ impl Chunk {
                     let yf = y as f32;
                     let zf = z as f32;
 
-                    for i in 0..4 {
-                        vertices.push(vertex_offset(VERTEX_MAP[FACE_FRONT][i], xf, yf, zf));
-                        normals.push(NORMAL_MAP[FACE_FRONT][i]);
+                    // Top Face
+                    if self.is_transparent(xf, yf + 1.0, zf) {
+                        for i in 0..4 {
+                            vertices.push(vertex_offset(VERTEX_MAP[FACE_TOP][i], xf, yf, zf));
+                            normals.push(NORMAL_MAP[FACE_TOP][i]);
+                        }
+
+                        for i in 0..6 {
+                            indices.push(index + INDEX_MAP[FACE_TOP][i])
+                        }
+
+                        index += 4;
                     }
 
-                    for i in 0..6 {
-                        indices.push(index + INDEX_MAP[FACE_FRONT][i])
+                    // Bottom Face
+                    if self.is_transparent(xf, yf - 1.0, zf) {
+                        for i in 0..4 {
+                            vertices.push(vertex_offset(VERTEX_MAP[FACE_BOTTOM][i], xf, yf, zf));
+                            normals.push(NORMAL_MAP[FACE_BOTTOM][i]);
+                        }
+
+                        for i in 0..6 {
+                            indices.push(index + INDEX_MAP[FACE_BOTTOM][i])
+                        }
+
+                        index += 4;
                     }
 
-                    index += 4;
+                    // Right Face
+                    if self.is_transparent(xf + 1.0, yf, zf) {
+                        for i in 0..4 {
+                            vertices.push(vertex_offset(VERTEX_MAP[FACE_RIGHT][i], xf, yf, zf));
+                            normals.push(NORMAL_MAP[FACE_RIGHT][i]);
+                        }
+
+                        for i in 0..6 {
+                            indices.push(index + INDEX_MAP[FACE_RIGHT][i])
+                        }
+
+                        index += 4;
+                    }
+
+                    // Left Face
+                    if self.is_transparent(xf - 1.0, yf, zf) {
+                        for i in 0..4 {
+                            vertices.push(vertex_offset(VERTEX_MAP[FACE_LEFT][i], xf, yf, zf));
+                            normals.push(NORMAL_MAP[FACE_LEFT][i]);
+                        }
+
+                        for i in 0..6 {
+                            indices.push(index + INDEX_MAP[FACE_LEFT][i])
+                        }
+
+                        index += 4;
+                    }
+
+                    // Front Face
+                    if self.is_transparent(xf, yf, zf + 1.0) {
+                        for i in 0..4 {
+                            vertices.push(vertex_offset(VERTEX_MAP[FACE_FRONT][i], xf, yf, zf));
+                            normals.push(NORMAL_MAP[FACE_FRONT][i]);
+                        }
+
+                        for i in 0..6 {
+                            indices.push(index + INDEX_MAP[FACE_FRONT][i])
+                        }
+
+                        index += 4;
+                    }
+
+                    // Back Face
+                    if self.is_transparent(xf, yf, zf - 1.0) {
+                        for i in 0..4 {
+                            vertices.push(vertex_offset(VERTEX_MAP[FACE_BACK][i], xf, yf, zf));
+                            normals.push(NORMAL_MAP[FACE_BACK][i]);
+                        }
+
+                        for i in 0..6 {
+                            indices.push(index + INDEX_MAP[FACE_BACK][i])
+                        }
+
+                        index += 4;
+                    }
                 }
             }
         }
@@ -106,10 +206,6 @@ pub fn chunk_setup(
         for z in -WORLD_XZ..WORLD_XZ {
             let chunk = Chunk::default();
             let chunk_mesh = meshes.add(chunk.create_mesh());
-
-            meshes.add(Mesh::from(shape::Cube {
-                size: CHUNK_XZ as f32,
-            }));
 
             commands
                 .spawn_bundle(ChunkBundle {
