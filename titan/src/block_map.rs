@@ -79,46 +79,40 @@ pub fn texture_offset_from_block(block_type: VoxelType) -> TextureOffset {
 
 pub const TEXTURE_MAP: [[[f32; 2]; 4]; 6] = [
     [
-        // Front
-        [0.0, TEX_Y_STEP],
-        [TEX_X_STEP, TEX_Y_STEP],
-        [TEX_X_STEP, 0.0],
         [0.0, 0.0],
-    ],
-    [
-        // Back
-        [0.0, 0.0],
-        [0.0, TEX_Y_STEP],
-        [TEX_X_STEP, TEX_Y_STEP],
         [TEX_X_STEP, 0.0],
-    ],
-    [
-        // Right
         [TEX_X_STEP, TEX_Y_STEP],
-        [TEX_X_STEP, 0.0],
-        [0.0, 0.0],
         [0.0, TEX_Y_STEP],
     ],
     [
-        // Left
         [TEX_X_STEP, 0.0],
         [0.0, 0.0],
         [0.0, TEX_Y_STEP],
         [TEX_X_STEP, TEX_Y_STEP],
     ],
     [
-        // Top
-        [TEX_X_STEP, TEX_Y_STEP],
-        [TEX_X_STEP, 0.0],
         [0.0, 0.0],
+        [TEX_X_STEP, 0.0],
+        [TEX_X_STEP, TEX_Y_STEP],
         [0.0, TEX_Y_STEP],
     ],
     [
-        // Bottom
-        [0.0, TEX_Y_STEP],
-        [TEX_X_STEP, TEX_Y_STEP],
         [TEX_X_STEP, 0.0],
         [0.0, 0.0],
+        [0.0, TEX_Y_STEP],
+        [TEX_X_STEP, TEX_Y_STEP],
+    ],
+    [
+        [TEX_X_STEP, 0.0],
+        [0.0, 0.0],
+        [0.0, TEX_Y_STEP],
+        [TEX_X_STEP, TEX_Y_STEP],
+    ],
+    [
+        [0.0, 0.0],
+        [TEX_X_STEP, 0.0],
+        [TEX_X_STEP, TEX_Y_STEP],
+        [0.0, TEX_Y_STEP],
     ],
 ];
 

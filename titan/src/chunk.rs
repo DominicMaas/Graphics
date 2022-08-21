@@ -225,8 +225,10 @@ pub fn chunk_setup(
     asset_server: Res<AssetServer>,
 ) {
     let block_map_texture_handle = asset_server.load("block_map.png");
+
     let chunk_mat = materials.add(StandardMaterial {
         base_color_texture: Some(block_map_texture_handle.clone()),
+        reflectance: 0.2,
         ..Default::default()
     });
 

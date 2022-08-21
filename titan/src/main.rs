@@ -2,7 +2,7 @@ mod block_map;
 mod chunk;
 mod terrain;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, render::texture::ImageSettings};
 use bevy_atmosphere::prelude::*;
 use bevy_rapier3d::prelude::*;
 use chunk::chunk_setup;
@@ -14,6 +14,7 @@ use terrain::Terrain;
 
 fn main() {
     App::new()
+        .insert_resource(ImageSettings::default_nearest())
         .insert_resource(Msaa { samples: 4 })
         .insert_resource(Atmosphere::default())
         .insert_resource(ClearColor(Color::rgb(0.5294, 0.8078, 0.9216)))

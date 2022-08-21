@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bracket_noise::prelude::*;
 
-use crate::chunk::VoxelType;
+use crate::chunk::{VoxelType, CHUNK_Y};
 
 pub struct Terrain {
     seed: u64,
@@ -32,14 +32,26 @@ impl Terrain {
 
         v += 6.0;
 
+        let mut t = VoxelType::Air;
+
         if position.y == 0.0 {
-            return VoxelType::Grass;
+            t = VoxelType::Grass;
+        } else if v >= position.y {
+            t = VoxelType::Dirt;
         }
 
-        if v >= position.y {
-            return VoxelType::Dirt;
-        } else {
-            return VoxelType::Air;
+        // Very top layer of the world should be grass
+        if position.y == (CHUNK_Y - 1) as f32 && t == VoxelType::Dirt {
+            t = VoxelType::Grass;
         }
+
+        // Get top layer grass
+        if t == VoxelType::Dirt {
+            if self.get_block_type(position + Vec3::new(0.0, 1.0, 0.0)) == VoxelType::Air {
+                t = VoxelType::Grass;
+            }
+        }
+
+        t
     }
 }
