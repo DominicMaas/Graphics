@@ -1,3 +1,5 @@
+use crate::chunk::VoxelType;
+
 pub type BlockFace = usize;
 
 pub const FACE_FRONT: BlockFace = 0;
@@ -13,6 +15,112 @@ pub const TEX_Y_STEP: f32 = 1.0;
 pub fn vertex_offset(input: [f32; 3], x: f32, y: f32, z: f32) -> [f32; 3] {
     return [x + input[0], y + input[1], z + input[2]];
 }
+
+pub fn add_uvs(offset: [f32; 2], map: [f32; 2]) -> [f32; 2] {
+    return [offset[0] + map[0], offset[1] + map[1]];
+}
+
+pub struct TextureOffset {
+    pub front: [f32; 2],
+    pub back: [f32; 2],
+    pub left: [f32; 2],
+    pub right: [f32; 2],
+    pub top: [f32; 2],
+    pub bottom: [f32; 2],
+}
+
+pub fn texture_offset_from_block(block_type: VoxelType) -> TextureOffset {
+    let side_offset: f32;
+    let top_offset: f32;
+    let bottom_offset: f32;
+
+    match block_type {
+        VoxelType::Dirt => {
+            side_offset = 0.0;
+            top_offset = 0.0;
+            bottom_offset = 0.0
+        }
+        VoxelType::Grass => {
+            side_offset = 1.0;
+            top_offset = 2.0;
+            bottom_offset = 0.0
+        }
+        /*super::BlockType::Sand => {
+            side_offset = 6.0;
+            top_offset = 6.0;
+            bottom_offset = 6.0
+        }
+        super::BlockType::Stone => {
+            side_offset = 5.0;
+            top_offset = 5.0;
+            bottom_offset = 5.0
+        }
+        super::BlockType::Water { flowing: _ } => {
+            side_offset = 7.0;
+            top_offset = 7.0;
+            bottom_offset = 7.0
+        }*/
+        _ => {
+            side_offset = 0.0;
+            top_offset = 0.0;
+            bottom_offset = 0.0
+        }
+    }
+
+    TextureOffset {
+        front: [TEX_X_STEP * side_offset, 0.0],
+        back: [TEX_X_STEP * side_offset, 0.0],
+        left: [TEX_X_STEP * side_offset, 0.0],
+        right: [TEX_X_STEP * side_offset, 0.0],
+        top: [TEX_X_STEP * top_offset, 0.0],
+        bottom: [TEX_X_STEP * bottom_offset, 0.0],
+    }
+}
+
+pub const TEXTURE_MAP: [[[f32; 2]; 4]; 6] = [
+    [
+        // Front
+        [0.0, TEX_Y_STEP],
+        [TEX_X_STEP, TEX_Y_STEP],
+        [TEX_X_STEP, 0.0],
+        [0.0, 0.0],
+    ],
+    [
+        // Back
+        [0.0, 0.0],
+        [0.0, TEX_Y_STEP],
+        [TEX_X_STEP, TEX_Y_STEP],
+        [TEX_X_STEP, 0.0],
+    ],
+    [
+        // Right
+        [TEX_X_STEP, TEX_Y_STEP],
+        [TEX_X_STEP, 0.0],
+        [0.0, 0.0],
+        [0.0, TEX_Y_STEP],
+    ],
+    [
+        // Left
+        [TEX_X_STEP, 0.0],
+        [0.0, 0.0],
+        [0.0, TEX_Y_STEP],
+        [TEX_X_STEP, TEX_Y_STEP],
+    ],
+    [
+        // Top
+        [TEX_X_STEP, TEX_Y_STEP],
+        [TEX_X_STEP, 0.0],
+        [0.0, 0.0],
+        [0.0, TEX_Y_STEP],
+    ],
+    [
+        // Bottom
+        [0.0, TEX_Y_STEP],
+        [TEX_X_STEP, TEX_Y_STEP],
+        [TEX_X_STEP, 0.0],
+        [0.0, 0.0],
+    ],
+];
 
 // Defined in counter clockwise
 pub const VERTEX_MAP: [[[f32; 3]; 4]; 6] = [

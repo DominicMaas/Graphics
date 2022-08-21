@@ -1,6 +1,7 @@
 [package]
 name = "titan"
 version = "0.1.0"
+authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2021"
 
 [dependencies]
@@ -9,6 +10,8 @@ bevy_egui = "0.15"
 bevy_atmosphere = "0.4.0"
 bevy_rapier3d = { version = "0.16.0", features = [ "simd-stable", "debug-render" ] }                                                              # Actual Game Engine
 smooth-bevy-cameras = { git = "https://github.com/bonsairobo/smooth-bevy-cameras" }     # Nice cameras for moving around
+bracket-noise = "0.8.2"
+rand = "0.8.5"
 
 # Enable only a small amount of optimization in debug mode
 [profile.dev]

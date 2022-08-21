@@ -1,5 +1,6 @@
 mod block_map;
 mod chunk;
+mod terrain;
 
 use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
@@ -9,6 +10,7 @@ use smooth_bevy_cameras::{
     controllers::fps::{FpsCameraBundle, FpsCameraController, FpsCameraPlugin},
     LookTransformPlugin,
 };
+use terrain::Terrain;
 
 fn main() {
     App::new()
@@ -17,7 +19,7 @@ fn main() {
         .insert_resource(ClearColor(Color::rgb(0.5294, 0.8078, 0.9216)))
         .insert_resource(AmbientLight {
             color: Color::WHITE,
-            brightness: 0.05,
+            brightness: 0.1,
         })
         .insert_resource(WindowDescriptor {
             title: "Titan Voxel Experiment - Dominic Maas".to_string(),
@@ -25,6 +27,7 @@ fn main() {
             height: 1080.,
             ..Default::default()
         })
+        .insert_resource(Terrain::new(rand::random::<u64>()))
         .add_plugins(DefaultPlugins)
         .add_plugin(AtmospherePlugin)
         .add_plugin(LookTransformPlugin)
@@ -43,7 +46,7 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Sun
-    let sun_val: f32 = 2.9;
+    let sun_val: f32 = 2.1;
     let sun_pos = Vec3::new(1.0, sun_val.sin(), sun_val.cos());
 
     atmosphere.sun_position = sun_pos;
@@ -60,8 +63,6 @@ fn setup(
         },
         ..Default::default()
     });
-
-    // Bouncing Ball!
 
     commands
         .spawn_bundle(PbrBundle {
@@ -116,9 +117,9 @@ fn setup(
             material: materials.add(StandardMaterial::from(Color::rgb(0.0, 0.0, 0.0))),
             ..Default::default()
         })
-        .insert(RigidBody::KinematicPositionBased)
-        .insert(Collider::capsule_y(1.0, 1.0))
-        .insert(LockedAxes::ROTATION_LOCKED)
-        .insert(Ccd::enabled())
+        //.insert(RigidBody::KinematicPositionBased)
+        //.insert(Collider::capsule_y(1.0, 1.0))
+        //.insert(LockedAxes::ROTATION_LOCKED)
+        //.insert(Ccd::enabled())
         .insert(AtmosphereCamera(None));
 }
