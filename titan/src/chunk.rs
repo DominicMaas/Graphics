@@ -200,12 +200,13 @@ pub fn chunk_setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let chunk_mat = materials.add(Color::rgb(0.8, 0.7, 0.6).into());
+    let chunk_mat = materials.add(Color::rgb(0.2, 0.8, 0.2).into());
 
     for x in -WORLD_XZ..WORLD_XZ {
         for z in -WORLD_XZ..WORLD_XZ {
             let chunk = Chunk::default();
-            let chunk_mesh = meshes.add(chunk.create_mesh());
+            let chunk_mesh_handle = meshes.add(chunk.create_mesh());
+            let chunk_mesh = &meshes.get(&chunk_mesh_handle);
 
             commands
                 .spawn_bundle(ChunkBundle {
@@ -218,13 +219,12 @@ pub fn chunk_setup(
                     ),
                     ..Default::default()
                 })
-                .insert(chunk_mesh)
+                .insert(chunk_mesh_handle)
                 .insert(RigidBody::Fixed)
-                .insert(Collider::cuboid(
-                    CHUNK_XZ as f32 / 2.0,
-                    CHUNK_XZ as f32 / 2.0,
-                    CHUNK_XZ as f32 / 2.0,
-                ));
+                .insert(
+                    Collider::from_bevy_mesh(chunk_mesh.unwrap(), &ComputedColliderShape::TriMesh)
+                        .unwrap(),
+                );
         }
     }
 }
