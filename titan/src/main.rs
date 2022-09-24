@@ -48,7 +48,7 @@ fn setup(
 ) {
     // Sun
     let sun_val: f32 = 2.1;
-    let sun_pos = Vec3::new(1.0, sun_val.sin(), sun_val.cos());
+    let sun_pos = Vec3::new(0.0, sun_val.sin(), sun_val.cos());
 
     atmosphere.sun_position = sun_pos;
 
