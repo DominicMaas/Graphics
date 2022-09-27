@@ -1,6 +1,6 @@
 use bevy::{
     prelude::*,
-    render::{mesh::Indices, render_resource::PrimitiveTopology},
+    render::{mesh::Indices, render_resource::PrimitiveTopology, texture::ImageSampler},
 };
 use bevy_rapier3d::prelude::*;
 
@@ -9,23 +9,37 @@ use crate::{
         add_uvs, texture_offset_from_block, vertex_offset, FACE_BACK, FACE_BOTTOM, FACE_FRONT,
         FACE_LEFT, FACE_RIGHT, FACE_TOP, INDEX_MAP, NORMAL_MAP, TEXTURE_MAP, VERTEX_MAP,
     },
+    table::{CORNERS, EDGES, EDGE_CROSSING_MASK, TRIANGLES},
     terrain::Terrain,
 };
 
 // Chunk constants
 
-pub const CHUNK_XZ: usize = 32;
+pub const CHUNK_XZ: usize = 16;
 pub const CHUNK_Y: usize = 16;
 pub const CHUNK_SZ: usize = CHUNK_XZ * CHUNK_XZ * CHUNK_Y;
 
-pub const WORLD_XZ: isize = 16;
+pub const WORLD_XZ: isize = 14;
+pub const WORLD_Y: isize = 2;
+
+#[derive(Default, Clone, Copy, PartialEq)]
+pub struct TerrainVoxel {
+    pub density: f32,
+}
 
 #[derive(Default, Clone, Copy, PartialEq)]
 pub enum VoxelType {
     #[default]
     Air,
-    Dirt,
-    Grass,
+    Dirt(TerrainVoxel),
+    Grass(TerrainVoxel),
+    Leaf,
+    Log,
+    Stone(TerrainVoxel),
+    Sand(TerrainVoxel),
+    Glass,
+    Brick,
+    Water,
 }
 
 /// Represents a single chunk in the world
@@ -33,6 +47,9 @@ pub enum VoxelType {
 pub struct Chunk {
     /// 1D Array of all blocks in this chunk
     pub blocks: Vec<VoxelType>,
+
+    /// Where in the world is this chunk
+    pub world_position: Vec3,
 }
 
 #[derive(Default, Bundle)]
@@ -55,11 +72,21 @@ impl Default for Chunk {
     fn default() -> Self {
         let mut blocks = Vec::with_capacity(CHUNK_SZ);
         blocks.resize(CHUNK_SZ, VoxelType::Air);
-        Self { blocks }
+        Self {
+            blocks,
+            world_position: Vec3::default(),
+        }
     }
 }
 
 impl Chunk {
+    fn new(world_position: Vec3) -> Self {
+        Self {
+            world_position,
+            ..Default::default()
+        }
+    }
+
     /// Set the block type at the provided position
     pub fn set_block(&mut self, x: usize, y: usize, z: usize, voxel_type: VoxelType) {
         self.blocks[(z * CHUNK_XZ * CHUNK_Y + y * CHUNK_XZ + x) as usize] = voxel_type;
@@ -70,150 +97,100 @@ impl Chunk {
         self.blocks[(z * CHUNK_XZ * CHUNK_Y + y * CHUNK_XZ + x) as usize]
     }
 
-    /// Returns if the specified block is transparent (air, water, etc.)
-    /// Used for block culling
-    fn is_transparent(&self, x: f32, y: f32, z: f32) -> bool {
-        // Always air on top of a chunk
-        if y >= CHUNK_Y as f32 {
-            return true;
-        }
-
-        // No need to render the bottom of the world
-        if y < 0.0 {
-            return false;
-        }
-
+    /// Get the block type at the provided position
+    fn get_t_block(&self, position: Vec3, t: &Res<Terrain>) -> VoxelType {
         // If outside this chunk
-        if (x < 0.0) || (z < 0.0) || (x >= CHUNK_XZ as f32) || (z >= CHUNK_XZ as f32) {
-            // Always true for now
-            return true;
+        if (position.x < 0.0)
+            || (position.y < 0.0)
+            || (position.z < 0.0)
+            || (position.x >= CHUNK_XZ as f32)
+            || (position.y >= CHUNK_Y as f32)
+            || (position.z >= CHUNK_XZ as f32)
+        {
+            return t.get_block_type(self.world_position + position);
         }
 
-        return self.get_block(x as usize, y as usize, z as usize) == VoxelType::Air;
+        // If inside the chunk
+        self.blocks[(position.z as usize * CHUNK_XZ * CHUNK_Y
+            + position.y as usize * CHUNK_XZ
+            + position.x as usize) as usize]
     }
 
-    pub fn create_mesh(&self) -> Mesh {
+    /// Returns if the specified block is transparent (air, water, etc.)
+    /// Used for block culling
+    fn is_transparent(&self, position: Vec3, t: &Res<Terrain>) -> bool {
+        self.get_t_block(position, t) == VoxelType::Air
+    }
+
+    pub fn create_mesh(&self, t: &Res<Terrain>) -> Option<Mesh> {
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 
         let mut vertices: Vec<[f32; 3]> = Vec::new();
         let mut normals: Vec<[f32; 3]> = Vec::new();
         let mut uvs: Vec<[f32; 2]> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
-        let mut index = 0;
 
-        for x in 0..CHUNK_XZ {
-            for y in 0..CHUNK_Y {
-                for z in 0..CHUNK_XZ {
-                    let xf = x as f32;
-                    let yf = y as f32;
-                    let zf = z as f32;
+        for x in 0..(CHUNK_XZ + 1) {
+            for y in 0..(CHUNK_Y + 1) {
+                for z in 0..(CHUNK_XZ + 1) {
+                    let position = Vec3::new(x as f32, y as f32, z as f32);
+                    let voxel_type = self.get_t_block(position, t);
 
-                    let block_type = self.get_block(x, y, z);
-                    if block_type == VoxelType::Air {
-                        continue;
+                    // Calculate the cube index by looking at all 8 corners of the current
+                    // voxel
+                    let mut cube_index = 0;
+                    for i in 0..8 {
+                        if self.is_transparent((position - 1.0) + CORNERS[i], t) {
+                            cube_index |= 1 << i;
+                        }
                     }
 
-                    let texture_offset = texture_offset_from_block(block_type);
-
-                    // Top Face
-                    if self.is_transparent(xf, yf + 1.0, zf) {
-                        for i in 0..4 {
-                            vertices.push(vertex_offset(VERTEX_MAP[FACE_TOP][i], xf, yf, zf));
-                            normals.push(NORMAL_MAP[FACE_TOP][i]);
-                            uvs.push(add_uvs(texture_offset.top, TEXTURE_MAP[FACE_TOP][i]));
+                    // Look up the triangulation for this index
+                    let triangles = TRIANGLES[cube_index];
+                    for edge_index in triangles {
+                        if edge_index == -1 {
+                            break;
                         }
 
-                        for i in 0..6 {
-                            indices.push(index + INDEX_MAP[FACE_TOP][i])
-                        }
+                        let index_a = EDGES[edge_index as usize][0];
+                        let index_b = EDGES[edge_index as usize][1];
 
-                        index += 4;
-                    }
+                        let v = position + ((CORNERS[index_a] + CORNERS[index_b]) / 2.0);
 
-                    // Bottom Face
-                    if self.is_transparent(xf, yf - 1.0, zf) {
-                        for i in 0..4 {
-                            vertices.push(vertex_offset(VERTEX_MAP[FACE_BOTTOM][i], xf, yf, zf));
-                            normals.push(NORMAL_MAP[FACE_BOTTOM][i]);
-                            uvs.push(add_uvs(texture_offset.bottom, TEXTURE_MAP[FACE_BOTTOM][i]));
-                        }
+                        vertices.push(v.to_array());
+                        uvs.push([0.0, 0.0]);
 
-                        for i in 0..6 {
-                            indices.push(index + INDEX_MAP[FACE_BOTTOM][i])
-                        }
-
-                        index += 4;
-                    }
-
-                    // Right Face
-                    if self.is_transparent(xf + 1.0, yf, zf) {
-                        for i in 0..4 {
-                            vertices.push(vertex_offset(VERTEX_MAP[FACE_RIGHT][i], xf, yf, zf));
-                            normals.push(NORMAL_MAP[FACE_RIGHT][i]);
-                            uvs.push(add_uvs(texture_offset.right, TEXTURE_MAP[FACE_RIGHT][i]));
-                        }
-
-                        for i in 0..6 {
-                            indices.push(index + INDEX_MAP[FACE_RIGHT][i])
-                        }
-
-                        index += 4;
-                    }
-
-                    // Left Face
-                    if self.is_transparent(xf - 1.0, yf, zf) {
-                        for i in 0..4 {
-                            vertices.push(vertex_offset(VERTEX_MAP[FACE_LEFT][i], xf, yf, zf));
-                            normals.push(NORMAL_MAP[FACE_LEFT][i]);
-                            uvs.push(add_uvs(texture_offset.left, TEXTURE_MAP[FACE_LEFT][i]));
-                        }
-
-                        for i in 0..6 {
-                            indices.push(index + INDEX_MAP[FACE_LEFT][i])
-                        }
-
-                        index += 4;
-                    }
-
-                    // Front Face
-                    if self.is_transparent(xf, yf, zf + 1.0) {
-                        for i in 0..4 {
-                            vertices.push(vertex_offset(VERTEX_MAP[FACE_FRONT][i], xf, yf, zf));
-                            normals.push(NORMAL_MAP[FACE_FRONT][i]);
-                            uvs.push(add_uvs(texture_offset.front, TEXTURE_MAP[FACE_FRONT][i]));
-                        }
-
-                        for i in 0..6 {
-                            indices.push(index + INDEX_MAP[FACE_FRONT][i])
-                        }
-
-                        index += 4;
-                    }
-
-                    // Back Face
-                    if self.is_transparent(xf, yf, zf - 1.0) {
-                        for i in 0..4 {
-                            vertices.push(vertex_offset(VERTEX_MAP[FACE_BACK][i], xf, yf, zf));
-                            normals.push(NORMAL_MAP[FACE_BACK][i]);
-                            uvs.push(add_uvs(texture_offset.back, TEXTURE_MAP[FACE_BACK][i]));
-                        }
-
-                        for i in 0..6 {
-                            indices.push(index + INDEX_MAP[FACE_BACK][i])
-                        }
-
-                        index += 4;
+                        indices.push(vertices.len() as u32 - 1);
                     }
                 }
             }
         }
+
+        // Calculate normals for all vertices
+        for vertex in vertices.chunks(3) {
+            let v1 = Vec3::from(vertex[0]);
+            let v2 = Vec3::from(vertex[1]);
+            let v3 = Vec3::from(vertex[2]);
+
+            let normal = (v2 - v1).cross(v3 - v1).normalize();
+
+            normals.push(normal.to_array());
+            normals.push(normal.to_array());
+            normals.push(normal.to_array());
+        }
+
+        let index_count = indices.len();
 
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
         mesh.set_indices(Some(Indices::U32(indices)));
 
-        return mesh;
+        if index_count > 0 {
+            return Some(mesh);
+        }
+
+        return None;
     }
 }
 
@@ -222,56 +199,71 @@ pub fn chunk_setup(
     terrain: Res<Terrain>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut textures: ResMut<Assets<Image>>,
     asset_server: Res<AssetServer>,
 ) {
+    // Load in the block map texture used for the chunks
     let block_map_texture_handle = asset_server.load("block_map.png");
 
+    // Change sampling for block map
+    if let Some(mut texture) = textures.get_mut(&block_map_texture_handle.clone()) {
+        texture.sampler_descriptor = ImageSampler::nearest();
+    }
+
+    // Create the chunk material
     let chunk_mat = materials.add(StandardMaterial {
         base_color_texture: Some(block_map_texture_handle.clone()),
         reflectance: 0.2,
         ..Default::default()
     });
 
-    for x in -WORLD_XZ..WORLD_XZ {
-        for z in -WORLD_XZ..WORLD_XZ {
-            // Where this chunk is in the world
-            let world_position = Vec3::new(
-                (x * CHUNK_XZ as isize) as f32,
-                0.0,
-                (z * CHUNK_XZ as isize) as f32,
-            );
+    for y in -WORLD_Y..WORLD_Y {
+        for x in -WORLD_XZ..WORLD_XZ {
+            for z in -WORLD_XZ..WORLD_XZ {
+                // Where this chunk is in the world
+                let world_position = Vec3::new(
+                    (x * CHUNK_XZ as isize) as f32,
+                    (y * CHUNK_Y as isize) as f32,
+                    (z * CHUNK_XZ as isize) as f32,
+                );
 
-            // Create a default chunk
-            let mut chunk = Chunk::default();
+                // Create a default chunk
+                let mut chunk = Chunk::new(world_position);
 
-            // Load in some initial terrain
-            for cx in 0..CHUNK_XZ {
-                for cy in 0..CHUNK_Y {
-                    for cz in 0..CHUNK_XZ {
-                        let c_pos = Vec3::new(cx as f32, cy as f32, cz as f32) + world_position;
-                        let block_type = terrain.get_block_type(c_pos);
+                // Load in some initial terrain
+                for cx in 0..CHUNK_XZ {
+                    for cy in 0..CHUNK_Y {
+                        for cz in 0..CHUNK_XZ {
+                            let c_pos = Vec3::new(cx as f32, cy as f32, cz as f32) + world_position;
+                            let block_type = terrain.get_block_type(c_pos);
 
-                        chunk.set_block(cx, cy, cz, block_type);
+                            chunk.set_block(cx, cy, cz, block_type);
+                        }
                     }
                 }
+
+                if let Some(m) = chunk.create_mesh(&terrain) {
+                    let chunk_mesh_handle = meshes.add(m);
+                    //let chunk_mesh = &meshes.get(&chunk_mesh_handle);
+
+                    commands
+                        .spawn_bundle(ChunkBundle {
+                            chunk,
+                            material: chunk_mat.clone(),
+                            transform: Transform::from_translation(world_position),
+                            ..Default::default()
+                        })
+                        .insert(chunk_mesh_handle);
+                    //.insert(RigidBody::Fixed)
+                    //.insert(
+                    //    Collider::from_bevy_mesh(
+                    //        chunk_mesh.unwrap(),
+                    //        &ComputedColliderShape::TriMesh,
+                    //    )
+                    //    .unwrap(),
+                    //);
+                }
             }
-
-            let chunk_mesh_handle = meshes.add(chunk.create_mesh());
-            let chunk_mesh = &meshes.get(&chunk_mesh_handle);
-
-            commands
-                .spawn_bundle(ChunkBundle {
-                    chunk,
-                    material: chunk_mat.clone(),
-                    transform: Transform::from_translation(world_position),
-                    ..Default::default()
-                })
-                .insert(chunk_mesh_handle)
-                .insert(RigidBody::Fixed)
-                .insert(
-                    Collider::from_bevy_mesh(chunk_mesh.unwrap(), &ComputedColliderShape::TriMesh)
-                        .unwrap(),
-                );
         }
     }
 }

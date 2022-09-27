@@ -1,10 +1,11 @@
 mod block_map;
 mod chunk;
+mod table;
 mod terrain;
 
-use bevy::{prelude::*, render::texture::ImageSettings};
+use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
-use bevy_rapier3d::prelude::*;
+use bevy_rapier3d::{prelude::*, render::RapierDebugRenderPlugin};
 use chunk::chunk_setup;
 use smooth_bevy_cameras::{
     controllers::fps::{FpsCameraBundle, FpsCameraController, FpsCameraPlugin},
@@ -14,13 +15,12 @@ use terrain::Terrain;
 
 fn main() {
     App::new()
-        .insert_resource(ImageSettings::default_nearest())
         .insert_resource(Msaa { samples: 4 })
         .insert_resource(Atmosphere::default())
         .insert_resource(ClearColor(Color::rgb(0.5294, 0.8078, 0.9216)))
         .insert_resource(AmbientLight {
             color: Color::WHITE,
-            brightness: 0.1,
+            brightness: 0.15,
         })
         .insert_resource(WindowDescriptor {
             title: "Titan Voxel Experiment - Dominic Maas".to_string(),
@@ -33,7 +33,7 @@ fn main() {
         .add_plugin(AtmospherePlugin)
         .add_plugin(LookTransformPlugin)
         .add_plugin(FpsCameraPlugin::default())
-        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        //.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         //.add_plugin(RapierDebugRenderPlugin::default())
         .add_startup_system(setup)
         .add_startup_system(chunk_setup)
@@ -47,7 +47,7 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Sun
-    let sun_val: f32 = 2.1;
+    let sun_val: f32 = 2.6;
     let sun_pos = Vec3::new(0.0, sun_val.sin(), sun_val.cos());
 
     atmosphere.sun_position = sun_pos;
@@ -55,7 +55,7 @@ fn setup(
     commands.spawn_bundle(DirectionalLightBundle {
         directional_light: DirectionalLight {
             illuminance: 10000.0,
-            shadows_enabled: true,
+            shadows_enabled: false,
             ..Default::default()
         },
         transform: Transform {
@@ -65,7 +65,7 @@ fn setup(
         ..Default::default()
     });
 
-    commands
+    /*commands
         .spawn_bundle(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
             material: materials.add(StandardMaterial::from(Color::rgb(0.8, 0.2, 0.2))),
@@ -96,7 +96,7 @@ fn setup(
         .insert(RigidBody::Dynamic)
         .insert(Collider::cuboid(1.0, 1.0, 1.0))
         .insert(Restitution::coefficient(0.7))
-        .insert_bundle(TransformBundle::from(Transform::from_xyz(1.0, 36.0, 0.0)));
+        .insert_bundle(TransformBundle::from(Transform::from_xyz(1.0, 36.0, 0.0)));*/
 
     // Camera
     commands

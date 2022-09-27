@@ -35,31 +35,51 @@ pub fn texture_offset_from_block(block_type: VoxelType) -> TextureOffset {
     let bottom_offset: f32;
 
     match block_type {
-        VoxelType::Dirt => {
+        VoxelType::Dirt(_) => {
             side_offset = 0.0;
             top_offset = 0.0;
             bottom_offset = 0.0
         }
-        VoxelType::Grass => {
-            side_offset = 1.0;
+        VoxelType::Grass(_) => {
+            side_offset = 2.0;
             top_offset = 2.0;
-            bottom_offset = 0.0
+            bottom_offset = 2.0
         }
-        /*super::BlockType::Sand => {
-            side_offset = 6.0;
-            top_offset = 6.0;
-            bottom_offset = 6.0
+        VoxelType::Leaf => {
+            side_offset = 3.0;
+            top_offset = 3.0;
+            bottom_offset = 3.0
         }
-        super::BlockType::Stone => {
+        VoxelType::Log => {
+            side_offset = 5.0;
+            top_offset = 11.0;
+            bottom_offset = 11.0
+        }
+        VoxelType::Stone(_) => {
             side_offset = 5.0;
             top_offset = 5.0;
             bottom_offset = 5.0
         }
-        super::BlockType::Water { flowing: _ } => {
+        VoxelType::Sand(_) => {
+            side_offset = 6.0;
+            top_offset = 6.0;
+            bottom_offset = 6.0
+        }
+        VoxelType::Glass => {
             side_offset = 7.0;
             top_offset = 7.0;
             bottom_offset = 7.0
-        }*/
+        }
+        VoxelType::Brick => {
+            side_offset = 8.0;
+            top_offset = 8.0;
+            bottom_offset = 8.0
+        }
+        VoxelType::Water => {
+            side_offset = 7.0;
+            top_offset = 7.0;
+            bottom_offset = 7.0
+        }
         _ => {
             side_offset = 0.0;
             top_offset = 0.0;
