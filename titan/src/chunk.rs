@@ -2,14 +2,11 @@ use bevy::{
     prelude::*,
     render::{mesh::Indices, render_resource::PrimitiveTopology, texture::ImageSampler},
 };
-use bevy_rapier3d::prelude::*;
+use bevy_rapier3d::{parry::transformation::voxelization::Voxel, prelude::*};
+use rand::Rng;
 
 use crate::{
-    block_map::{
-        add_uvs, texture_offset_from_block, vertex_offset, FACE_BACK, FACE_BOTTOM, FACE_FRONT,
-        FACE_LEFT, FACE_RIGHT, FACE_TOP, INDEX_MAP, NORMAL_MAP, TEXTURE_MAP, VERTEX_MAP,
-    },
-    table::{CORNERS, EDGES, EDGE_CROSSING_MASK, TRIANGLES},
+    table::{CORNERS, EDGES, TRIANGLES},
     terrain::Terrain,
 };
 
@@ -20,7 +17,9 @@ pub const CHUNK_Y: usize = 16;
 pub const CHUNK_SZ: usize = CHUNK_XZ * CHUNK_XZ * CHUNK_Y;
 
 pub const WORLD_XZ: isize = 14;
-pub const WORLD_Y: isize = 2;
+pub const WORLD_Y: isize = 4;
+
+pub const WORLD_HEIGHT: usize = WORLD_Y as usize * CHUNK_Y;
 
 #[derive(Default, Clone, Copy, PartialEq)]
 pub struct TerrainVoxel {
@@ -40,6 +39,27 @@ pub enum VoxelType {
     Glass,
     Brick,
     Water,
+}
+
+impl VoxelType {
+    pub fn base_color(self) -> Vec4 {
+        match self {
+            VoxelType::Sand(_) => (
+                (1.0 / 255.0) * 253.0,
+                (1.0 / 255.0) * 253.0,
+                (1.0 / 255.0) * 90.0,
+                1.0,
+            )
+                .into(),
+            _ => (
+                (1.0 / 255.0) * 255.0,
+                (1.0 / 255.0) * 0.0,
+                (1.0 / 255.0) * 0.0,
+                1.0,
+            )
+                .into(),
+        }
+    }
 }
 
 /// Represents a single chunk in the world
@@ -123,24 +143,29 @@ impl Chunk {
     }
 
     pub fn create_mesh(&self, t: &Res<Terrain>) -> Option<Mesh> {
+        let mut rand = rand::thread_rng();
+
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 
         let mut vertices: Vec<[f32; 3]> = Vec::new();
         let mut normals: Vec<[f32; 3]> = Vec::new();
-        let mut uvs: Vec<[f32; 2]> = Vec::new();
+        let mut colors: Vec<[f32; 4]> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
 
-        for x in 0..(CHUNK_XZ + 1) {
-            for y in 0..(CHUNK_Y + 1) {
-                for z in 0..(CHUNK_XZ + 1) {
+        for x in 0..(CHUNK_XZ) {
+            for y in 0..(CHUNK_Y) {
+                for z in 0..(CHUNK_XZ) {
                     let position = Vec3::new(x as f32, y as f32, z as f32);
                     let voxel_type = self.get_t_block(position, t);
+                    let color = voxel_type.base_color();
+
+                    let offset_color = color + rand.gen_range(-0.05..0.05);
 
                     // Calculate the cube index by looking at all 8 corners of the current
                     // voxel
                     let mut cube_index = 0;
                     for i in 0..8 {
-                        if self.is_transparent((position - 1.0) + CORNERS[i], t) {
+                        if self.is_transparent((position + 0.0) + CORNERS[i], t) {
                             cube_index |= 1 << i;
                         }
                     }
@@ -157,8 +182,8 @@ impl Chunk {
 
                         let v = position + ((CORNERS[index_a] + CORNERS[index_b]) / 2.0);
 
-                        vertices.push(v.to_array());
-                        uvs.push([0.0, 0.0]);
+                        vertices.push(v.into());
+                        colors.push(offset_color.into());
 
                         indices.push(vertices.len() as u32 - 1);
                     }
@@ -183,7 +208,7 @@ impl Chunk {
 
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-        mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
         mesh.set_indices(Some(Indices::U32(indices)));
 
         if index_count > 0 {
@@ -202,22 +227,16 @@ pub fn chunk_setup(
     mut textures: ResMut<Assets<Image>>,
     asset_server: Res<AssetServer>,
 ) {
-    // Load in the block map texture used for the chunks
-    let block_map_texture_handle = asset_server.load("block_map.png");
-
-    // Change sampling for block map
-    if let Some(mut texture) = textures.get_mut(&block_map_texture_handle.clone()) {
-        texture.sampler_descriptor = ImageSampler::nearest();
-    }
-
     // Create the chunk material
     let chunk_mat = materials.add(StandardMaterial {
-        base_color_texture: Some(block_map_texture_handle.clone()),
-        reflectance: 0.2,
+        base_color: Color::rgb(1.0, 1.0, 1.0),
+        reflectance: 0.0,
+        metallic: 0.0,
+        perceptual_roughness: 1.0,
         ..Default::default()
     });
 
-    for y in -WORLD_Y..WORLD_Y {
+    for y in 0..WORLD_Y {
         for x in -WORLD_XZ..WORLD_XZ {
             for z in -WORLD_XZ..WORLD_XZ {
                 // Where this chunk is in the world
@@ -244,7 +263,7 @@ pub fn chunk_setup(
 
                 if let Some(m) = chunk.create_mesh(&terrain) {
                     let chunk_mesh_handle = meshes.add(m);
-                    //let chunk_mesh = &meshes.get(&chunk_mesh_handle);
+                    let chunk_mesh = &meshes.get(&chunk_mesh_handle);
 
                     commands
                         .spawn_bundle(ChunkBundle {
@@ -253,15 +272,15 @@ pub fn chunk_setup(
                             transform: Transform::from_translation(world_position),
                             ..Default::default()
                         })
-                        .insert(chunk_mesh_handle);
-                    //.insert(RigidBody::Fixed)
-                    //.insert(
-                    //    Collider::from_bevy_mesh(
-                    //        chunk_mesh.unwrap(),
-                    //        &ComputedColliderShape::TriMesh,
-                    //    )
-                    //    .unwrap(),
-                    //);
+                        .insert(chunk_mesh_handle)
+                        .insert(RigidBody::Fixed)
+                        .insert(
+                            Collider::from_bevy_mesh(
+                                chunk_mesh.unwrap(),
+                                &ComputedColliderShape::TriMesh,
+                            )
+                            .unwrap(),
+                        );
                 }
             }
         }

@@ -1,10 +1,10 @@
-mod block_map;
 mod chunk;
 mod table;
 mod terrain;
 
 use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
+use bevy_egui::{egui, EguiContext, EguiPlugin};
 use bevy_rapier3d::{prelude::*, render::RapierDebugRenderPlugin};
 use chunk::chunk_setup;
 use smooth_bevy_cameras::{
@@ -30,13 +30,15 @@ fn main() {
         })
         .insert_resource(Terrain::new(rand::random::<u64>()))
         .add_plugins(DefaultPlugins)
+        .add_plugin(EguiPlugin)
         .add_plugin(AtmospherePlugin)
         .add_plugin(LookTransformPlugin)
         .add_plugin(FpsCameraPlugin::default())
-        //.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         //.add_plugin(RapierDebugRenderPlugin::default())
         .add_startup_system(setup)
         .add_startup_system(chunk_setup)
+        .add_system(process_ui)
         .run();
 }
 
@@ -45,7 +47,10 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
+    asset_server.watch_for_changes().unwrap();
+
     // Sun
     let sun_val: f32 = 2.6;
     let sun_pos = Vec3::new(0.0, sun_val.sin(), sun_val.cos());
@@ -123,4 +128,16 @@ fn setup(
         //.insert(LockedAxes::ROTATION_LOCKED)
         //.insert(Ccd::enabled())
         .insert(AtmosphereCamera(None));
+}
+
+fn process_ui(mut egui_context: ResMut<EguiContext>, mut atmosphere: ResMut<Atmosphere>) {
+    egui::Window::new("Infinite Drive").show(egui_context.ctx_mut(), |ui| {
+        ui.label("Created by Dominic Maas");
+        ui.separator();
+
+        ui.label("Sun Position: ");
+        ui.add(egui::Slider::new(&mut atmosphere.sun_position.x, 0.0..=1.0));
+        ui.add(egui::Slider::new(&mut atmosphere.sun_position.y, 0.0..=1.0));
+        ui.add(egui::Slider::new(&mut atmosphere.sun_position.z, 0.0..=1.0));
+    });
 }
