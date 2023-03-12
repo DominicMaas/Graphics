@@ -1,8 +1,8 @@
 use bevy::{
     prelude::*,
-    render::{mesh::Indices, render_resource::PrimitiveTopology, texture::ImageSampler},
+    render::{mesh::Indices, render_resource::PrimitiveTopology},
 };
-use bevy_rapier3d::{parry::transformation::voxelization::Voxel, prelude::*};
+use bevy_rapier3d::prelude::*;
 use rand::Rng;
 
 use crate::{
@@ -52,9 +52,9 @@ impl VoxelType {
             )
                 .into(),
             _ => (
-                (1.0 / 255.0) * 255.0,
-                (1.0 / 255.0) * 0.0,
-                (1.0 / 255.0) * 0.0,
+                (1.0 / 255.0) * 253.0,
+                (1.0 / 255.0) * 253.0,
+                (1.0 / 255.0) * 90.0,
                 1.0,
             )
                 .into(),
@@ -159,7 +159,7 @@ impl Chunk {
                     let voxel_type = self.get_t_block(position, t);
                     let color = voxel_type.base_color();
 
-                    let offset_color = color + rand.gen_range(-0.05..0.05);
+                    let offset_color = color + rand.gen_range(-0.1..0.1);
 
                     // Calculate the cube index by looking at all 8 corners of the current
                     // voxel
@@ -266,7 +266,7 @@ pub fn chunk_setup(
                     let chunk_mesh = &meshes.get(&chunk_mesh_handle);
 
                     commands
-                        .spawn_bundle(ChunkBundle {
+                        .spawn(ChunkBundle {
                             chunk,
                             material: chunk_mat.clone(),
                             transform: Transform::from_translation(world_position),

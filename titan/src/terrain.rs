@@ -3,6 +3,7 @@ use bracket_noise::prelude::*;
 
 use crate::chunk::{TerrainVoxel, VoxelType, WORLD_HEIGHT};
 
+#[derive(Resource)]
 pub struct Terrain {
     noise_func: FastNoise,
 }

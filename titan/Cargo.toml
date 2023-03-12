@@ -5,12 +5,12 @@ authors = ["Dominic Maas <dominic.maas@live.com>"]
 edition = "2021"
 
 [dependencies]
-bevy = "0.8"      
-bevy_egui = "0.16.1"      
-bevy_atmosphere = "0.4.0"
-bevy_rapier3d = { version = "0.16.2", features = [ "simd-stable", "debug-render" ] }                                                              # Actual Game Engine
+bevy = "0.10.0"      
+bevy_egui = "0.20.1"      
+bevy_atmosphere = "0.6.0"
+bevy_rapier3d = { version = "0.21.0", features = [ "simd-stable", "debug-render" ] }                                                              # Actual Game Engine
 smooth-bevy-cameras = { git = "https://github.com/bonsairobo/smooth-bevy-cameras" }     # Nice cameras for moving around
-bracket-noise = "0.8.2"
+bracket-noise = "0.8.7"
 rand = "0.8.5"
 
 # Enable only a small amount of optimization in debug mode

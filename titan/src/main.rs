@@ -2,10 +2,10 @@ mod chunk;
 mod table;
 mod terrain;
 
-use bevy::prelude::*;
+use bevy::{pbr::CascadeShadowConfigBuilder, prelude::*};
 use bevy_atmosphere::prelude::*;
-use bevy_egui::{egui, EguiContext, EguiPlugin};
-use bevy_rapier3d::{prelude::*, render::RapierDebugRenderPlugin};
+use bevy_egui::{egui, EguiContexts, EguiPlugin};
+use bevy_rapier3d::prelude::*;
 use chunk::chunk_setup;
 use smooth_bevy_cameras::{
     controllers::fps::{FpsCameraBundle, FpsCameraController, FpsCameraPlugin},
@@ -15,21 +15,29 @@ use terrain::Terrain;
 
 fn main() {
     App::new()
-        .insert_resource(Msaa { samples: 4 })
-        .insert_resource(Atmosphere::default())
+        .insert_resource(Msaa::Sample8)
+        .insert_resource(AtmosphereModel::default())
         .insert_resource(ClearColor(Color::rgb(0.5294, 0.8078, 0.9216)))
         .insert_resource(AmbientLight {
             color: Color::WHITE,
             brightness: 0.15,
         })
-        .insert_resource(WindowDescriptor {
-            title: "Titan Voxel Experiment - Dominic Maas".to_string(),
-            width: 1920.,
-            height: 1080.,
-            ..Default::default()
-        })
         .insert_resource(Terrain::new(rand::random::<u64>()))
-        .add_plugins(DefaultPlugins)
+        .add_plugins(
+            DefaultPlugins
+                .set(AssetPlugin {
+                    watch_for_changes: true,
+                    ..Default::default()
+                })
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Infinite Drive - Dominic Maas".to_string(),
+                        resolution: (1920.0, 1080.0).into(),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
+        )
         .add_plugin(EguiPlugin)
         .add_plugin(AtmospherePlugin)
         .add_plugin(LookTransformPlugin)
@@ -43,30 +51,33 @@ fn main() {
 }
 
 fn setup(
-    mut atmosphere: ResMut<Atmosphere>,
+    //mut atmosphere: ResMut<Atmosphere>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
 ) {
-    asset_server.watch_for_changes().unwrap();
-
     // Sun
-    let sun_val: f32 = 2.6;
+    let sun_val: f32 = 2.7;
     let sun_pos = Vec3::new(0.0, sun_val.sin(), sun_val.cos());
 
-    atmosphere.sun_position = sun_pos;
+    //atmosphere.sun_position = sun_pos;
 
-    commands.spawn_bundle(DirectionalLightBundle {
+    commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             illuminance: 10000.0,
-            shadows_enabled: false,
+            shadows_enabled: true,
             ..Default::default()
         },
         transform: Transform {
             rotation: Quat::from_rotation_x(-sun_pos.y.atan2(sun_pos.z)),
             ..default()
         },
+        cascade_shadow_config: CascadeShadowConfigBuilder {
+            first_cascade_far_bound: 4.0,
+            num_cascades: 5,
+            ..Default::default()
+        }
+        .into(),
         ..Default::default()
     });
 
@@ -105,13 +116,14 @@ fn setup(
 
     // Camera
     commands
-        .spawn_bundle(Camera3dBundle::default())
-        .insert_bundle(FpsCameraBundle::new(
+        .spawn(Camera3dBundle::default())
+        .insert(FpsCameraBundle::new(
             FpsCameraController::default(),
             Vec3::new(0.0, 32.0, 5.0),
             Vec3::new(0., 32.0, 0.),
+            Vec3::Y,
         ))
-        .insert_bundle(PbrBundle {
+        .insert(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Capsule {
                 radius: 1.0,
                 rings: 0,
@@ -123,15 +135,17 @@ fn setup(
             material: materials.add(StandardMaterial::from(Color::rgb(0.0, 0.0, 0.0))),
             ..Default::default()
         })
-        //.insert(RigidBody::KinematicPositionBased)
-        //.insert(Collider::capsule_y(1.0, 1.0))
-        //.insert(LockedAxes::ROTATION_LOCKED)
-        //.insert(Ccd::enabled())
-        .insert(AtmosphereCamera(None));
+        .insert(AtmosphereCamera::default());
+
+    //.insert(RigidBody::KinematicPositionBased)
+    //.insert(Collider::capsule_y(1.0, 1.0))
+    //.insert(LockedAxes::ROTATION_LOCKED)
+    //.insert(Ccd::enabled())
+    //.insert(AtmosphereCamera(None));
 }
 
-fn process_ui(mut egui_context: ResMut<EguiContext>, mut atmosphere: ResMut<Atmosphere>) {
-    egui::Window::new("Infinite Drive").show(egui_context.ctx_mut(), |ui| {
+fn process_ui(mut contexts: EguiContexts, mut atmosphere: AtmosphereMut<Nishita>) {
+    egui::Window::new("Infinite Drive").show(contexts.ctx_mut(), |ui| {
         ui.label("Created by Dominic Maas");
         ui.separator();
 
