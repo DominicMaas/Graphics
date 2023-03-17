@@ -53,7 +53,7 @@ impl ChunkResources {
         let uv_t = (position.y * self.tile_size.y) / height; //0
         let uv_b = ((position.y + 1.0) * self.tile_size.y) / height; //1
 
-        let bleed_padding = 0.005;
+        let bleed_padding = 0.001;
 
         [
             [uv_l + bleed_padding, uv_b - bleed_padding],
@@ -106,11 +106,11 @@ impl Chunk {
         noise.set_noise_type(NoiseType::SimplexFractal);
         noise.set_fractal_type(FractalType::FBM);
         noise.set_fractal_octaves(6);
-        noise.set_frequency(0.5);
+        noise.set_frequency(0.6);
 
         for x in 0..CHUNK_X {
             // Generate the noise, map it, and offset it
-            let mut n = noise.get_noise((chunk.position.x + (x as f32)) / 32.0, 0.0);
+            let mut n = noise.get_noise((chunk.position.x + (x as f32)) / 48.0, 0.0);
             n = Self::map_range((-1.0, 1.0), (0.0, CHUNK_Y as f32 - 5.0), n);
             n += 5.0;
 
@@ -126,9 +126,9 @@ impl Chunk {
             chunk.set_tile(x, n as usize, TileType::Grass);
 
             // There is a random chance to have a rock on top of this tile!
-            if n as usize + 1 <= CHUNK_Y && rng.range(0, 100) < 20 {
-                chunk.set_tile(x, n as usize + 1, TileType::RockEntity);
-            }
+            // if n as usize + 1 <= CHUNK_Y && rng.range(0, 100) < 20 {
+            //      chunk.set_tile(x, n as usize + 1, TileType::RockEntity);
+            // }
         }
 
         chunk
@@ -170,6 +170,8 @@ impl Chunk {
 
                 let tile_right = self.get_tile(x + 1, y);
 
+                let tile_top_right = self.get_tile(x + 1, y + 1);
+
                 // Don't build air
                 if tile == TileType::Air {
                     continue;
@@ -181,17 +183,21 @@ impl Chunk {
                 let uvs = chunk_resources.get_uv_coords(match tile {
                     TileType::Air => Vec2::new(0.0, 0.0),
                     TileType::Grass => match (tile_left.is_opaque(), tile_right.is_opaque()) {
-                        (false, false) => Vec2::new(13.0, 0.0),
-                        (false, _) => Vec2::new(10.0, 0.0),
-                        (_, false) => Vec2::new(12.0, 0.0),
-                        _ => Vec2::new(11.0, 0.0),
-                    },
-                    TileType::Dirt => match rng.range(0, 10) == 0 {
-                        true => match rng.range(0, 2) == 0 {
-                            true => Vec2::new(7.0, 1.0),
-                            false => Vec2::new(7.0, 1.0),
+                        (false, false) => Vec2::new(3.0, 1.0),
+                        (false, _) => Vec2::new(1.0, 1.0),
+                        (_, false) => Vec2::new(0.0, 1.0),
+                        _ => match rng.range(0, 4) {
+                            0 => Vec2::new(0.0, 0.0),
+                            1 => Vec2::new(1.0, 0.0),
+                            3 => Vec2::new(2.0, 0.0),
+                            _ => Vec2::new(3.0, 0.0),
                         },
-                        false => Vec2::new(11.0, 1.0),
+                    },
+                    TileType::Dirt => match rng.range(0, 4) {
+                        0 => Vec2::new(0.0, 7.0),
+                        1 => Vec2::new(2.0, 7.0),
+                        2 => Vec2::new(2.0, 7.0),
+                        _ => Vec2::new(3.0, 7.0),
                     },
                     TileType::RockEntity => match rng.range(0, 3) {
                         0 => Vec2::new(16.0, 6.0),
@@ -280,8 +286,8 @@ pub fn spawn_chunk_system(
                 chunk: chunk.clone(),
                 material: MaterialMesh2dBundle {
                     mesh: meshes.add(mesh).into(),
-                    transform: Transform::from_xyz(ev.0.x * GAME_SCALE, ev.0.y, 0.0)
-                        .with_scale(Vec3::splat(GAME_SCALE)),
+                    transform: Transform::from_xyz(ev.0.x * 8.0, ev.0.y, 0.0)
+                        .with_scale(Vec3::splat(8.0)),
                     material: chunk_resources.material.clone(),
                     ..default()
                 },

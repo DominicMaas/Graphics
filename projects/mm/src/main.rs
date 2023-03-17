@@ -2,11 +2,15 @@ mod chunk;
 mod player;
 
 use bevy::{
-    core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
+    core_pipeline::{
+        bloom::BloomSettings,
+        tonemapping::{DebandDither, Tonemapping},
+    },
     prelude::*,
     render::camera::ScalingMode,
 };
 use bevy_particle_systems::*;
+use bevy_pixel_camera::*;
 use bevy_rapier2d::prelude::*;
 
 use bracket_random::prelude::RandomNumberGenerator;
@@ -30,6 +34,7 @@ fn main() {
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(
             GAME_SCALE,
         ))
+        .add_plugin(PixelCameraPlugin)
         .add_plugin(ParticleSystemPlugin::default())
         .add_event::<SpawnChunkEvent>()
         .add_startup_system(setup)
@@ -90,29 +95,16 @@ fn setup(
         // Add the playing component so it starts playing. This can be added later as well.
         .insert(Playing);
 
-    // Camera
+    let mut pixel_camera = PixelCameraBundle::from_zoom(5);
+    pixel_camera.camera.hdr = true;
+
     commands.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                hdr: true,
-                ..default()
-            },
-            projection: OrthographicProjection {
-                scale: 20.0 * GAME_SCALE,
-                scaling_mode: ScalingMode::FixedVertical(1.),
-                ..default()
-            },
-            tonemapping: Tonemapping::TonyMcMapface,
-            ..default()
-        },
+        pixel_camera,
         BloomSettings::default(),
         MainCamera,
+        Tonemapping::BlenderFilmic,
+        DebandDither::Enabled,
     ));
-
-    //commands.spawn(SpriteBundle {
-    //    texture: background_texture_handle,
-    //    ..default()
-    //});
 
     // Player
     commands.spawn((
@@ -130,9 +122,7 @@ fn setup(
                 color: Color::rgb(1.1, 1.1, 1.1),
                 ..default()
             },
-            transform: Transform::from_xyz(0.0, 32.0 * GAME_SCALE, 0.0)
-                .with_scale(Vec3::splat(0.06 * GAME_SCALE)),
-
+            transform: Transform::from_xyz(0.0, 32.0 * GAME_SCALE, 0.0),
             ..default()
         },
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
@@ -140,7 +130,7 @@ fn setup(
     ));
 
     //  Test Ground
-    let texture_handle = asset_server.load("sheet.png");
+    let texture_handle = asset_server.load("sheet_2.png");
     let terrain_material = materials.add(ColorMaterial::from(texture_handle));
 
     let mut rng = RandomNumberGenerator::new();
