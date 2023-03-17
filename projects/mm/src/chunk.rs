@@ -19,6 +19,17 @@ pub enum TileType {
     Air,
     Grass,
     Dirt,
+    RockEntity,
+}
+
+impl TileType {
+    pub fn is_opaque(&self) -> bool {
+        match self {
+            TileType::Air => false,
+            TileType::RockEntity => false,
+            _ => true,
+        }
+    }
 }
 
 #[derive(Resource, Default, Debug)]
@@ -27,11 +38,27 @@ pub struct ChunkResources {
     pub tile_size: Vec2,
     pub rows: usize,
     pub columns: usize,
+    pub seed: u64,
 }
 
 impl ChunkResources {
     pub fn get_uv_coords(&self, position: Vec2) -> [[f32; 2]; 4] {
-        [[0.0, 1.0], [0.0, 0.0], [1.0, 0.0], [1.0, 1.0]]
+        let width = self.columns as f32 * self.tile_size.x;
+        let height = self.rows as f32 * self.tile_size.y;
+
+        let uv_l = (position.x * self.tile_size.x) / width; //0
+        let uv_r = ((position.x + 1.0) * self.tile_size.x) / width; //1
+        let uv_t = (position.y * self.tile_size.y) / height; //0
+        let uv_b = ((position.y + 1.0) * self.tile_size.y) / height; //1
+
+        let bleed_padding = 0.002;
+
+        [
+            [uv_l + bleed_padding, uv_b - bleed_padding],
+            [uv_l + bleed_padding, uv_t + bleed_padding],
+            [uv_r - bleed_padding, uv_t + bleed_padding],
+            [uv_r - bleed_padding, uv_b - bleed_padding],
+        ]
     }
 }
 
@@ -58,7 +85,7 @@ impl Chunk {
         to_range.0 + (s - from_range.0) * (to_range.1 - to_range.0) / (from_range.1 - from_range.0)
     }
 
-    pub fn new(position: Vec2) -> Self {
+    pub fn new(position: Vec2, seed: u64) -> Self {
         let mut chunk = Chunk {
             tiles: Vec::with_capacity(CHUNK_SZ),
             position,
@@ -73,13 +100,13 @@ impl Chunk {
         //   let noise2 = NoiseBuilder::fbm_1d(100, 100).generate_scaled(0.0, 1.0);
 
         let mut rng = RandomNumberGenerator::new();
-        let mut noise = FastNoise::seeded(rng.next_u64());
+        let mut noise = FastNoise::seeded(seed);
         noise.set_noise_type(NoiseType::Simplex);
-        noise.set_frequency(0.4);
+        noise.set_frequency(0.3);
 
         for x in 0..CHUNK_X {
             // Generate the noise, map it, and offset it
-            let mut n = noise.get_noise((chunk.position.x + (x as f32)) / 10.0, 0.0);
+            let mut n = noise.get_noise((chunk.position.x + (x as f32)) / 32.0, 0.0);
             n = Self::map_range((-1.0, 1.0), (0.0, CHUNK_Y as f32 / 2.0), n);
             n += CHUNK_Y as f32 / 2.0;
 
@@ -93,6 +120,11 @@ impl Chunk {
 
             // Ensure we have grass on top
             chunk.set_tile(x, n as usize, TileType::Grass);
+
+            // There is a random chance to have a rock on top of this tile!
+            if n as usize + 1 <= CHUNK_Y && rng.range(0, 100) < 10 {
+                chunk.set_tile(x, n as usize + 1, TileType::RockEntity);
+            }
         }
 
         chunk
@@ -103,31 +135,70 @@ impl Chunk {
     }
 
     pub fn get_tile(&self, x: usize, y: usize) -> TileType {
+        if x >= CHUNK_X {
+            return TileType::Air;
+        }
+
+        if y >= CHUNK_Y {
+            return TileType::Air;
+        }
+
         self.tiles[CHUNK_X * x + y]
     }
 
-    pub fn create_mesh(&self, chunk_resources: Res<ChunkResources>) -> Mesh {
+    pub fn create_mesh(&self, chunk_resources: &Res<ChunkResources>) -> Mesh {
         let mut vertices: Vec<([f32; 3], [f32; 3], [f32; 2])> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
 
         let mut m = 0;
 
+        let mut rng = RandomNumberGenerator::new();
+
         for x in 0..(CHUNK_X) {
             for y in 0..(CHUNK_Y) {
+                let tile = self.get_tile(x, y);
+
+                let tile_left = if x != 0 {
+                    self.get_tile(x - 1, y)
+                } else {
+                    TileType::Air
+                };
+
+                let tile_right = self.get_tile(x + 1, y);
+
                 // Don't build air
-                if self.get_tile(x, y) == TileType::Air {
+                if tile == TileType::Air {
                     continue;
                 }
 
                 let xf = x as f32;
                 let yf = y as f32;
 
-                let uvs = chunk_resources.get_uv_coords((0.0, 0.0).into());
+                let uvs = chunk_resources.get_uv_coords(match tile {
+                    TileType::Air => Vec2::new(0.0, 0.0),
+                    TileType::Grass => match (tile_left.is_opaque(), tile_right.is_opaque()) {
+                        (false, false) => Vec2::new(13.0, 0.0),
+                        (false, _) => Vec2::new(10.0, 0.0),
+                        (_, false) => Vec2::new(12.0, 0.0),
+                        _ => Vec2::new(11.0, 0.0),
+                    },
+                    TileType::Dirt => match rng.range(0, 10) == 0 {
+                        true => match rng.range(0, 2) == 0 {
+                            true => Vec2::new(7.0, 1.0),
+                            false => Vec2::new(7.0, 1.0),
+                        },
+                        false => Vec2::new(11.0, 1.0),
+                    },
+                    TileType::RockEntity => match rng.range(0, 2) == 0 {
+                        true => Vec2::new(16.0, 6.0),
+                        false => Vec2::new(16.0, 5.0),
+                    },
+                });
 
-                vertices.push(([xf + -0.5, yf + -0.5, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0]));
-                vertices.push(([xf + -0.5, yf + 0.5, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0]));
-                vertices.push(([xf + 0.5, yf + 0.5, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0]));
-                vertices.push(([xf + 0.5, yf + -0.5, 0.0], [0.0, 0.0, 1.0], [1.0, 1.0]));
+                vertices.push(([xf + -0.5, yf + -0.5, 0.0], [0.0, 0.0, 1.0], uvs[0]));
+                vertices.push(([xf + -0.5, yf + 0.5, 0.0], [0.0, 0.0, 1.0], uvs[1]));
+                vertices.push(([xf + 0.5, yf + 0.5, 0.0], [0.0, 0.0, 1.0], uvs[2]));
+                vertices.push(([xf + 0.5, yf + -0.5, 0.0], [0.0, 0.0, 1.0], uvs[3]));
 
                 indices.push(m + 0);
                 indices.push(m + 2);
@@ -162,7 +233,7 @@ impl Chunk {
         for x in 0..(CHUNK_X) {
             for y in 0..(CHUNK_Y) {
                 // Don't build air
-                if self.get_tile(x, y) == TileType::Air {
+                if !self.get_tile(x, y).is_opaque() {
                     continue;
                 }
 
@@ -196,16 +267,16 @@ pub fn spawn_chunk_system(
     chunk_resources: Res<ChunkResources>,
 ) {
     for ev in ev_spawn_chunk.iter() {
-        let chunk = Chunk::new(ev.0);
-        let mesh = chunk.create_mesh();
+        let chunk = Chunk::new(ev.0, chunk_resources.seed);
+        let mesh = chunk.create_mesh(&chunk_resources);
 
         commands.spawn((
             ChunkBundle {
                 chunk: chunk.clone(),
                 material: MaterialMesh2dBundle {
                     mesh: meshes.add(mesh).into(),
-                    transform: Transform::from_xyz(ev.0.x * 25.0, ev.0.y, 0.0)
-                        .with_scale(Vec3::splat(25.0)),
+                    transform: Transform::from_xyz(ev.0.x * 50.0, ev.0.y, 0.0)
+                        .with_scale(Vec3::splat(50.0)),
                     material: chunk_resources.material.clone(),
                     ..default()
                 },

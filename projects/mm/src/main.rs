@@ -18,6 +18,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_particle_systems::*;
 use bevy_rapier2d::{prelude::*, rapier::prelude::RigidBodyType};
 
+use bracket_random::prelude::RandomNumberGenerator;
 use chunk::{Chunk, ChunkBundle, ChunkResources, SpawnChunkEvent};
 use player::Player;
 
@@ -99,7 +100,7 @@ fn setup(
                 ..default()
             },
             projection: OrthographicProjection {
-                scale: 2000.0,
+                scale: 1000.0,
                 scaling_mode: ScalingMode::FixedVertical(1.),
                 ..default()
             },
@@ -138,11 +139,14 @@ fn setup(
     let texture_handle = asset_server.load("sheet.png");
     let terrain_material = materials.add(ColorMaterial::from(texture_handle));
 
+    let mut rng = RandomNumberGenerator::new();
+
     commands.insert_resource(ChunkResources {
         material: terrain_material,
         tile_size: Vec2::new(16.0, 16.0),
         columns: 17,
         rows: 8,
+        seed: rng.next_u64(),
     });
 
     ev_spawn_chunk.send(SpawnChunkEvent((-64.0, 0.0).into()));
