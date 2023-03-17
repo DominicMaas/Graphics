@@ -3,25 +3,30 @@ use std::time::Duration;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{AnimationTimer, MainCamera};
+use crate::{AnimationTimer, MainCamera, GAME_SCALE};
 
 pub const PLAYER_ANIM_IDLE: usize = 0;
 pub const PLAYER_ANIM_RUN_START: usize = 1;
 pub const PLAYER_ANIM_RUN_END: usize = 6;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum PlayerState {
-    Jump { event_time: Duration },
-    Land,
-    Fall,
+    Idle,
+    Walking,
+    Jumping,
+    Falling,
 }
 
 #[derive(Component)]
-pub struct Player;
+pub struct Player {
+    pub state: PlayerState,
+}
 
 impl Player {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            state: PlayerState::Idle,
+        }
     }
 }
 
@@ -44,24 +49,29 @@ pub fn player_movement_system(
         false
     };
 
-    let gravity = Vec2::Y * -9.8;
+    if is_grounded {
+        player.state = PlayerState::Idle;
+    }
+
+    let gravity = -1.0 * GAME_SCALE;
 
     // Process keyboard inputs
     if keyboard_input.pressed(KeyCode::A) {
-        velocity.linvel.x -= 200.0;
+        velocity.linvel.x = -(12.0 * GAME_SCALE);
     }
 
     if keyboard_input.pressed(KeyCode::D) {
-        velocity.linvel.x += 200.0;
+        velocity.linvel.x = 12.0 * GAME_SCALE;
     }
 
-    if keyboard_input.pressed(KeyCode::Space) && is_grounded {
-        velocity.linvel.y += 350.0;
+    if keyboard_input.pressed(KeyCode::Space) && player.state != PlayerState::Jumping {
+        velocity.linvel.y += 16.0 * GAME_SCALE;
+        player.state = PlayerState::Jumping;
     }
 
     // Update the translation
     velocity.linvel.x *= 0.75;
-    velocity.linvel.y += gravity.y;
+    velocity.linvel.y += gravity;
 
     controller.translation = Some(velocity.linvel * time.delta_seconds());
 
@@ -90,14 +100,12 @@ pub fn player_animation_system(
 
     sprite.flip_x = velocity.linvel.x <= 0.0;
 }
-//(&Transform, With<Player>)
+
+// Keeps the camera in sync with the player
 pub fn player_camera_system(
     mut main_camera_query: Query<&mut Transform, (With<MainCamera>, Without<Player>)>,
     player_query: Query<&Transform, (With<Player>, Without<MainCamera>)>,
 ) {
-    let mut main_camera_transform = main_camera_query.single_mut();
-    let player_transform = player_query.single();
-
-    main_camera_transform.translation.x = player_transform.translation.x.round();
-    main_camera_transform.translation.y = player_transform.translation.y.round();
+    main_camera_query.single_mut().translation.x = player_query.single().translation.x.round();
+    main_camera_query.single_mut().translation.y = player_query.single().translation.y.round();
 }

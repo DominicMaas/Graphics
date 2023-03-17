@@ -7,6 +7,8 @@ use bevy_rapier2d::prelude::*;
 use bracket_noise::prelude::*;
 use bracket_random::prelude::*;
 
+use crate::GAME_SCALE;
+
 pub const CHUNK_X: usize = 32;
 pub const CHUNK_Y: usize = 32;
 pub const CHUNK_SZ: usize = CHUNK_X * CHUNK_Y;
@@ -51,7 +53,7 @@ impl ChunkResources {
         let uv_t = (position.y * self.tile_size.y) / height; //0
         let uv_b = ((position.y + 1.0) * self.tile_size.y) / height; //1
 
-        let bleed_padding = 0.002;
+        let bleed_padding = 0.005;
 
         [
             [uv_l + bleed_padding, uv_b - bleed_padding],
@@ -101,17 +103,19 @@ impl Chunk {
 
         let mut rng = RandomNumberGenerator::new();
         let mut noise = FastNoise::seeded(seed);
-        noise.set_noise_type(NoiseType::Simplex);
-        noise.set_frequency(0.3);
+        noise.set_noise_type(NoiseType::SimplexFractal);
+        noise.set_fractal_type(FractalType::FBM);
+        noise.set_fractal_octaves(6);
+        noise.set_frequency(0.5);
 
         for x in 0..CHUNK_X {
             // Generate the noise, map it, and offset it
             let mut n = noise.get_noise((chunk.position.x + (x as f32)) / 32.0, 0.0);
-            n = Self::map_range((-1.0, 1.0), (0.0, CHUNK_Y as f32 / 2.0), n);
-            n += CHUNK_Y as f32 / 2.0;
+            n = Self::map_range((-1.0, 1.0), (0.0, CHUNK_Y as f32 - 5.0), n);
+            n += 5.0;
 
             // Ensure we have a floor for the world
-            chunk.set_tile(x, 0, TileType::Grass);
+            chunk.set_tile(x, 0, TileType::Dirt);
 
             // Now generate the rest
             for y in 1..n as usize {
@@ -122,7 +126,7 @@ impl Chunk {
             chunk.set_tile(x, n as usize, TileType::Grass);
 
             // There is a random chance to have a rock on top of this tile!
-            if n as usize + 1 <= CHUNK_Y && rng.range(0, 100) < 10 {
+            if n as usize + 1 <= CHUNK_Y && rng.range(0, 100) < 20 {
                 chunk.set_tile(x, n as usize + 1, TileType::RockEntity);
             }
         }
@@ -189,9 +193,10 @@ impl Chunk {
                         },
                         false => Vec2::new(11.0, 1.0),
                     },
-                    TileType::RockEntity => match rng.range(0, 2) == 0 {
-                        true => Vec2::new(16.0, 6.0),
-                        false => Vec2::new(16.0, 5.0),
+                    TileType::RockEntity => match rng.range(0, 3) {
+                        0 => Vec2::new(16.0, 6.0),
+                        1 => Vec2::new(16.0, 5.0),
+                        _ => Vec2::new(14.0, 4.0),
                     },
                 });
 
@@ -275,8 +280,8 @@ pub fn spawn_chunk_system(
                 chunk: chunk.clone(),
                 material: MaterialMesh2dBundle {
                     mesh: meshes.add(mesh).into(),
-                    transform: Transform::from_xyz(ev.0.x * 50.0, ev.0.y, 0.0)
-                        .with_scale(Vec3::splat(50.0)),
+                    transform: Transform::from_xyz(ev.0.x * GAME_SCALE, ev.0.y, 0.0)
+                        .with_scale(Vec3::splat(GAME_SCALE)),
                     material: chunk_resources.material.clone(),
                     ..default()
                 },

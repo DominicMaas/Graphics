@@ -4,22 +4,13 @@ mod player;
 use bevy::{
     core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
     prelude::*,
-    render::{
-        camera::ScalingMode,
-        mesh::Indices,
-        render_resource::PrimitiveTopology,
-        settings::{WgpuFeatures, WgpuSettings},
-        RenderPlugin,
-    },
-    sprite::{MaterialMesh2dBundle, Mesh2dHandle},
+    render::camera::ScalingMode,
 };
-use bevy_hanabi::prelude::*;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_particle_systems::*;
-use bevy_rapier2d::{prelude::*, rapier::prelude::RigidBodyType};
+use bevy_rapier2d::prelude::*;
 
 use bracket_random::prelude::RandomNumberGenerator;
-use chunk::{Chunk, ChunkBundle, ChunkResources, SpawnChunkEvent};
+use chunk::{ChunkResources, SpawnChunkEvent, CHUNK_X};
 use player::Player;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -29,13 +20,16 @@ enum AppState {
     Paused,
 }
 
+/// Everything is scaled by this value
+pub const GAME_SCALE: f32 = 50.0;
+
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::ALICE_BLUE))
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-        //.add_plugin(RapierDebugRenderPlugin::default())
-        .add_plugin(WorldInspectorPlugin::default())
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(
+            GAME_SCALE,
+        ))
         .add_plugin(ParticleSystemPlugin::default())
         .add_event::<SpawnChunkEvent>()
         .add_startup_system(setup)
@@ -65,6 +59,8 @@ fn setup(
         TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 7, 1, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
+    //  let background_texture_handle = asset_server.load("01_background.png");
+
     // Clouds, TODO: Move to weather system
     commands
         // Add the bundle specifying the particle system itself.
@@ -72,21 +68,23 @@ fn setup(
             particle_system: ParticleSystem {
                 max_particles: 20,
                 texture: ParticleTexture::Sprite(asset_server.load("cloud.png")),
+
                 spawn_rate_per_second: 1.0.into(),
-                initial_speed: JitteredValue::jittered(15.0, -5.0..5.0),
+                initial_speed: JitteredValue::jittered(50.0, -25.0..25.0),
                 scale: ValueOverTime::Constant(10.0),
                 lifetime: 1000.0.into(),
                 emitter_shape: Line {
-                    length: 400.0,
+                    length: 64.0 * 50.0,
                     angle: 0.0.into(),
                 }
                 .into(),
 
                 looping: true,
                 system_duration_seconds: 10.0,
+                z_value_override: Some(JitteredValue::new(-0.1)),
                 ..ParticleSystem::default()
             },
-            transform: Transform::from_xyz(-20.0, 150.0, -10.0),
+            transform: Transform::from_xyz(0.0, 32.0 * GAME_SCALE, -10.0),
             ..ParticleSystemBundle::default()
         })
         // Add the playing component so it starts playing. This can be added later as well.
@@ -100,7 +98,7 @@ fn setup(
                 ..default()
             },
             projection: OrthographicProjection {
-                scale: 1000.0,
+                scale: 20.0 * GAME_SCALE,
                 scaling_mode: ScalingMode::FixedVertical(1.),
                 ..default()
             },
@@ -111,28 +109,34 @@ fn setup(
         MainCamera,
     ));
 
+    //commands.spawn(SpriteBundle {
+    //    texture: background_texture_handle,
+    //    ..default()
+    //});
+
     // Player
     commands.spawn((
         RigidBody::KinematicPositionBased,
         Collider::cuboid(8.0, 11.0),
         KinematicCharacterController::default(),
         Velocity::zero(),
+        LockedAxes::ROTATION_LOCKED,
+        Friction::default(),
+        Ccd::enabled(),
         SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
             sprite: TextureAtlasSprite {
                 index: player::PLAYER_ANIM_IDLE,
-                color: Color::rgb(1.5, 1.5, 1.5),
+                color: Color::rgb(1.1, 1.1, 1.1),
                 ..default()
             },
-            transform: Transform::from_xyz(0.0, 32.0 * 50.0, 0.0).with_scale(Vec3::splat(5.0)),
+            transform: Transform::from_xyz(0.0, 32.0 * GAME_SCALE, 0.0)
+                .with_scale(Vec3::splat(0.06 * GAME_SCALE)),
 
             ..default()
         },
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
         Player::new(),
-        LockedAxes::ROTATION_LOCKED_X
-            | LockedAxes::ROTATION_LOCKED_Y
-            | LockedAxes::ROTATION_LOCKED_Z,
     ));
 
     //  Test Ground
@@ -149,9 +153,13 @@ fn setup(
         seed: rng.next_u64(),
     });
 
-    ev_spawn_chunk.send(SpawnChunkEvent((-64.0, 0.0).into()));
-    ev_spawn_chunk.send(SpawnChunkEvent((-32.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((CHUNK_X as f32 * -4.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((CHUNK_X as f32 * -3.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((CHUNK_X as f32 * -2.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((CHUNK_X as f32 * -1.0, 0.0).into()));
     ev_spawn_chunk.send(SpawnChunkEvent((0.0, 0.0).into()));
-    ev_spawn_chunk.send(SpawnChunkEvent((32.0, 0.0).into()));
-    ev_spawn_chunk.send(SpawnChunkEvent((64.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((CHUNK_X as f32 * 1.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((CHUNK_X as f32 * 2.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((CHUNK_X as f32 * 3.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((CHUNK_X as f32 * 4.0, 0.0).into()));
 }
