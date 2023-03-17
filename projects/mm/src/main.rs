@@ -18,7 +18,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_particle_systems::*;
 use bevy_rapier2d::{prelude::*, rapier::prelude::RigidBodyType};
 
-use chunk::{Chunk, ChunkBundle};
+use chunk::{Chunk, ChunkBundle, ChunkResources, SpawnChunkEvent};
 use player::Player;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -36,10 +36,12 @@ fn main() {
         //.add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(WorldInspectorPlugin::default())
         .add_plugin(ParticleSystemPlugin::default())
+        .add_event::<SpawnChunkEvent>()
         .add_startup_system(setup)
         .add_system(player::player_animation_system)
         .add_system(player::player_movement_system)
         .add_system(player::player_camera_system)
+        .add_system(chunk::spawn_chunk_system)
         .run();
 }
 
@@ -55,6 +57,7 @@ fn setup(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut ev_spawn_chunk: EventWriter<SpawnChunkEvent>,
 ) {
     let texture_handle = asset_server.load("gabe-idle-run.png");
     let texture_atlas =
@@ -96,7 +99,7 @@ fn setup(
                 ..default()
             },
             projection: OrthographicProjection {
-                scale: 1000.0,
+                scale: 2000.0,
                 scaling_mode: ScalingMode::FixedVertical(1.),
                 ..default()
             },
@@ -120,7 +123,7 @@ fn setup(
                 color: Color::rgb(1.5, 1.5, 1.5),
                 ..default()
             },
-            transform: Transform::from_xyz(0.0, 100.0, 0.0).with_scale(Vec3::splat(5.0)),
+            transform: Transform::from_xyz(0.0, 32.0 * 50.0, 0.0).with_scale(Vec3::splat(5.0)),
 
             ..default()
         },
@@ -132,37 +135,19 @@ fn setup(
     ));
 
     //  Test Ground
-    let texture_handle = asset_server.load("Untitled.png");
+    let texture_handle = asset_server.load("sheet.png");
     let terrain_material = materials.add(ColorMaterial::from(texture_handle));
 
-    let mut c = Chunk::default();
-    c.set_tile(0, 15, chunk::TileType::Air);
-    c.set_tile(1, 15, chunk::TileType::Air);
-    c.set_tile(1, 14, chunk::TileType::Air);
-    c.set_tile(2, 13, chunk::TileType::Air);
-    c.set_tile(2, 13, chunk::TileType::Air);
-    c.set_tile(2, 14, chunk::TileType::Air);
-    c.set_tile(2, 14, chunk::TileType::Air);
-    c.set_tile(2, 15, chunk::TileType::Air);
-    c.set_tile(2, 15, chunk::TileType::Air);
-    c.set_tile(3, 15, chunk::TileType::Air);
-    c.set_tile(3, 14, chunk::TileType::Air);
+    commands.insert_resource(ChunkResources {
+        material: terrain_material,
+        tile_size: Vec2::new(16.0, 16.0),
+        columns: 17,
+        rows: 8,
+    });
 
-    let m = c.create_mesh();
-
-    commands.spawn((
-        ChunkBundle {
-            chunk: c.clone(),
-            material: MaterialMesh2dBundle {
-                mesh: meshes.add(m).into(),
-                transform: Transform::from_xyz(0.0, 16.0 * -100.0, 0.0)
-                    .with_scale(Vec3::splat(100.0)),
-                material: terrain_material.clone(),
-                ..default()
-            },
-        },
-        c.create_colider_mesh(),
-        //Collider::cuboid(10.0, 10.0),
-        RigidBody::Fixed,
-    ));
+    ev_spawn_chunk.send(SpawnChunkEvent((-64.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((-32.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((0.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((32.0, 0.0).into()));
+    ev_spawn_chunk.send(SpawnChunkEvent((64.0, 0.0).into()));
 }

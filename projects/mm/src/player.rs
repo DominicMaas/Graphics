@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -6,6 +8,13 @@ use crate::{AnimationTimer, MainCamera};
 pub const PLAYER_ANIM_IDLE: usize = 0;
 pub const PLAYER_ANIM_RUN_START: usize = 1;
 pub const PLAYER_ANIM_RUN_END: usize = 6;
+
+#[derive(Debug)]
+pub enum PlayerState {
+    Jump { event_time: Duration },
+    Land,
+    Fall,
+}
 
 #[derive(Component)]
 pub struct Player;
