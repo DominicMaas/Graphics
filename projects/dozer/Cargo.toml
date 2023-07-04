@@ -1,0 +1,21 @@
+[package]
+name = "dozer"
+version = "0.1.0"
+authors = ["Dominic Maas <dominic.maas@live.com>"]
+edition = "2021"
+
+[dependencies]
+bevy = "0.10"
+bevy_ecs_tilemap = "0.10"
+
+# Enable max optimizations for dependencies, but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
+
+# Enable only a small amount of optimization in debug mode
+[profile.dev]
+opt-level = 1
+
+# Awesome amounts of optimization in release mode
+[profile.release]
+lto = "thin"

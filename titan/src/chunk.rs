@@ -16,7 +16,7 @@ pub const CHUNK_XZ: usize = 16;
 pub const CHUNK_Y: usize = 16;
 pub const CHUNK_SZ: usize = CHUNK_XZ * CHUNK_XZ * CHUNK_Y;
 
-pub const WORLD_XZ: isize = 14;
+pub const WORLD_XZ: isize = 18;
 pub const WORLD_Y: isize = 4;
 
 pub const WORLD_HEIGHT: usize = WORLD_Y as usize * CHUNK_Y;

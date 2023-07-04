@@ -31,7 +31,7 @@ fn main() {
                 })
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        title: "Infinite Drive - Dominic Maas".to_string(),
+                        title: "Voxel Game - Dominic Maas".to_string(),
                         resolution: (1920.0, 1080.0).into(),
                         ..Default::default()
                     }),
