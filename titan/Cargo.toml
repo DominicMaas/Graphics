@@ -8,7 +8,10 @@ edition = "2021"
 bevy = "0.10.0"      
 bevy_egui = "0.20.1"      
 bevy_atmosphere = "0.6.0"
-bevy_rapier3d = { version = "0.21.0", features = [ "simd-stable", "debug-render" ] }                                                              # Actual Game Engine
+bevy_rapier3d = { version = "0.21.0", features = [ "simd-stable", "debug-render" ] } 
+bevy_tile_atlas = "0.6.0"     
+bevy_asset_loader = "0.16.1"  
+bevy-inspector-egui = "0.18.3"                                                      # Actual Game Engine
 smooth-bevy-cameras = { git = "https://github.com/bonsairobo/smooth-bevy-cameras" }     # Nice cameras for moving around
 bracket-noise = "0.8.7"
 rand = "0.8.5"

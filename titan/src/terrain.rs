@@ -1,16 +1,57 @@
 use bevy::prelude::*;
 use bracket_noise::prelude::*;
 
-use crate::chunk::{TerrainVoxel, VoxelType, WORLD_HEIGHT};
+use crate::chunk::{Chunk, ChunkState, VoxelType, CHUNK_XZ, CHUNK_Y, WORLD_HEIGHT};
 
-#[derive(Resource)]
+#[derive(Resource, Clone, Copy, Debug)]
 pub struct Terrain {
-    noise_func: FastNoise,
+    pub seed: u64,
 }
 
 impl Terrain {
     pub fn new(seed: u64) -> Self {
-        let mut noise_func = FastNoise::seeded(seed);
+        Self { seed }
+    }
+
+    pub fn generate2(&self, world_position: Vec3) -> Chunk {
+        let mut chunk = Chunk::default();
+
+        // Load in some initial terrain
+        for cx in 0..CHUNK_XZ {
+            for cy in 0..CHUNK_Y {
+                for cz in 0..CHUNK_XZ {
+                    let c_pos = Vec3::new(cx as f32, cy as f32, cz as f32) + world_position;
+                    let block_type = self.get_block_type(c_pos);
+
+                    chunk.set_block(cx, cy, cz, block_type);
+                }
+            }
+        }
+
+        chunk
+    }
+
+    pub fn generate(&self, chunk: &mut Chunk, world_position: Vec3) {
+        chunk.state = ChunkState::Generating;
+
+        // Load in some initial terrain
+        for cx in 0..CHUNK_XZ {
+            for cy in 0..CHUNK_Y {
+                for cz in 0..CHUNK_XZ {
+                    let c_pos = Vec3::new(cx as f32, cy as f32, cz as f32) + world_position;
+                    let block_type = self.get_block_type(c_pos);
+
+                    chunk.set_block(cx, cy, cz, block_type);
+                }
+            }
+        }
+
+        chunk.state = ChunkState::Generated;
+    }
+
+    /// Gets the block type at this position
+    pub fn get_block_type(&self, position: Vec3) -> VoxelType {
+        let mut noise_func = FastNoise::seeded(self.seed);
         noise_func.set_noise_type(NoiseType::SimplexFractal);
         noise_func.set_fractal_type(FractalType::FBM);
         noise_func.set_fractal_octaves(6);
@@ -18,14 +59,8 @@ impl Terrain {
         noise_func.set_fractal_lacunarity(2.0);
         noise_func.set_frequency(1.0);
 
-        Self { noise_func }
-    }
-
-    /// Gets the block type at this position
-    pub fn get_block_type(&self, position: Vec3) -> VoxelType {
-        let raw_noise = self
-            .noise_func
-            .get_noise(position.x / 255.0, position.z / 255.0);
+        let raw_noise =
+            noise_func.get_noise3d(position.x / 255.0, position.y / 255.0, position.z / 255.0);
 
         assert!(raw_noise >= -1.0);
         assert!(raw_noise <= 1.0);
@@ -64,7 +99,7 @@ impl Terrain {
             assert!(density > 0.0);
             assert!(density <= 1.0);
 
-            t = VoxelType::Sand(TerrainVoxel { density });
+            t = VoxelType::Grass;
         }
 
         // Get top layer grass

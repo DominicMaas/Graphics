@@ -1,20 +1,36 @@
 mod chunk;
 mod table;
 mod terrain;
+pub mod world;
 
+use crate::chunk::chunk_setup;
 use bevy::{pbr::CascadeShadowConfigBuilder, prelude::*};
+use bevy_asset_loader::prelude::*;
 use bevy_atmosphere::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
-use chunk::chunk_setup;
+use chunk::{material::ChunkMaterial, tile_map::TileAssets};
 use smooth_bevy_cameras::{
     controllers::fps::{FpsCameraBundle, FpsCameraController, FpsCameraPlugin},
     LookTransformPlugin,
 };
 use terrain::Terrain;
+use world::WorldPlugin;
+
+#[derive(Component)]
+pub struct Player;
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+enum AppState {
+    #[default]
+    Loading,
+    InGame,
+}
 
 fn main() {
     App::new()
+        .add_state::<AppState>()
         .insert_resource(Msaa::Sample8)
         .insert_resource(AtmosphereModel::default())
         .insert_resource(ClearColor(Color::rgb(0.5294, 0.8078, 0.9216)))
@@ -38,15 +54,25 @@ fn main() {
                     ..Default::default()
                 }),
         )
+        .add_plugin(WorldPlugin)
         .add_plugin(EguiPlugin)
         .add_plugin(AtmospherePlugin)
         .add_plugin(LookTransformPlugin)
         .add_plugin(FpsCameraPlugin::default())
+        .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(MaterialPlugin::<ChunkMaterial>::default())
         //.add_plugin(RapierDebugRenderPlugin::default())
-        .add_startup_system(setup)
-        .add_startup_system(chunk_setup)
-        .add_system(process_ui)
+        .add_loading_state(LoadingState::new(AppState::Loading).continue_to_state(AppState::InGame))
+        .add_collection_to_loading_state::<_, TileAssets>(AppState::Loading)
+        .add_system(setup.in_schedule(OnEnter(AppState::InGame)))
+        .add_system(chunk_setup.in_schedule(OnEnter(AppState::InGame)))
+        .add_system(process_ui.in_set(OnUpdate(AppState::InGame)))
+        //.add_startup_system(setup)
+        // .add_startup_system(chunk_setup)
+        //.add_system(process_ui)
+        //.add_systems(OnEnter(AppState::InGame), setup)
+        // .add_systems(OnEnter(AppState::InGame), chunk_setup)
         .run();
 }
 
@@ -118,7 +144,10 @@ fn setup(
     commands
         .spawn(Camera3dBundle::default())
         .insert(FpsCameraBundle::new(
-            FpsCameraController::default(),
+            FpsCameraController {
+                translate_sensitivity: 20.0,
+                ..Default::default()
+            },
             Vec3::new(0.0, 32.0, 5.0),
             Vec3::new(0., 32.0, 0.),
             Vec3::Y,
@@ -135,7 +164,8 @@ fn setup(
             material: materials.add(StandardMaterial::from(Color::rgb(0.0, 0.0, 0.0))),
             ..Default::default()
         })
-        .insert(AtmosphereCamera::default());
+        .insert(AtmosphereCamera::default())
+        .insert(Player {});
 
     //.insert(RigidBody::KinematicPositionBased)
     //.insert(Collider::capsule_y(1.0, 1.0))
@@ -145,7 +175,7 @@ fn setup(
 }
 
 fn process_ui(mut contexts: EguiContexts, mut atmosphere: AtmosphereMut<Nishita>) {
-    egui::Window::new("Infinite Drive").show(contexts.ctx_mut(), |ui| {
+    egui::Window::new("Voxel Demo").show(contexts.ctx_mut(), |ui| {
         ui.label("Created by Dominic Maas");
         ui.separator();
 
