@@ -3,7 +3,6 @@ mod table;
 mod terrain;
 pub mod world;
 
-use crate::chunk::chunk_setup;
 use bevy::{pbr::CascadeShadowConfigBuilder, prelude::*};
 use bevy_asset_loader::prelude::*;
 use bevy_atmosphere::prelude::*;
@@ -66,7 +65,6 @@ fn main() {
         .add_loading_state(LoadingState::new(AppState::Loading).continue_to_state(AppState::InGame))
         .add_collection_to_loading_state::<_, TileAssets>(AppState::Loading)
         .add_system(setup.in_schedule(OnEnter(AppState::InGame)))
-        .add_system(chunk_setup.in_schedule(OnEnter(AppState::InGame)))
         .add_system(process_ui.in_set(OnUpdate(AppState::InGame)))
         //.add_startup_system(setup)
         // .add_startup_system(chunk_setup)

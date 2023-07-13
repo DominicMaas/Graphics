@@ -25,7 +25,7 @@ impl ChunkMesher {
         world_position: Vec3,
         position: Vec3,
         voxel_type: VoxelType,
-        terrain: &Res<Terrain>,
+        terrain: &Terrain,
         index: &mut u32,
         vertices: &mut Vec<[f32; 3]>,
         normals: &mut Vec<[f32; 3]>,
@@ -65,7 +65,7 @@ impl ChunkMesher {
         }
     }
 
-    pub fn build(chunk: &Chunk, world_position: Vec3, terrain: &Res<Terrain>) -> Option<Mesh> {
+    pub fn build(chunk: &Chunk, world_position: Vec3, terrain: &Terrain) -> Option<Mesh> {
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 
         let mut vertices: Vec<[f32; 3]> = Vec::new();

@@ -1,20 +1,28 @@
 use bevy::prelude::*;
 use bracket_noise::prelude::*;
 
-use crate::chunk::{Chunk, ChunkState, VoxelType, CHUNK_XZ, CHUNK_Y, WORLD_HEIGHT};
+use crate::chunk::{Chunk, VoxelType, CHUNK_XZ, CHUNK_Y, WORLD_HEIGHT};
 
-#[derive(Resource, Clone, Copy, Debug)]
+#[derive(Resource)]
 pub struct Terrain {
-    pub seed: u64,
+    pub noise_func: FastNoise,
 }
 
 impl Terrain {
     pub fn new(seed: u64) -> Self {
-        Self { seed }
+        let mut noise_func = FastNoise::seeded(seed);
+        noise_func.set_noise_type(NoiseType::SimplexFractal);
+        noise_func.set_fractal_type(FractalType::FBM);
+        noise_func.set_fractal_octaves(6);
+        noise_func.set_fractal_gain(0.5);
+        noise_func.set_fractal_lacunarity(2.0);
+        noise_func.set_frequency(1.0);
+
+        Self { noise_func }
     }
 
     pub fn generate2(&self, world_position: Vec3) -> Chunk {
-        let mut chunk = Chunk::default();
+        let mut chunk = Chunk::new();
 
         // Load in some initial terrain
         for cx in 0..CHUNK_XZ {
@@ -32,8 +40,6 @@ impl Terrain {
     }
 
     pub fn generate(&self, chunk: &mut Chunk, world_position: Vec3) {
-        chunk.state = ChunkState::Generating;
-
         // Load in some initial terrain
         for cx in 0..CHUNK_XZ {
             for cy in 0..CHUNK_Y {
@@ -45,22 +51,13 @@ impl Terrain {
                 }
             }
         }
-
-        chunk.state = ChunkState::Generated;
     }
 
     /// Gets the block type at this position
     pub fn get_block_type(&self, position: Vec3) -> VoxelType {
-        let mut noise_func = FastNoise::seeded(self.seed);
-        noise_func.set_noise_type(NoiseType::SimplexFractal);
-        noise_func.set_fractal_type(FractalType::FBM);
-        noise_func.set_fractal_octaves(6);
-        noise_func.set_fractal_gain(0.5);
-        noise_func.set_fractal_lacunarity(2.0);
-        noise_func.set_frequency(1.0);
-
         let raw_noise =
-            noise_func.get_noise3d(position.x / 255.0, position.y / 255.0, position.z / 255.0);
+            self.noise_func
+                .get_noise3d(position.x / 255.0, position.y / 255.0, position.z / 255.0);
 
         assert!(raw_noise >= -1.0);
         assert!(raw_noise <= 1.0);
@@ -99,6 +96,10 @@ impl Terrain {
             assert!(density > 0.0);
             assert!(density <= 1.0);
 
+            t = VoxelType::Stone;
+        }
+
+        if terrain_noise >= (position.y - 1.0) {
             t = VoxelType::Grass;
         }
 

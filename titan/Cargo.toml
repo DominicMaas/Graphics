@@ -15,6 +15,7 @@ bevy-inspector-egui = "0.18.3"                                                  
 smooth-bevy-cameras = { git = "https://github.com/bonsairobo/smooth-bevy-cameras" }     # Nice cameras for moving around
 bracket-noise = "0.8.7"
 rand = "0.8.5"
+futures-lite = "1.13.0"
 
 # Enable only a small amount of optimization in debug mode
 [profile.dev]

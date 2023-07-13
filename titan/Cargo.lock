@@ -3480,6 +3480,7 @@ dependencies = [
  "bevy_rapier3d",
  "bevy_tile_atlas",
  "bracket-noise",
+ "futures-lite",
  "rand",
  "smooth-bevy-cameras",
 ]
